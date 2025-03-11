@@ -1,8 +1,8 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { toast } from "@/components/ui/use-toast";
 
 const HamburgerMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -48,9 +48,31 @@ const HamburgerMenu = () => {
     };
   }, [isOpen]);
 
-  // Manipula o clique no botão sair
-  const handleExit = () => {
-    navigate("/");
+  const handleExit = async () => {
+    try {
+      // Sai do modo tela cheia
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      }
+      
+      // Desbloqueia a orientação
+      if (screen.orientation && screen.orientation.unlock) {
+        await screen.orientation.unlock();
+      }
+      
+      navigate("/");
+      toast({
+        title: "Saindo do aplicativo",
+        description: "Obrigado por usar o Esfera Sonora!",
+      });
+    } catch (error) {
+      console.error("Erro ao sair:", error);
+      toast({
+        title: "Erro ao sair",
+        description: "Não foi possível sair corretamente do aplicativo.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -104,17 +126,17 @@ const HamburgerMenu = () => {
           </div>
           
           <div className="flex-1">
-            {/* Itens do menu podem ser adicionados aqui */}
+            {/* Espaço para itens de menu futuros */}
           </div>
           
           <div className="mt-auto">
             <Button
-              variant="default"
+              variant="destructive"
               className="w-full justify-start"
               onClick={handleExit}
             >
               <X className="mr-2 h-4 w-4" />
-              Sair
+              Sair do Aplicativo
             </Button>
           </div>
         </div>

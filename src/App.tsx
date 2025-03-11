@@ -34,26 +34,52 @@ const AnimatedRoutes = () => {
 
 const App = () => {
   useEffect(() => {
-    // Set app to fullscreen on load
-    const setFullscreen = () => {
-      if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen().catch((e) => {
-          console.error("Error attempting to enable fullscreen:", e);
-        });
+    const enableFullScreen = async () => {
+      try {
+        // Solicita tela cheia
+        if (document.documentElement.requestFullscreen) {
+          await document.documentElement.requestFullscreen();
+        }
+        
+        // Bloqueia orientação em portrait (vertical)
+        if (screen.orientation && screen.orientation.lock) {
+          await screen.orientation.lock('portrait');
+        }
+        
+        // Mantém a tela sempre ativa
+        if (navigator.wakeLock) {
+          const wakeLock = await navigator.wakeLock.request('screen');
+          
+          // Reativa o wakeLock se o documento ficar visível novamente
+          document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'visible') {
+              await navigator.wakeLock.request('screen');
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Erro ao configurar modo tela cheia:", error);
       }
     };
-    
-    // Try to set fullscreen on user interaction
+
+    // Tenta habilitar tela cheia na interação do usuário
     const handleUserInteraction = () => {
-      setFullscreen();
-      // Remove event listeners after first interaction
+      enableFullScreen();
+      // Remove os event listeners após a primeira interação
       document.removeEventListener("click", handleUserInteraction);
       document.removeEventListener("touchstart", handleUserInteraction);
     };
-    
+
     document.addEventListener("click", handleUserInteraction);
     document.addEventListener("touchstart", handleUserInteraction);
-    
+
+    // Impede que o usuário saia do modo tela cheia com ESC
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement) {
+        enableFullScreen();
+      }
+    });
+
     return () => {
       document.removeEventListener("click", handleUserInteraction);
       document.removeEventListener("touchstart", handleUserInteraction);
