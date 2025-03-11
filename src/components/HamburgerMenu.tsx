@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -83,8 +82,7 @@ const HamburgerMenu = () => {
         </Button>
       </div>
 
-      {/* Menu panel */}
-      <div
+      <div 
         ref={menuRef}
         className={`fixed top-0 left-0 h-full w-64 glass z-40 transform transition-transform duration-300 ease-in-out ${
           isOpen ? "translate-x-0" : "-translate-x-full"
@@ -98,14 +96,14 @@ const HamburgerMenu = () => {
               size="icon"
               className="h-8 w-8 rounded-full"
               onClick={toggleMenu}
-              aria-label="Close menu"
+              aria-label="Fechar menu"
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
           
           <div className="flex-1">
-            {/* Menu items can be added here */}
+            {/* Itens do menu podem ser adicionados aqui */}
           </div>
           
           <div className="mt-auto">
@@ -115,7 +113,7 @@ const HamburgerMenu = () => {
               onClick={handleExit}
             >
               <X className="mr-2 h-4 w-4" />
-              Exit
+              Sair
             </Button>
           </div>
         </div>

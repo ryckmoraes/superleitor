@@ -54,11 +54,11 @@ const SplashScreen = () => {
         </div>
         
         <h1 className="text-4xl font-semibold tracking-tight mb-3 text-primary">
-          Sound Sphere
+          Esfera Sonora
         </h1>
         
         <p className="text-muted-foreground max-w-md mb-8">
-          Visualize your sound frequencies with a beautiful reactive sphere
+          Visualize suas frequências sonoras com uma esfera reativa
         </p>
         
         <Button 
@@ -67,7 +67,7 @@ const SplashScreen = () => {
           className="group relative overflow-hidden rounded-full px-8 py-6 shadow-md transition-all duration-300 ease-out hover:shadow-lg bg-primary text-primary-foreground hover:bg-primary/90"
         >
           <span className="relative z-10 flex items-center gap-2 font-medium">
-            Continue
+            Continuar
             <ArrowRight className="w-5 h-5 transition-transform duration-300 ease-out group-hover:translate-x-1" />
           </span>
         </Button>

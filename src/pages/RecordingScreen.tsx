@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Mic, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,58 +19,51 @@ const RecordingScreen = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Show error toast if microphone access is denied
   useEffect(() => {
     if (errorMessage) {
       toast({
-        title: "Error",
+        title: "Erro",
         description: errorMessage,
         variant: "destructive",
       });
     }
   }, [errorMessage]);
 
-  // Toggle recording
   const toggleRecording = () => {
     if (isRecording) {
       stopRecording();
       toast({
-        title: "Recording stopped",
-        description: "Audio visualization has stopped.",
+        title: "Gravação interrompida",
+        description: "A visualização de áudio foi interrompida.",
       });
     } else {
       startRecording();
       toast({
-        title: "Recording started",
-        description: "Audio visualization is active.",
+        title: "Gravação iniciada",
+        description: "A visualização de áudio está ativa.",
       });
     }
   };
 
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-background to-background/90 overflow-hidden">
-      {/* Hamburger Menu */}
       <HamburgerMenu />
       
-      {/* Content container */}
       <div 
         className={`flex flex-col items-center justify-center w-full h-full transition-all duration-1000 ease-out transform ${
           loaded ? "opacity-100 scale-100" : "opacity-0 scale-95"
         }`}
       >
-        {/* Title */}
         <div className="absolute top-6 left-0 right-0 text-center">
           <h1 className="text-2xl font-semibold tracking-tight text-primary">
-            Sound Sphere
+            Esfera Sonora
           </h1>
         </div>
         
-        {/* Main sphere visualization */}
         <div className="w-full max-w-[500px] h-[500px] flex items-center justify-center">
           <AudioSphere audioData={audioData} isRecording={isRecording} />
         </div>
         
-        {/* Controls */}
         <div className="absolute bottom-12 left-0 right-0 flex justify-center">
           <Button
             onClick={toggleRecording}
@@ -87,12 +79,12 @@ const RecordingScreen = () => {
               {isRecording ? (
                 <>
                   <Square className="w-5 h-5" />
-                  Stop Recording
+                  Parar Gravação
                 </>
               ) : (
                 <>
                   <Mic className="w-5 h-5" />
-                  Start Recording
+                  Iniciar Gravação
                 </>
               )}
             </span>
