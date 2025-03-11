@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ const HamburgerMenu = () => {
   const triggerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
 
-  // Show menu trigger when mouse enters trigger area
+  // Mostra o gatilho do menu quando o mouse entra na área de gatilho
   const handleTriggerAreaEnter = () => {
     if (triggerTimeoutRef.current) {
       clearTimeout(triggerTimeoutRef.current);
@@ -19,7 +20,7 @@ const HamburgerMenu = () => {
     setShowTrigger(true);
   };
 
-  // Hide menu trigger after delay when mouse leaves
+  // Esconde o gatilho do menu após um atraso quando o mouse sai
   const handleTriggerAreaLeave = () => {
     if (!isOpen) {
       triggerTimeoutRef.current = setTimeout(() => {
@@ -28,12 +29,12 @@ const HamburgerMenu = () => {
     }
   };
 
-  // Toggle menu open/closed
+  // Alterna o menu entre aberto/fechado
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
 
-  // Close menu when clicking outside
+  // Fecha o menu ao clicar fora
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node) && isOpen) {
@@ -47,21 +48,21 @@ const HamburgerMenu = () => {
     };
   }, [isOpen]);
 
-  // Handle exit button click
+  // Manipula o clique no botão sair
   const handleExit = () => {
     navigate("/");
   };
 
   return (
     <>
-      {/* Invisible trigger area */}
+      {/* Área de gatilho invisível */}
       <div 
         className="menu-hover-area"
         onMouseEnter={handleTriggerAreaEnter}
         onMouseLeave={handleTriggerAreaLeave}
       />
 
-      {/* Menu trigger button */}
+      {/* Botão de gatilho do menu */}
       <div 
         className={`fixed top-6 left-6 z-50 transition-all duration-300 ${
           showTrigger || isOpen ? "opacity-100" : "opacity-0"
@@ -72,7 +73,7 @@ const HamburgerMenu = () => {
           size="icon"
           className="h-10 w-10 rounded-full glass border-0 transition-all duration-300 hover:bg-primary/10"
           onClick={toggleMenu}
-          aria-label={isOpen ? "Close menu" : "Open menu"}
+          aria-label={isOpen ? "Fechar menu" : "Abrir menu"}
         >
           {isOpen ? (
             <X className="h-5 w-5" />

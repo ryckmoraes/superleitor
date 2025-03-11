@@ -9,7 +9,7 @@ const SplashScreen = () => {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    // Add animation after component mounts
+    // Adiciona animação após o componente ser montado
     const timer = setTimeout(() => {
       setLoaded(true);
     }, 100);

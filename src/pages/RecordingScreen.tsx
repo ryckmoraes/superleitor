@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Mic, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ const RecordingScreen = () => {
   const [loaded, setLoaded] = useState(false);
   const { isRecording, audioData, errorMessage, startRecording, stopRecording } = useAudioAnalyzer();
 
-  // Animation when component mounts
+  // Animação quando o componente é montado
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoaded(true);
