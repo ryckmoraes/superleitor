@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Menu, X, Settings as SettingsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -138,18 +137,18 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
         <Button
           variant="outline"
           size="icon"
-          className={`h-10 w-10 rounded-full glass border-0 transition-all duration-300 ${
+          className={`h-10 w-10 rounded-full ${
             isDarkMode 
-              ? "hover:bg-white/20" 
-              : "hover:bg-black/10"
+              ? "bg-white/10 hover:bg-white/20 border border-white/20" 
+              : "bg-black/5 hover:bg-black/10 border border-black/10"
           }`}
           onClick={toggleMenu}
           aria-label={isOpen ? "Fechar menu" : "Abrir menu"}
         >
           {isOpen ? (
-            <X className={`h-5 w-5 ${isDarkMode ? "text-white" : "text-primary"}`} />
+            <X className={`h-5 w-5 ${isDarkMode ? "text-white" : "text-black"}`} />
           ) : (
-            <Menu className={`h-5 w-5 ${isDarkMode ? "text-white" : "text-primary"}`} />
+            <Menu className={`h-5 w-5 ${isDarkMode ? "text-white" : "text-black"}`} />
           )}
         </Button>
       </div>
