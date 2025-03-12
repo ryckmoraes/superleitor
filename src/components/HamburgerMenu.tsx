@@ -140,16 +140,16 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
           size="icon"
           className={`h-10 w-10 rounded-full glass border-0 transition-all duration-300 ${
             isDarkMode 
-              ? "hover:bg-white/20 text-white" 
-              : "hover:bg-black/10 text-primary"
+              ? "hover:bg-white/20" 
+              : "hover:bg-black/10"
           }`}
           onClick={toggleMenu}
           aria-label={isOpen ? "Fechar menu" : "Abrir menu"}
         >
           {isOpen ? (
-            <X className="h-5 w-5" />
+            <X className={`h-5 w-5 ${isDarkMode ? "text-white" : "text-primary"}`} />
           ) : (
-            <Menu className="h-5 w-5" />
+            <Menu className={`h-5 w-5 ${isDarkMode ? "text-white" : "text-primary"}`} />
           )}
         </Button>
       </div>
