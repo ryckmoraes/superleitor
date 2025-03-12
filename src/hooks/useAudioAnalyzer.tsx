@@ -5,12 +5,15 @@ const useAudioAnalyzer = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [audioData, setAudioData] = useState<Uint8Array | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [recordingTime, setRecordingTime] = useState(0);
   
   const streamRef = useRef<MediaStream | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const dataArrayRef = useRef<Uint8Array | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const recordingStartTimeRef = useRef<number | null>(null);
+  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const startRecording = async () => {
     try {
@@ -51,9 +54,18 @@ const useAudioAnalyzer = () => {
       analyzeAudio();
       setIsRecording(true);
       
+      // Iniciar o contador de tempo
+      recordingStartTimeRef.current = Date.now();
+      timerIntervalRef.current = setInterval(() => {
+        if (recordingStartTimeRef.current) {
+          const elapsed = (Date.now() - recordingStartTimeRef.current) / 1000;
+          setRecordingTime(elapsed);
+        }
+      }, 1000);
+      
     } catch (error) {
       console.error("Error accessing microphone:", error);
-      setErrorMessage("Microphone access denied. Please allow microphone access and try again.");
+      setErrorMessage("Acesso ao microfone negado. Por favor, permita o acesso ao microfone e tente novamente.");
       setIsRecording(false);
     }
   };
@@ -77,10 +89,17 @@ const useAudioAnalyzer = () => {
       audioContextRef.current = null;
     }
     
+    // Parar o contador de tempo
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+    
     analyserRef.current = null;
     dataArrayRef.current = null;
     setAudioData(null);
     setIsRecording(false);
+    // Não resetamos o recordingTime aqui para exibir o tempo total ao final
   };
 
   // Clean up on unmount
@@ -97,6 +116,10 @@ const useAudioAnalyzer = () => {
       if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
         audioContextRef.current.close();
       }
+      
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+      }
     };
   }, []);
 
@@ -105,7 +128,8 @@ const useAudioAnalyzer = () => {
     audioData, 
     errorMessage, 
     startRecording, 
-    stopRecording 
+    stopRecording,
+    recordingTime
   };
 };
 

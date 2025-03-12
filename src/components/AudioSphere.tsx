@@ -14,6 +14,7 @@ const AudioSphere = ({ audioData, isRecording }: AudioSphereProps) => {
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sphereRef = useRef<THREE.Mesh | null>(null);
   const frameIdRef = useRef<number | null>(null);
+  const particlesRef = useRef<THREE.Points | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -53,6 +54,11 @@ const AudioSphere = ({ audioData, isRecording }: AudioSphereProps) => {
     directionalLight.position.set(1, 1, 1);
     scene.add(directionalLight);
 
+    // Add point light in center
+    const pointLight = new THREE.PointLight(0x0088ff, 1, 10);
+    pointLight.position.set(0, 0, 0);
+    scene.add(pointLight);
+
     // Create sphere geometry with high detail
     const geometry = new THREE.IcosahedronGeometry(1, 5);
     
@@ -70,9 +76,41 @@ const AudioSphere = ({ audioData, isRecording }: AudioSphereProps) => {
     scene.add(sphere);
     sphereRef.current = sphere;
 
+    // Adiciona partículas ao redor da esfera para efeito visual
+    const particlesGeometry = new THREE.BufferGeometry();
+    const particleCount = 1000;
+    const positions = new Float32Array(particleCount * 3);
+    
+    for (let i = 0; i < particleCount; i++) {
+      // Distribui partículas em uma esfera maior
+      const radius = 2 + Math.random() * 2;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.random() * Math.PI;
+      
+      positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+      positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+      positions[i * 3 + 2] = radius * Math.cos(phi);
+    }
+    
+    particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    
+    // Material para as partículas
+    const particlesMaterial = new THREE.PointsMaterial({
+      color: 0x88ccff,
+      size: 0.05,
+      transparent: true,
+      opacity: 0.6,
+      sizeAttenuation: true
+    });
+    
+    // Cria e adiciona o sistema de partículas
+    const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+    scene.add(particles);
+    particlesRef.current = particles;
+
     // Animate function
     const animate = () => {
-      if (!sphereRef.current) return;
+      if (!sphereRef.current || !particlesRef.current) return;
       
       // Subtle rotation when not recording
       if (!isRecording) {
@@ -83,6 +121,10 @@ const AudioSphere = ({ audioData, isRecording }: AudioSphereProps) => {
         const time = Date.now() * 0.001;
         const scale = 1 + Math.sin(time) * 0.05;
         sphereRef.current.scale.set(scale, scale, scale);
+        
+        // Rotate particles in opposite direction
+        particlesRef.current.rotation.x -= 0.001;
+        particlesRef.current.rotation.y -= 0.001;
       }
       
       if (rendererRef.current && sceneRef.current && cameraRef.current) {
@@ -125,9 +167,10 @@ const AudioSphere = ({ audioData, isRecording }: AudioSphereProps) => {
 
   // Update sphere based on audio data
   useEffect(() => {
-    if (!audioData || !sphereRef.current || !isRecording) return;
+    if (!audioData || !sphereRef.current || !particlesRef.current || !isRecording) return;
 
     const positions = sphereRef.current.geometry.attributes.position;
+    const particlePositions = particlesRef.current.geometry.attributes.position;
     const vertex = new THREE.Vector3();
     
     // Calculate average volume level and frequency distribution
@@ -156,16 +199,44 @@ const AudioSphere = ({ audioData, isRecording }: AudioSphereProps) => {
       positions.setXYZ(i, vertex.x, vertex.y, vertex.z);
     }
     
+    // Update particles based on audio
+    for (let i = 0; i < particlePositions.count; i++) {
+      // Get current particle position
+      vertex.fromBufferAttribute(particlePositions, i);
+      
+      // Normalize to get direction from center
+      const direction = vertex.clone().normalize();
+      
+      // Calculate distortion based on audio frequency and average volume
+      const freqIndex = Math.min(Math.floor(i / particlePositions.count * audioData.length), audioData.length - 1);
+      const freqValue = audioData[freqIndex] / 255;
+      
+      // Calculate new distance from center
+      const baseDistance = vertex.length();
+      const newDistance = baseDistance + freqValue * 0.5;
+      
+      // Set new position
+      vertex.copy(direction.multiplyScalar(newDistance));
+      particlePositions.setXYZ(i, vertex.x, vertex.y, vertex.z);
+    }
+    
     // Update material color based on volume
     if (sphereRef.current.material instanceof THREE.MeshPhongMaterial) {
       // Shift color from blue to purple based on volume
       const hue = 0.6 - avgVolume * 0.1;
       sphereRef.current.material.color.setHSL(hue, 0.8, 0.5);
       sphereRef.current.material.opacity = 0.7 + avgVolume * 0.3;
+      
+      // Atualizamos também as partículas
+      if (particlesRef.current.material instanceof THREE.PointsMaterial) {
+        particlesRef.current.material.color.setHSL(hue + 0.1, 0.7, 0.6);
+        particlesRef.current.material.size = 0.05 + avgVolume * 0.1;
+      }
     }
     
     // Flag the geometry as needing update
     positions.needsUpdate = true;
+    particlePositions.needsUpdate = true;
     
   }, [audioData, isRecording]);
 

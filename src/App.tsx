@@ -41,21 +41,39 @@ const App = () => {
           await document.documentElement.requestFullscreen();
         }
         
-        // Bloqueia orientação em portrait (vertical)
-        if (screen.orientation && screen.orientation.lock) {
-          await screen.orientation.lock('portrait');
+        // Bloqueia orientação em portrait (vertical) - usando try/catch para compatibilidade
+        try {
+          if (screen.orientation) {
+            await screen.orientation.lock("portrait");
+          }
+        } catch (orientationError) {
+          console.error("Erro ao bloquear orientação:", orientationError);
+        }
+        
+        // Modo imersivo para Android (ocultar barra de status e navegação)
+        const nav = navigator as any;
+        if (nav.keyboard && nav.keyboard.lock) {
+          try {
+            await nav.keyboard.lock();
+          } catch (keyboardError) {
+            console.error("Erro ao bloquear teclado:", keyboardError);
+          }
         }
         
         // Mantém a tela sempre ativa
         if (navigator.wakeLock) {
-          const wakeLock = await navigator.wakeLock.request('screen');
-          
-          // Reativa o wakeLock se o documento ficar visível novamente
-          document.addEventListener('visibilitychange', async () => {
-            if (document.visibilityState === 'visible') {
-              await navigator.wakeLock.request('screen');
-            }
-          });
+          try {
+            const wakeLock = await navigator.wakeLock.request('screen');
+            
+            // Reativa o wakeLock se o documento ficar visível novamente
+            document.addEventListener('visibilitychange', async () => {
+              if (document.visibilityState === 'visible') {
+                await navigator.wakeLock.request('screen');
+              }
+            });
+          } catch (wakeLockError) {
+            console.error("Erro ao manter tela ativa:", wakeLockError);
+          }
         }
       } catch (error) {
         console.error("Erro ao configurar modo tela cheia:", error);
@@ -79,6 +97,13 @@ const App = () => {
         enableFullScreen();
       }
     });
+
+    // Previne gestos de navegação (swipe back/forward) em dispositivos móveis
+    document.addEventListener('touchstart', (e) => {
+      if (e.touches.length > 1) {
+        e.preventDefault();
+      }
+    }, { passive: false });
 
     return () => {
       document.removeEventListener("click", handleUserInteraction);

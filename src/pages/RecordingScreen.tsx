@@ -1,15 +1,27 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Mic, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import AudioSphere from "@/components/AudioSphere";
 import useAudioAnalyzer from "@/hooks/useAudioAnalyzer";
+import usePatternDetection from "@/hooks/usePatternDetection";
 
 const RecordingScreen = () => {
   const [loaded, setLoaded] = useState(false);
-  const { isRecording, audioData, errorMessage, startRecording, stopRecording } = useAudioAnalyzer();
+  const [isStoryMode, setIsStoryMode] = useState(false);
+  const [storyTranscript, setStoryTranscript] = useState("");
+  const { 
+    isRecording, 
+    audioData, 
+    errorMessage, 
+    startRecording, 
+    stopRecording,
+    recordingTime
+  } = useAudioAnalyzer();
+  const { patternDetected, patternType } = usePatternDetection(audioData);
+  const patternNotifiedRef = useRef(false);
 
   // Animação quando o componente é montado
   useEffect(() => {
@@ -30,18 +42,40 @@ const RecordingScreen = () => {
     }
   }, [errorMessage]);
 
+  // Notifica o usuário quando um padrão é detectado
+  useEffect(() => {
+    if (patternDetected && !patternNotifiedRef.current && isRecording) {
+      patternNotifiedRef.current = true;
+      
+      toast({
+        title: "Padrão Detectado",
+        description: `Um padrão de ${patternType === 'music' ? 'música' : 'som repetitivo'} foi identificado!`,
+        variant: "default",
+      });
+      
+      // Reset a notificação após um tempo para permitir notificações futuras
+      setTimeout(() => {
+        patternNotifiedRef.current = false;
+      }, 10000);
+    }
+  }, [patternDetected, patternType, isRecording]);
+
   const toggleRecording = () => {
     if (isRecording) {
       stopRecording();
+      setIsStoryMode(false);
+      
       toast({
         title: "Gravação interrompida",
-        description: "A visualização de áudio foi interrompida.",
+        description: `A visualização de áudio foi interrompida após ${Math.floor(recordingTime)} segundos.`,
       });
     } else {
       startRecording();
+      setIsStoryMode(true);
+      
       toast({
-        title: "Gravação iniciada",
-        description: "A visualização de áudio está ativa.",
+        title: "Modo História Ativado",
+        description: "Conte sua história para a Esfera Sonora. Ela está ouvindo!",
       });
     }
   };
@@ -57,13 +91,24 @@ const RecordingScreen = () => {
       >
         <div className="absolute top-6 left-0 right-0 text-center">
           <h1 className="text-2xl font-semibold tracking-tight text-primary">
-            Esfera Sonora
+            {isStoryMode ? "Modo História" : "Esfera Sonora"}
           </h1>
+          {isRecording && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Tempo de gravação: {Math.floor(recordingTime)} segundos
+            </p>
+          )}
         </div>
         
         <div className="w-full max-w-[500px] h-[500px] flex items-center justify-center">
           <AudioSphere audioData={audioData} isRecording={isRecording} />
         </div>
+        
+        {isStoryMode && storyTranscript && (
+          <div className="mb-8 px-6 max-w-md text-center">
+            <p className="text-sm opacity-75">{storyTranscript}</p>
+          </div>
+        )}
         
         <div className="absolute bottom-12 left-0 right-0 flex justify-center">
           <Button
@@ -85,7 +130,7 @@ const RecordingScreen = () => {
               ) : (
                 <>
                   <Mic className="w-5 h-5" />
-                  Iniciar Gravação
+                  Iniciar História
                 </>
               )}
             </span>
