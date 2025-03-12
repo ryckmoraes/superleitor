@@ -44,6 +44,7 @@ const App = () => {
         // Bloqueia orientação em portrait (vertical) - usando try/catch para compatibilidade
         try {
           if (screen.orientation) {
+            // Correção: Usando o método correto para bloquear orientação
             await screen.orientation.lock("portrait");
           }
         } catch (orientationError) {
