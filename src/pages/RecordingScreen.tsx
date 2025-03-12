@@ -12,6 +12,12 @@ const RecordingScreen = () => {
   const [loaded, setLoaded] = useState(false);
   const [isStoryMode, setIsStoryMode] = useState(false);
   const [storyTranscript, setStoryTranscript] = useState("");
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Retrieve theme from localStorage or default to false (light mode)
+    const savedTheme = localStorage.getItem("dark-mode");
+    return savedTheme === "true";
+  });
+  
   const { 
     isRecording, 
     audioData, 
@@ -22,6 +28,22 @@ const RecordingScreen = () => {
   } = useAudioAnalyzer();
   const { patternDetected, patternType } = usePatternDetection(audioData);
   const patternNotifiedRef = useRef(false);
+
+  // Apply theme class to document
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    // Save theme preference to localStorage
+    localStorage.setItem("dark-mode", isDarkMode.toString());
+  }, [isDarkMode]);
+
+  // Toggle theme function
+  const toggleTheme = () => {
+    setIsDarkMode(prev => !prev);
+  };
 
   // Animação quando o componente é montado
   useEffect(() => {
@@ -81,8 +103,12 @@ const RecordingScreen = () => {
   };
 
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-background to-background/90 overflow-hidden">
-      <HamburgerMenu />
+    <div className={`relative flex flex-col items-center justify-center min-h-screen ${
+      isDarkMode 
+        ? "bg-gradient-to-b from-background to-background/90" 
+        : "bg-gradient-to-b from-background to-background/90"
+    } overflow-hidden`}>
+      <HamburgerMenu isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
       
       <div 
         className={`flex flex-col items-center justify-center w-full h-full transition-all duration-1000 ease-out transform ${

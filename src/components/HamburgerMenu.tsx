@@ -1,12 +1,23 @@
+
 import { useState, useEffect, useRef } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Settings as SettingsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
+import Settings from "./Settings";
+import PasswordDialog from "./PasswordDialog";
 
-const HamburgerMenu = () => {
+interface HamburgerMenuProps {
+  isDarkMode: boolean;
+  toggleTheme: () => void;
+}
+
+const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showTrigger, setShowTrigger] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [passwordAction, setPasswordAction] = useState<"settings" | "exit">("settings");
   const menuRef = useRef<HTMLDivElement>(null);
   const triggerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
@@ -48,7 +59,41 @@ const HamburgerMenu = () => {
     };
   }, [isOpen]);
 
-  const handleExit = async () => {
+  const handleSettingsClick = () => {
+    const hasPassword = !!localStorage.getItem("app_password");
+    
+    if (hasPassword) {
+      setPasswordAction("settings");
+      setPasswordDialogOpen(true);
+    } else {
+      setSettingsOpen(true);
+    }
+    
+    setIsOpen(false);
+  };
+
+  const handleExitClick = () => {
+    const hasPassword = !!localStorage.getItem("app_password");
+    
+    if (hasPassword) {
+      setPasswordAction("exit");
+      setPasswordDialogOpen(true);
+    } else {
+      exitApp();
+    }
+  };
+
+  const handlePasswordSuccess = () => {
+    setPasswordDialogOpen(false);
+    
+    if (passwordAction === "settings") {
+      setSettingsOpen(true);
+    } else if (passwordAction === "exit") {
+      exitApp();
+    }
+  };
+
+  const exitApp = async () => {
     try {
       // Sai do modo tela cheia
       if (document.fullscreenElement) {
@@ -93,7 +138,11 @@ const HamburgerMenu = () => {
         <Button
           variant="outline"
           size="icon"
-          className="h-10 w-10 rounded-full glass border-0 transition-all duration-300 hover:bg-primary/10"
+          className={`h-10 w-10 rounded-full glass border-0 transition-all duration-300 ${
+            isDarkMode 
+              ? "hover:bg-white/20 text-white" 
+              : "hover:bg-black/10 text-primary"
+          }`}
           onClick={toggleMenu}
           aria-label={isOpen ? "Fechar menu" : "Abrir menu"}
         >
@@ -126,14 +175,21 @@ const HamburgerMenu = () => {
           </div>
           
           <div className="flex-1">
-            {/* Espaço para itens de menu futuros */}
+            <Button
+              variant="ghost"
+              className="w-full justify-start mb-2"
+              onClick={handleSettingsClick}
+            >
+              <SettingsIcon className="mr-2 h-4 w-4" />
+              Configurações
+            </Button>
           </div>
           
           <div className="mt-auto">
             <Button
               variant="destructive"
               className="w-full justify-start"
-              onClick={handleExit}
+              onClick={handleExitClick}
             >
               <X className="mr-2 h-4 w-4" />
               Sair do Aplicativo
@@ -141,6 +197,21 @@ const HamburgerMenu = () => {
           </div>
         </div>
       </div>
+
+      <Settings 
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        toggleTheme={toggleTheme}
+        isDarkMode={isDarkMode}
+      />
+
+      <PasswordDialog
+        isOpen={passwordDialogOpen}
+        onClose={() => setPasswordDialogOpen(false)}
+        onSuccess={handlePasswordSuccess}
+        mode="verify"
+        title={passwordAction === "settings" ? "Acessar Configurações" : "Sair do Aplicativo"}
+      />
     </>
   );
 };
