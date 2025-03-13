@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Mic, Square, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,26 +10,52 @@ import { geminiService } from "@/services/geminiService";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 
-// Configures voice to be more natural
-const configureVoice = (utterance: SpeechSynthesisUtterance): void => {
+// Improved voice configuration for more natural speech
+const configureNaturalVoice = (utterance: SpeechSynthesisUtterance): void => {
   utterance.lang = 'pt-BR';
-  utterance.rate = 0.9; // Slightly slower
-  utterance.pitch = 1.1; // Slightly higher pitch
+  utterance.rate = 0.85; // Slower for more natural pacing
+  utterance.pitch = 1.05; // Slightly higher for children's content
   utterance.volume = 1.0;
   
   // Try to select a more natural female voice if available
   const voices = speechSynthesis.getVoices();
-  const brazilianVoice = voices.find(voice => 
-    voice.lang.includes('pt-BR') && voice.name.includes('female')
+  
+  // First try to find a Brazilian Portuguese female voice
+  let selectedVoice = voices.find(voice => 
+    voice.lang.includes('pt-BR') && 
+    (voice.name.toLowerCase().includes('female') || 
+     voice.name.toLowerCase().includes('mulher') ||
+     voice.name.toLowerCase().includes('feminin'))
   );
   
-  if (brazilianVoice) {
-    utterance.voice = brazilianVoice;
+  // If not found, try any Brazilian Portuguese voice
+  if (!selectedVoice) {
+    selectedVoice = voices.find(voice => voice.lang.includes('pt-BR'));
+  }
+  
+  // Fallback to any Portuguese voice
+  if (!selectedVoice) {
+    selectedVoice = voices.find(voice => voice.lang.includes('pt'));
+  }
+  
+  if (selectedVoice) {
+    utterance.voice = selectedVoice;
   }
 };
 
-// Controls speech synthesis
-const speakText = (text: string, priority: boolean = false): void => {
+// Enhanced text processor for more natural speech with pauses and intonation
+const processTextForSpeech = (text: string): string => {
+  return text
+    .replace(/\.\s+/g, '... ') // Add longer pause after periods
+    .replace(/,\s+/g, ', ') // Ensure comma pauses
+    .replace(/(!|\?)\s+/g, '$1... ') // Add pause after exclamation/question marks
+    .replace(/:\s+/g, '... ') // Add pause after colons
+    .replace(/(\w+)(\W+)$/g, '$1...') // Add pause at the end of sentences
+    .replace(/\s{2,}/g, ' '); // Remove extra spaces
+};
+
+// Speaks text with a natural, expressive voice
+const speakNaturally = (text: string, priority: boolean = false): void => {
   if (!('speechSynthesis' in window)) return;
   
   // Cancel previous speech if priority message
@@ -41,16 +66,31 @@ const speakText = (text: string, priority: boolean = false): void => {
   // Don't interrupt if already speaking and not priority
   if (!priority && speechSynthesis.speaking) return;
   
-  const utterance = new SpeechSynthesisUtterance(text);
-  configureVoice(utterance);
+  // Split long text into smaller chunks for more natural delivery
+  const MAX_CHUNK_LENGTH = 100;
+  const processedText = processTextForSpeech(text);
   
-  // Add some natural pauses with commas
-  const processedText = text
-    .replace(/\./g, ', ') // Replace periods with commas and pauses
-    .replace(/(!|\?)/g, '$1, '); // Add pauses after exclamation/question marks
+  // Split by sentence markers but keep the markers
+  const sentences = processedText.match(/[^.!?]+[.!?]+/g) || [processedText];
+  
+  sentences.forEach((sentence, index) => {
+    const utterance = new SpeechSynthesisUtterance(sentence);
+    configureNaturalVoice(utterance);
     
-  utterance.text = processedText;
-  speechSynthesis.speak(utterance);
+    // Add a slight delay between sentences for more natural pacing
+    setTimeout(() => {
+      speechSynthesis.speak(utterance);
+    }, index * 200);
+  });
+};
+
+// Only show toast, don't speak it
+const showToastOnly = (title: string, description: string, variant: "default" | "destructive" = "default") => {
+  toast({
+    title,
+    description,
+    variant,
+  });
 };
 
 const RecordingScreen = () => {
@@ -110,11 +150,11 @@ const RecordingScreen = () => {
       setHasMicrophonePermission(true);
     } catch (error) {
       console.error("Error requesting microphone permission:", error);
-      toast({
-        title: "Permissão de Microfone",
-        description: "Por favor, permita o acesso ao microfone para que a Esfera Sonora funcione corretamente.",
-        variant: "destructive",
-      });
+      showToastOnly(
+        "Permissão de Microfone",
+        "Por favor, permita o acesso ao microfone para que a Esfera Sonora funcione corretamente.",
+        "destructive"
+      );
     }
   };
 
@@ -133,29 +173,23 @@ const RecordingScreen = () => {
   const speakWelcomeMessage = () => {
     if ('speechSynthesis' in window && onboardingData.superReaderName) {
       // Create welcome message with just the SuperLeitor name
-      const welcomeMessage = `Olá ${onboardingData.superReaderName}! Que bom te ver por aqui. Que história você quer me contar hoje?`;
+      const welcomeMessage = `Olá ${onboardingData.superReaderName}! Que bom te ver! Que história você quer me contar hoje?`;
       console.log("Speaking welcome message:", welcomeMessage);
       
       // Show toast message
-      toast({
-        title: "Bem-vindo!",
-        description: welcomeMessage,
-      });
+      showToastOnly("Bem-vindo!", welcomeMessage);
       
-      // Speak with improved voice
-      speakText(welcomeMessage, true);
+      // Speak with natural voice
+      speakNaturally(welcomeMessage, true);
     } else {
-      console.error("Speech synthesis not supported or SuperLeitor name not set", {
+      console.error("Speech synthesis not supported or name not set", {
         speechSynthesisSupported: 'speechSynthesis' in window,
         superReaderName: onboardingData.superReaderName
       });
       
       // Show toast if speech synthesis fails
       if (onboardingData.superReaderName) {
-        toast({
-          title: "Bem-vindo!",
-          description: `Olá ${onboardingData.superReaderName}! Que bom te ver por aqui.`,
-        });
+        showToastOnly("Bem-vindo!", `Olá ${onboardingData.superReaderName}! Que bom te ver!`);
       }
     }
   };
@@ -188,11 +222,7 @@ const RecordingScreen = () => {
 
   useEffect(() => {
     if (errorMessage) {
-      toast({
-        title: "Erro",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      showToastOnly("Erro", errorMessage, "destructive");
     }
   }, [errorMessage]);
 
@@ -202,22 +232,18 @@ const RecordingScreen = () => {
       patternNotifiedRef.current = true;
       
       // Create natural message
-      const message = `Ei, detectei um padrão de ${patternType === 'music' ? 'música' : 'sons repetitivos'} na sua história! Que legal!`;
+      const message = `Ei, percebi um padrão de ${patternType === 'music' ? 'música' : 'ritmo'} na sua história! Que legal!`;
       
-      // Show toast notification
-      toast({
-        title: "Padrão Detectado",
-        description: message,
-        variant: "default",
-      });
+      // Show toast notification only
+      showToastOnly("Padrão Detectado", message);
       
-      // Speak the notification
-      speakText(message);
+      // Speak the notification with natural voice
+      speakNaturally(message);
       
       // Reset notification after a time to allow future notifications
       setTimeout(() => {
         patternNotifiedRef.current = false;
-      }, 10000);
+      }, 12000); // Longer timeout to prevent too many notifications
     }
   }, [patternDetected, patternType, isRecording]);
 
@@ -228,38 +254,38 @@ const RecordingScreen = () => {
         setIsProcessing(true);
         try {
           setStoryTranscript("Processando áudio...");
-          toast({
-            title: "Analisando sua história",
-            description: "Estou ouvindo com atenção o que você contou...",
-          });
+          showToastOnly(
+            "Analisando sua história",
+            "Estou ouvindo com atenção o que você contou..."
+          );
           
           const response = await geminiService.processAudio(audioBlob);
           setStoryTranscript(response);
           setIsStoryMode(true);
           
-          // Show response in toast
-          toast({
-            title: "Sua história é incrível!",
-            description: response.length > 100 ? response.substring(0, 100) + "..." : response,
-          });
+          // Show response in toast only
+          showToastOnly(
+            "Sua história é incrível!",
+            response.length > 100 ? response.substring(0, 100) + "..." : response
+          );
           
-          // Speak with improved voice
-          speakText(response, true);
+          // Speak with natural voice
+          speakNaturally(response, true);
           
         } catch (error) {
           console.error("Error processing audio:", error);
-          const errorMessage = "Ops! Tive um probleminha para entender sua história. Vamos tentar de novo?";
+          const errorMessage = "Puxa! Não consegui entender sua história. Vamos tentar de novo?";
           
           setStoryTranscript(errorMessage);
           
-          toast({
-            title: "Pequeno problema",
-            description: errorMessage,
-            variant: "destructive",
-          });
+          showToastOnly(
+            "Ops!",
+            errorMessage,
+            "destructive"
+          );
           
-          // Speak error message
-          speakText(errorMessage, true);
+          // Speak error message with natural voice
+          speakNaturally(errorMessage, true);
         } finally {
           setIsProcessing(false);
         }
@@ -273,16 +299,16 @@ const RecordingScreen = () => {
     if (isRecording) {
       stopRecording();
       
-      const stopMessage = `Entendi! Estou pensando sobre a sua história...`;
+      const stopMessage = `Legal! Deixa eu pensar sobre essa história...`;
       
-      // Show toast
-      toast({
-        title: "História recebida!",
-        description: `Gravação finalizada após ${Math.floor(recordingTime)} segundos.`,
-      });
+      // Show toast only
+      showToastOnly(
+        "História recebida!",
+        `Gravação finalizada após ${Math.floor(recordingTime)} segundos.`
+      );
       
-      // Speak notification
-      speakText(stopMessage, true);
+      // Speak notification with natural voice
+      speakNaturally(stopMessage, true);
     } else {
       // Check for microphone permission before starting
       if (!hasMicrophonePermission) {
@@ -294,16 +320,16 @@ const RecordingScreen = () => {
       setStoryTranscript("");
       setIsStoryMode(false);
       
-      const startMessage = "Estou ouvindo! Pode começar a contar sua história...";
+      const startMessage = "Estou ouvindo! Pode contar sua história...";
       
-      // Show toast
-      toast({
-        title: "Modo História Ativado",
-        description: "Conte sua história para a Esfera Sonora!",
-      });
+      // Show toast only
+      showToastOnly(
+        "Modo História Ativado",
+        "Conte sua história para a Esfera Sonora!"
+      );
       
-      // Speak notification
-      speakText(startMessage, true);
+      // Speak notification with natural voice
+      speakNaturally(startMessage, true);
     }
   };
 

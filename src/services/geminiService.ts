@@ -33,6 +33,12 @@ export class GeminiService {
         return "Não foi possível processar o áudio: gravação vazia.";
       }
       
+      // Validate audio blob size - reject if too small
+      if (audioBlob.size < 1000) {
+        console.error("Audio blob too small:", audioBlob.size, "bytes");
+        return "Parece que a gravação foi muito curta. Tente falar por mais tempo.";
+      }
+      
       // Convert blob to base64
       const base64Audio = await this.blobToBase64(audioBlob);
       
@@ -47,18 +53,18 @@ export class GeminiService {
           parts: [
             {
               text: `
-              Transcreva e responda a este áudio com uma voz natural e conversacional.
+              Transcreva e responda a este áudio usando uma linguagem extremamente natural e conversacional.
               
               Considere os seguintes aspectos:
               - Identifique o principal conteúdo da história
-              - Responda como se estivesse tendo uma conversa informal
+              - Responda como se fosse um amigo próximo falando diretamente com a criança
               - Use linguagem simples e acessível para crianças
-              - Evite formalidades ou tom robótico
-              - Faça perguntas curiosas relacionadas ao tema da história
-              - Mantenha a resposta curta e envolvente
-              - Use uma linguagem expressiva e calorosa
+              - Evite completamente formalidades ou tom robótico
+              - Faça uma pergunta curiosa relacionada ao tema da história
+              - Mantenha a resposta curta (máximo 3 frases) e calorosa
+              - Use expressões coloquiais naturais do português brasileiro
               
-              Responda em português brasileiro coloquial, como uma conversa entre amigos.
+              MUITO IMPORTANTE: Responda em português brasileiro extremamente coloquial, usando pausas naturais e expressões de conversa real entre amigos.
               `
             },
             {
@@ -71,6 +77,10 @@ export class GeminiService {
         }
       ];
 
+      // Set longer timeout for fetch
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
       const response = await fetch(
         `${this.apiUrl}/${this.model}:generateContent?key=${this.apiKey}`,
         {
@@ -81,14 +91,17 @@ export class GeminiService {
           body: JSON.stringify({
             contents: messages,
             generation_config: {
-              temperature: 0.8, // Increased for more creativity and natural responses
-              max_output_tokens: 400, // Shorter responses to be more concise
+              temperature: 0.9, // Increased for more natural, varied responses
+              max_output_tokens: 300, // Shorter responses to be more concise
               top_k: 40,
               top_p: 0.95,
             },
           }),
+          signal: controller.signal
         }
       );
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -103,10 +116,24 @@ export class GeminiService {
         throw new Error("Resposta inválida da API Gemini");
       }
       
-      return data.candidates[0].content.parts[0].text || "Não foi possível processar o áudio.";
+      const responseText = data.candidates[0].content.parts[0].text || "";
+      
+      // If response is empty or too short, provide a friendly fallback
+      if (!responseText || responseText.length < 10) {
+        console.error("Empty or short response from Gemini:", responseText);
+        return "Que história legal! Conta mais detalhes pra mim?";
+      }
+      
+      return responseText;
     } catch (error) {
       console.error("Error processing audio with Gemini:", error);
-      return "Desculpe, tive um problema ao analisar sua história. Vamos tentar novamente?";
+      
+      // Check if it's a timeout error
+      if (error.name === "AbortError") {
+        return "Hmm, parece que demorou um pouco. Vamos tentar de novo? Conte sua história novamente!";
+      }
+      
+      return "Puxa, não consegui entender direito. Vamos tentar mais uma vez?";
     }
   }
 
