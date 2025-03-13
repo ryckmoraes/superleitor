@@ -2,13 +2,14 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, ArrowRight, ArrowLeft, Check } from "lucide-react";
+import { CalendarIcon, ArrowRight, ArrowLeft, Check } from "lucide-react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
 
@@ -136,17 +137,23 @@ const IntroductionStepper = () => {
       case 0:
         return (
           <div className="space-y-4">
-            <h2 className="text-2xl font-bold tracking-tight">Informações do Administrador</h2>
-            <p className="text-muted-foreground">Insira seu nome para começar a configuração.</p>
+            <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl font-bold text-primary">1</span>
+            </div>
+            <h2 className="text-2xl font-bold tracking-tight text-center">Informações do Administrador</h2>
+            <p className="text-muted-foreground text-center">Insira seu nome para começar a configuração.</p>
             
-            <div className="space-y-2">
+            <div className="space-y-2 mt-6">
               <Label htmlFor="adminName">Nome do Administrador</Label>
               <Input
                 id="adminName"
                 value={adminName}
                 onChange={(e) => setAdminName(e.target.value)}
                 placeholder="Digite seu nome completo"
-                className={formErrors.adminName ? "border-red-500" : ""}
+                className={cn(
+                  "bg-secondary/50 border-primary/20 focus:border-primary", 
+                  formErrors.adminName ? "border-red-500" : ""
+                )}
               />
               {formErrors.adminName && (
                 <p className="text-sm text-red-500">{formErrors.adminName}</p>
@@ -158,10 +165,13 @@ const IntroductionStepper = () => {
       case 1:
         return (
           <div className="space-y-4">
-            <h2 className="text-2xl font-bold tracking-tight">Data de Nascimento</h2>
-            <p className="text-muted-foreground">Insira sua data de nascimento. Você deve ter pelo menos 18 anos para continuar.</p>
+            <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl font-bold text-primary">2</span>
+            </div>
+            <h2 className="text-2xl font-bold tracking-tight text-center">Data de Nascimento</h2>
+            <p className="text-muted-foreground text-center">Insira sua data de nascimento. Você deve ter pelo menos 18 anos para continuar.</p>
             
-            <div className="space-y-2">
+            <div className="space-y-2 mt-6">
               <Label htmlFor="adminBirthdate">Data de Nascimento</Label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -169,12 +179,12 @@ const IntroductionStepper = () => {
                     id="adminBirthdate"
                     variant="outline"
                     className={cn(
-                      "w-full justify-start text-left font-normal",
+                      "w-full justify-start text-left font-normal bg-secondary/50 border-primary/20",
                       !adminBirthdate && "text-muted-foreground",
                       formErrors.adminBirthdate ? "border-red-500" : ""
                     )}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <CalendarIcon className="mr-2 h-4 w-4 text-primary" />
                     {adminBirthdate ? format(adminBirthdate, "dd/MM/yyyy") : <span>Selecione uma data</span>}
                   </Button>
                 </PopoverTrigger>
@@ -185,7 +195,6 @@ const IntroductionStepper = () => {
                     onSelect={setAdminBirthdate}
                     disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
                     initialFocus
-                    className="p-3 pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
@@ -205,10 +214,13 @@ const IntroductionStepper = () => {
       case 2:
         return (
           <div className="space-y-4">
-            <h2 className="text-2xl font-bold tracking-tight">Definição de Senha</h2>
-            <p className="text-muted-foreground">Crie uma senha para proteger o acesso ao menu e configurações.</p>
+            <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl font-bold text-primary">3</span>
+            </div>
+            <h2 className="text-2xl font-bold tracking-tight text-center">Definição de Senha</h2>
+            <p className="text-muted-foreground text-center">Crie uma senha para proteger o acesso ao menu e configurações.</p>
             
-            <div className="space-y-4">
+            <div className="space-y-4 mt-6">
               <div className="space-y-2">
                 <Label htmlFor="password">Senha</Label>
                 <Input
@@ -217,7 +229,10 @@ const IntroductionStepper = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Digite sua senha"
-                  className={formErrors.password ? "border-red-500" : ""}
+                  className={cn(
+                    "bg-secondary/50 border-primary/20 focus:border-primary",
+                    formErrors.password ? "border-red-500" : ""
+                  )}
                 />
                 {formErrors.password && (
                   <p className="text-sm text-red-500">{formErrors.password}</p>
@@ -232,7 +247,10 @@ const IntroductionStepper = () => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirme sua senha"
-                  className={formErrors.confirmPassword ? "border-red-500" : ""}
+                  className={cn(
+                    "bg-secondary/50 border-primary/20 focus:border-primary",
+                    formErrors.confirmPassword ? "border-red-500" : ""
+                  )}
                 />
                 {formErrors.confirmPassword && (
                   <p className="text-sm text-red-500">{formErrors.confirmPassword}</p>
@@ -245,17 +263,23 @@ const IntroductionStepper = () => {
       case 3:
         return (
           <div className="space-y-4">
-            <h2 className="text-2xl font-bold tracking-tight">Informações do Super Leitor</h2>
-            <p className="text-muted-foreground">Insira o nome do Super Leitor.</p>
+            <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl font-bold text-primary">4</span>
+            </div>
+            <h2 className="text-2xl font-bold tracking-tight text-center">Informações do Super Leitor</h2>
+            <p className="text-muted-foreground text-center">Insira o nome do Super Leitor.</p>
             
-            <div className="space-y-2">
+            <div className="space-y-2 mt-6">
               <Label htmlFor="superReaderName">Nome do Super Leitor</Label>
               <Input
                 id="superReaderName"
                 value={superReaderName}
                 onChange={(e) => setSuperReaderName(e.target.value)}
                 placeholder="Digite o nome do Super Leitor"
-                className={formErrors.superReaderName ? "border-red-500" : ""}
+                className={cn(
+                  "bg-secondary/50 border-primary/20 focus:border-primary",
+                  formErrors.superReaderName ? "border-red-500" : ""
+                )}
               />
               {formErrors.superReaderName && (
                 <p className="text-sm text-red-500">{formErrors.superReaderName}</p>
@@ -267,10 +291,13 @@ const IntroductionStepper = () => {
       case 4:
         return (
           <div className="space-y-4">
-            <h2 className="text-2xl font-bold tracking-tight">Data de Nascimento do Super Leitor</h2>
-            <p className="text-muted-foreground">Insira a data de nascimento do Super Leitor.</p>
+            <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl font-bold text-primary">5</span>
+            </div>
+            <h2 className="text-2xl font-bold tracking-tight text-center">Data de Nascimento do Super Leitor</h2>
+            <p className="text-muted-foreground text-center">Insira a data de nascimento do Super Leitor.</p>
             
-            <div className="space-y-2">
+            <div className="space-y-2 mt-6">
               <Label htmlFor="superReaderBirthdate">Data de Nascimento</Label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -278,12 +305,12 @@ const IntroductionStepper = () => {
                     id="superReaderBirthdate"
                     variant="outline"
                     className={cn(
-                      "w-full justify-start text-left font-normal",
+                      "w-full justify-start text-left font-normal bg-secondary/50 border-primary/20",
                       !superReaderBirthdate && "text-muted-foreground",
                       formErrors.superReaderBirthdate ? "border-red-500" : ""
                     )}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <CalendarIcon className="mr-2 h-4 w-4 text-primary" />
                     {superReaderBirthdate ? format(superReaderBirthdate, "dd/MM/yyyy") : <span>Selecione uma data</span>}
                   </Button>
                 </PopoverTrigger>
@@ -294,7 +321,6 @@ const IntroductionStepper = () => {
                     onSelect={setSuperReaderBirthdate}
                     disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
                     initialFocus
-                    className="p-3 pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
@@ -307,9 +333,9 @@ const IntroductionStepper = () => {
         
       case 5:
         return (
-          <div className="space-y-4 text-center">
-            <div className="mx-auto rounded-full bg-green-100 p-3 w-16 h-16 flex items-center justify-center dark:bg-green-900">
-              <Check className="h-8 w-8 text-green-600 dark:text-green-300" />
+          <div className="space-y-6 text-center">
+            <div className="mx-auto rounded-full bg-primary/20 p-3 w-20 h-20 flex items-center justify-center">
+              <Check className="h-10 w-10 text-primary" />
             </div>
             
             <h2 className="text-2xl font-bold tracking-tight">Configuração Concluída!</h2>
@@ -328,25 +354,27 @@ const IntroductionStepper = () => {
   return (
     <div className="max-w-md w-full mx-auto">
       <div className="mb-8">
-        <div className="w-full bg-muted h-2 rounded-full mb-2">
+        <div className="w-full bg-muted h-3 rounded-full mb-2">
           <div
-            className="bg-primary h-2 rounded-full transition-all duration-300"
+            className="bg-primary h-3 rounded-full transition-all duration-300"
             style={{ width: `${Math.min(100, ((currentStep + 1) / 6) * 100)}%` }}
           />
         </div>
-        <div className="text-xs text-muted-foreground">
+        <div className="text-xs text-muted-foreground text-center">
           Passo {currentStep + 1} de 6
         </div>
       </div>
 
-      <div className="bg-card rounded-lg border shadow-sm p-6 min-h-[350px] flex flex-col">
+      <div className="bg-card rounded-xl border shadow-md p-6 min-h-[350px] flex flex-col">
         <div className="flex-1">
           {renderStepContent()}
         </div>
 
-        <div className="flex justify-between mt-8">
+        <Separator className="my-6" />
+
+        <div className="flex justify-between">
           {currentStep > 0 ? (
-            <Button variant="outline" onClick={handleBack}>
+            <Button variant="outline" onClick={handleBack} className="rounded-xl">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Voltar
             </Button>
@@ -355,12 +383,12 @@ const IntroductionStepper = () => {
           )}
 
           {currentStep < 5 ? (
-            <Button onClick={handleNext}>
+            <Button onClick={handleNext} className="rounded-xl bg-primary hover:bg-primary/90">
               Avançar
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           ) : (
-            <Button onClick={handleComplete}>
+            <Button onClick={handleComplete} className="rounded-xl bg-primary hover:bg-primary/90">
               OK
               <Check className="ml-2 h-4 w-4" />
             </Button>
