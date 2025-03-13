@@ -10,6 +10,7 @@ import SplashScreen from "./pages/SplashScreen";
 import RecordingScreen from "./pages/RecordingScreen";
 import NotFound from "./pages/NotFound";
 import { OnboardingProvider } from "./contexts/OnboardingContext";
+import WelcomeSplashScreen from "./pages/WelcomeSplashScreen";
 
 const queryClient = new QueryClient();
 
@@ -24,7 +25,8 @@ const AnimatedRoutes = () => {
         timeout={300}
       >
         <Routes location={location}>
-          <Route path="/" element={<SplashScreen />} />
+          <Route path="/" element={<WelcomeSplashScreen />} />
+          <Route path="/setup" element={<SplashScreen />} />
           <Route path="/record" element={<RecordingScreen />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
@@ -44,11 +46,13 @@ const App = () => {
         
         // Bloqueia orientação em portrait (vertical) - usando try/catch para compatibilidade
         try {
-          if (screen.orientation && screen.orientation.lock) {
-            await screen.orientation.lock('portrait');
-          } else if (screen.orientation) {
-            // Fallback for browsers with screen.orientation but without lock method
-            console.log("Screen orientation API exists but lock method is not available");
+          if (screen.orientation) {
+            // Check if lock method exists before using it
+            if (typeof screen.orientation.lock === 'function') {
+              await screen.orientation.lock('portrait');
+            } else {
+              console.log("Screen orientation lock method is not available");
+            }
           }
         } catch (orientationError) {
           console.error("Erro ao bloquear orientação:", orientationError);

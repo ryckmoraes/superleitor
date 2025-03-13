@@ -15,6 +15,7 @@ interface OnboardingContextProps {
   updateOnboardingData: (data: Partial<OnboardingData>) => void;
   resetOnboarding: () => void;
   isFirstTimeUser: boolean;
+  handleAppExit: () => void;
 }
 
 const defaultOnboardingData: OnboardingData = {
@@ -76,13 +77,19 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     localStorage.removeItem("onboardingData");
     localStorage.removeItem("app_password"); // Also clear the app password
   };
+  
+  // Function to handle app exit - sets a flag that we're exiting, not logging out
+  const handleAppExit = () => {
+    localStorage.setItem("app_exited", "true");
+  };
 
   return (
     <OnboardingContext.Provider value={{ 
       onboardingData, 
       updateOnboardingData, 
       resetOnboarding,
-      isFirstTimeUser 
+      isFirstTimeUser,
+      handleAppExit
     }}>
       {children}
     </OnboardingContext.Provider>
