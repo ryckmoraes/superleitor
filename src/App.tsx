@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -48,14 +47,11 @@ const App = () => {
         try {
           if (screen.orientation) {
             // Check if orientation API is supported and use it safely
-            if (typeof screen.orientation.lock === 'function') {
-              try {
-                await screen.orientation.lock('portrait');
-              } catch (err) {
-                console.log("Orientation lock not supported:", err);
-              }
-            } else {
-              console.log("Screen orientation lock method is not available");
+            try {
+              // Use type assertion for TypeScript compatibility
+              await (screen.orientation as any).lock('portrait');
+            } catch (err) {
+              console.log("Orientation lock not supported:", err);
             }
           } else if ((screen as any).msLockOrientation) {
             // For IE

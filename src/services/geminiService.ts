@@ -39,7 +39,20 @@ export class GeminiService {
           role: "user",
           parts: [
             {
-              text: "Por favor, transcreva e analise esse áudio. Identifique padrões na fala, tom emocional e conteúdo principal. Responda em português."
+              text: `
+              Por favor, transcreva e analise esse áudio com uma voz natural e amigável.
+              
+              Considere os seguintes aspectos:
+              - Identifique o conteúdo principal da história contada
+              - Observe o tom emocional da narração
+              - Identifique personagens e suas características
+              - Responda com uma voz natural, como se estivesse conversando com uma criança
+              - Mantenha a resposta curta e envolvente
+              - Faça perguntas curiosas sobre a história para estimular a imaginação
+              - Responda em português brasileiro coloquial
+              
+              Aja como um amigo que está ouvindo a história e quer manter uma conversa natural.
+              `
             },
             {
               audio_data: {
@@ -61,8 +74,10 @@ export class GeminiService {
           body: JSON.stringify({
             contents: messages,
             generation_config: {
-              temperature: 0.2,
-              max_output_tokens: 800,
+              temperature: 0.7, // Increased for more natural responses
+              max_output_tokens: 500, // Shorter responses to be more concise
+              top_k: 40,
+              top_p: 0.95,
             },
           }),
         }
