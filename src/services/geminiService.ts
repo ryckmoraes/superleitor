@@ -1,4 +1,3 @@
-
 import { getApiKey } from "@/utils/apiKeys";
 
 type GeminiMessage = {
@@ -15,7 +14,7 @@ type GeminiMessage = {
 export class GeminiService {
   private apiKey: string;
   private apiUrl = "https://generativelanguage.googleapis.com/v1beta/models";
-  private model = "gemini-1.5-pro";
+  private model = "gemini-2.0-pro-exp-02-05"; // Updated to Gemini 2.0
 
   constructor() {
     this.apiKey = getApiKey("gemini");
@@ -45,7 +44,7 @@ export class GeminiService {
       // Determine MIME type (adjust as needed based on your recording format)
       const mimeType = audioBlob.type || "audio/webm";
       
-      console.log(`Processing audio: ${audioBlob.size} bytes, type: ${mimeType}`);
+      console.log(`Processing audio: ${audioBlob.size} bytes, type: ${mimeType}, using model: ${this.model}`);
       
       const messages: GeminiMessage[] = [
         {
@@ -53,18 +52,23 @@ export class GeminiService {
           parts: [
             {
               text: `
-              Transcreva e responda a este áudio usando uma linguagem extremamente natural e conversacional.
+              Transcreva e responda a este áudio usando uma linguagem extremamente natural, conversacional e com uma abordagem calorosa.
               
-              Considere os seguintes aspectos:
+              Instruções importantes:
               - Identifique o principal conteúdo da história
-              - Responda como se fosse um amigo próximo falando diretamente com a criança
-              - Use linguagem simples e acessível para crianças
-              - Evite completamente formalidades ou tom robótico
-              - Faça uma pergunta curiosa relacionada ao tema da história
-              - Mantenha a resposta curta (máximo 3 frases) e calorosa
+              - Responda como se fosse um amigo próximo ou familiar falando com uma criança
+              - Use linguagem muito simples e acessível
+              - Evite TOTALMENTE formalidades, termos técnicos ou tom robótico
+              - Faça uma pergunta curiosa e engajadora relacionada ao tema da história
+              - Mantenha a resposta relativamente curta (2-3 frases) e muito calorosa
               - Use expressões coloquiais naturais do português brasileiro
+              - Inclua pausas naturais como "hmm", "ah", "nossa", quando apropriado
               
-              MUITO IMPORTANTE: Responda em português brasileiro extremamente coloquial, usando pausas naturais e expressões de conversa real entre amigos.
+              IMPORTANTE: 
+              - Responda APENAS em português brasileiro conversacional
+              - Fale como se estivesse conversando pessoalmente, de forma totalmente natural
+              - Não use linguagem explicativa ou instrucional em momento algum
+              - Não mencione que você é uma IA, apenas responda diretamente à história
               `
             },
             {
@@ -79,7 +83,7 @@ export class GeminiService {
 
       // Set longer timeout for fetch
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      const timeoutId = setTimeout(() => controller.abort(), 45000); // Extended timeout to 45s
 
       const response = await fetch(
         `${this.apiUrl}/${this.model}:generateContent?key=${this.apiKey}`,
@@ -91,7 +95,7 @@ export class GeminiService {
           body: JSON.stringify({
             contents: messages,
             generation_config: {
-              temperature: 0.9, // Increased for more natural, varied responses
+              temperature: 1.0, // Increased for more conversational, varied responses
               max_output_tokens: 300, // Shorter responses to be more concise
               top_k: 40,
               top_p: 0.95,
@@ -106,6 +110,16 @@ export class GeminiService {
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`Gemini API error: ${response.status} - ${errorText}`);
+        
+        // Check for specific error types
+        if (response.status === 400) {
+          return "Desculpe, não consegui entender bem o áudio. Pode tentar falar mais claramente?";
+        } else if (response.status === 429) {
+          return "Nossa, estamos com muitas solicitações agora! Pode tentar de novo daqui a pouquinho?";
+        } else if (response.status >= 500) {
+          return "Hmm, parece que estamos com um probleminha técnico. Vamos tentar de novo?";
+        }
+        
         throw new Error(`Erro na API Gemini: ${response.status}`);
       }
 
@@ -113,6 +127,13 @@ export class GeminiService {
       
       if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content) {
         console.error("Invalid response format from Gemini API:", data);
+        
+        // Check if there are any blocks or safety issues
+        if (data.promptFeedback?.blockReason) {
+          console.warn("Content was blocked:", data.promptFeedback);
+          return "Hmm, parece que não consegui processar esse conteúdo. Que tal contar outra história?";
+        }
+        
         throw new Error("Resposta inválida da API Gemini");
       }
       
@@ -121,7 +142,7 @@ export class GeminiService {
       // If response is empty or too short, provide a friendly fallback
       if (!responseText || responseText.length < 10) {
         console.error("Empty or short response from Gemini:", responseText);
-        return "Que história legal! Conta mais detalhes pra mim?";
+        return "Que história legal! Me conta mais detalhes?";
       }
       
       return responseText;
@@ -130,7 +151,7 @@ export class GeminiService {
       
       // Check if it's a timeout error
       if (error.name === "AbortError") {
-        return "Hmm, parece que demorou um pouco. Vamos tentar de novo? Conte sua história novamente!";
+        return "Opa, parece que demorou um pouquinho. Vamos tentar de novo? Me conta sua história novamente!";
       }
       
       return "Puxa, não consegui entender direito. Vamos tentar mais uma vez?";
