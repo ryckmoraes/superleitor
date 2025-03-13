@@ -1,8 +1,18 @@
+
 # Welcome to your Lovable project
 
 ## Project info
 
 **URL**: https://lovable.dev/projects/61c9c85a-521b-4753-a60e-0cdb64c7b0cc
+
+## APK Download
+
+An Android APK is built automatically when changes are pushed to the main branch. You can download the latest APK by:
+
+1. Going to the GitHub repository's Actions tab
+2. Clicking on the latest workflow run
+3. Scrolling to the Artifacts section
+4. Downloading the "esfera-sonora-app" artifact
 
 ## How can I edit this code?
 
