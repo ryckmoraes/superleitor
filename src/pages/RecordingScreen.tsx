@@ -21,6 +21,7 @@ const RecordingScreen = () => {
     return savedTheme === "true";
   });
   const [isProcessing, setIsProcessing] = useState(false);
+  const [hasMicrophonePermission, setHasMicrophonePermission] = useState(false);
   const { onboardingData } = useOnboarding();
   
   const { 
@@ -35,6 +36,46 @@ const RecordingScreen = () => {
   const { patternDetected, patternType } = usePatternDetection(audioData);
   const patternNotifiedRef = useRef(false);
   const welcomeSpokenRef = useRef(false);
+  const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
+
+  // Check for microphone permission
+  useEffect(() => {
+    const checkMicrophonePermission = async () => {
+      try {
+        const result = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+        setHasMicrophonePermission(result.state === 'granted');
+        
+        // If not granted, request permission
+        if (result.state !== 'granted') {
+          requestMicrophonePermission();
+        }
+      } catch (error) {
+        console.error("Error checking microphone permission:", error);
+        // Fallback to requesting directly if query is not supported
+        requestMicrophonePermission();
+      }
+    };
+    
+    checkMicrophonePermission();
+  }, []);
+
+  // Function to request microphone permission
+  const requestMicrophonePermission = async () => {
+    try {
+      // Just requesting permission will trigger the browser's permission dialog
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Immediately stop the stream since we only needed to request permission
+      stream.getTracks().forEach(track => track.stop());
+      setHasMicrophonePermission(true);
+    } catch (error) {
+      console.error("Error requesting microphone permission:", error);
+      toast({
+        title: "Permissão de Microfone",
+        description: "Por favor, permita o acesso ao microfone para que a Esfera Sonora funcione corretamente.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Apply theme class to document
   useEffect(() => {
@@ -50,8 +91,14 @@ const RecordingScreen = () => {
   // Function to speak welcome message using Web Speech API
   const speakWelcomeMessage = () => {
     if ('speechSynthesis' in window && onboardingData.superReaderName) {
+      // Cancel any ongoing speech
+      if (speechSynthesis.speaking) {
+        speechSynthesis.cancel();
+      }
+      
       // Create welcome message with SuperLeitor name
       const welcomeMessage = `Bem vindo Superleitor ${onboardingData.superReaderName}. Que histórias irá me contar.`;
+      console.log("Speaking welcome message:", welcomeMessage);
       
       // Create speech utterance
       const utterance = new SpeechSynthesisUtterance(welcomeMessage);
@@ -60,20 +107,33 @@ const RecordingScreen = () => {
       utterance.pitch = 1.0;    // Normal pitch
       utterance.volume = 1.0;   // Full volume
       
+      // Store reference to utterance
+      speechSynthesisRef.current = utterance;
+      
+      // Add event handlers
+      utterance.onstart = () => console.log("Speech started");
+      utterance.onend = () => console.log("Speech ended");
+      utterance.onerror = (event) => console.error("Speech error:", event);
+      
       // Speak the welcome message
-      window.speechSynthesis.speak(utterance);
+      speechSynthesis.speak(utterance);
+    } else {
+      console.error("Speech synthesis not supported or SuperLeitor name not set", {
+        speechSynthesisSupported: 'speechSynthesis' in window,
+        superReaderName: onboardingData.superReaderName
+      });
     }
   };
 
-  // Speak welcome message on component mount
+  // Speak welcome message when component is loaded
   useEffect(() => {
-    if (loaded && !welcomeSpokenRef.current) {
+    if (loaded && !welcomeSpokenRef.current && onboardingData.superReaderName) {
       welcomeSpokenRef.current = true;
       
       // Slight delay to ensure everything is ready
       setTimeout(() => {
         speakWelcomeMessage();
-      }, 800);
+      }, 1000);
     }
   }, [loaded, onboardingData.superReaderName]);
 
@@ -106,11 +166,19 @@ const RecordingScreen = () => {
     if (patternDetected && !patternNotifiedRef.current && isRecording) {
       patternNotifiedRef.current = true;
       
-      toast({
-        title: "Padrão Detectado",
-        description: `Um padrão de ${patternType === 'music' ? 'música' : 'som repetitivo'} foi identificado!`,
-        variant: "default",
-      });
+      // Use speech synthesis for notification
+      if ('speechSynthesis' in window) {
+        const message = `Um padrão de ${patternType === 'music' ? 'música' : 'som repetitivo'} foi identificado!`;
+        const utterance = new SpeechSynthesisUtterance(message);
+        utterance.lang = 'pt-BR';
+        speechSynthesis.speak(utterance);
+      } else {
+        toast({
+          title: "Padrão Detectado",
+          description: `Um padrão de ${patternType === 'music' ? 'música' : 'som repetitivo'} foi identificado!`,
+          variant: "default",
+        });
+      }
       
       // Reset notification after a time to allow future notifications
       setTimeout(() => {
@@ -130,20 +198,35 @@ const RecordingScreen = () => {
           setStoryTranscript(response);
           setIsStoryMode(true);
           
-          // Speak the Gemini response instead of showing text
+          // Speak the Gemini response
           if ('speechSynthesis' in window) {
+            // Cancel any ongoing speech
+            if (speechSynthesis.speaking) {
+              speechSynthesis.cancel();
+            }
+            
             const utterance = new SpeechSynthesisUtterance(response);
             utterance.lang = 'pt-BR';
-            window.speechSynthesis.speak(utterance);
+            speechSynthesis.speak(utterance);
           }
           
         } catch (error) {
           console.error("Error processing audio:", error);
-          toast({
-            title: "Erro de Processamento",
-            description: "Não foi possível processar o áudio com o Gemini.",
-            variant: "destructive",
-          });
+          
+          // Speak error message
+          if ('speechSynthesis' in window) {
+            const errorMessage = "Não foi possível processar o áudio. Por favor, tente novamente.";
+            const utterance = new SpeechSynthesisUtterance(errorMessage);
+            utterance.lang = 'pt-BR';
+            speechSynthesis.speak(utterance);
+          } else {
+            toast({
+              title: "Erro de Processamento",
+              description: "Não foi possível processar o áudio com o Gemini.",
+              variant: "destructive",
+            });
+          }
+          
           setStoryTranscript("");
         } finally {
           setIsProcessing(false);
@@ -158,20 +241,39 @@ const RecordingScreen = () => {
     if (isRecording) {
       stopRecording();
       
-      toast({
-        title: "Gravação interrompida",
-        description: `A visualização de áudio foi interrompida após ${Math.floor(recordingTime)} segundos.`,
-      });
+      // Use speech for notification
+      if ('speechSynthesis' in window) {
+        const stopMessage = `Gravação interrompida após ${Math.floor(recordingTime)} segundos. Processando sua história...`;
+        const utterance = new SpeechSynthesisUtterance(stopMessage);
+        utterance.lang = 'pt-BR';
+        speechSynthesis.speak(utterance);
+      } else {
+        toast({
+          title: "Gravação interrompida",
+          description: `A visualização de áudio foi interrompida após ${Math.floor(recordingTime)} segundos.`,
+        });
+      }
     } else {
+      // Check for microphone permission before starting
+      if (!hasMicrophonePermission) {
+        requestMicrophonePermission();
+        return;
+      }
+      
       startRecording();
       setStoryTranscript("");
       
-      // Use audio for interaction instead of toast
+      // Use audio for interaction
       if ('speechSynthesis' in window) {
+        // Cancel any ongoing speech
+        if (speechSynthesis.speaking) {
+          speechSynthesis.cancel();
+        }
+        
         const startMessage = "Estou ouvindo! Conte sua história para a Esfera Sonora.";
         const utterance = new SpeechSynthesisUtterance(startMessage);
         utterance.lang = 'pt-BR';
-        window.speechSynthesis.speak(utterance);
+        speechSynthesis.speak(utterance);
       } else {
         toast({
           title: "Modo História Ativado",
@@ -180,6 +282,15 @@ const RecordingScreen = () => {
       }
     }
   };
+
+  // Clean up speech synthesis on component unmount
+  useEffect(() => {
+    return () => {
+      if (speechSynthesis && speechSynthesis.speaking) {
+        speechSynthesis.cancel();
+      }
+    };
+  }, []);
 
   return (
     <div className={`relative flex flex-col items-center justify-center min-h-screen ${
