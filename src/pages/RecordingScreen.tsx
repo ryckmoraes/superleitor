@@ -11,6 +11,48 @@ import { geminiService } from "@/services/geminiService";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 
+// Configures voice to be more natural
+const configureVoice = (utterance: SpeechSynthesisUtterance): void => {
+  utterance.lang = 'pt-BR';
+  utterance.rate = 0.9; // Slightly slower
+  utterance.pitch = 1.1; // Slightly higher pitch
+  utterance.volume = 1.0;
+  
+  // Try to select a more natural female voice if available
+  const voices = speechSynthesis.getVoices();
+  const brazilianVoice = voices.find(voice => 
+    voice.lang.includes('pt-BR') && voice.name.includes('female')
+  );
+  
+  if (brazilianVoice) {
+    utterance.voice = brazilianVoice;
+  }
+};
+
+// Controls speech synthesis
+const speakText = (text: string, priority: boolean = false): void => {
+  if (!('speechSynthesis' in window)) return;
+  
+  // Cancel previous speech if priority message
+  if (priority && speechSynthesis.speaking) {
+    speechSynthesis.cancel();
+  }
+  
+  // Don't interrupt if already speaking and not priority
+  if (!priority && speechSynthesis.speaking) return;
+  
+  const utterance = new SpeechSynthesisUtterance(text);
+  configureVoice(utterance);
+  
+  // Add some natural pauses with commas
+  const processedText = text
+    .replace(/\./g, ', ') // Replace periods with commas and pauses
+    .replace(/(!|\?)/g, '$1, '); // Add pauses after exclamation/question marks
+    
+  utterance.text = processedText;
+  speechSynthesis.speak(utterance);
+};
+
 const RecordingScreen = () => {
   const [loaded, setLoaded] = useState(false);
   const [isStoryMode, setIsStoryMode] = useState(false);
@@ -36,7 +78,6 @@ const RecordingScreen = () => {
   const { patternDetected, patternType } = usePatternDetection(audioData);
   const patternNotifiedRef = useRef(false);
   const welcomeSpokenRef = useRef(false);
-  const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   // Check for microphone permission
   useEffect(() => {
@@ -91,38 +132,18 @@ const RecordingScreen = () => {
   // Function to speak welcome message using Web Speech API
   const speakWelcomeMessage = () => {
     if ('speechSynthesis' in window && onboardingData.superReaderName) {
-      // Cancel any ongoing speech
-      if (speechSynthesis.speaking) {
-        speechSynthesis.cancel();
-      }
-      
-      // Create welcome message with just the SuperLeitor name - fixed!
-      const welcomeMessage = `Bem vindo ${onboardingData.superReaderName}. Que histórias irá me contar.`;
+      // Create welcome message with just the SuperLeitor name
+      const welcomeMessage = `Olá ${onboardingData.superReaderName}! Que bom te ver por aqui. Que história você quer me contar hoje?`;
       console.log("Speaking welcome message:", welcomeMessage);
       
-      // Create speech utterance with improved parameters for more natural voice
-      const utterance = new SpeechSynthesisUtterance(welcomeMessage);
-      utterance.lang = 'pt-BR'; // Set language to Portuguese
-      utterance.rate = 0.9;     // Slightly slower speaking rate for more natural sound
-      utterance.pitch = 1.1;    // Slightly higher pitch
-      utterance.volume = 1.0;   // Full volume
-      
-      // Store reference to utterance
-      speechSynthesisRef.current = utterance;
-      
-      // Add event handlers
-      utterance.onstart = () => console.log("Speech started");
-      utterance.onend = () => console.log("Speech ended");
-      utterance.onerror = (event) => console.error("Speech error:", event);
-      
-      // Speak the welcome message
-      speechSynthesis.speak(utterance);
-      
-      // Also show toast message
+      // Show toast message
       toast({
         title: "Bem-vindo!",
         description: welcomeMessage,
       });
+      
+      // Speak with improved voice
+      speakText(welcomeMessage, true);
     } else {
       console.error("Speech synthesis not supported or SuperLeitor name not set", {
         speechSynthesisSupported: 'speechSynthesis' in window,
@@ -133,7 +154,7 @@ const RecordingScreen = () => {
       if (onboardingData.superReaderName) {
         toast({
           title: "Bem-vindo!",
-          description: `Bem vindo ${onboardingData.superReaderName}. Que histórias irá me contar.`,
+          description: `Olá ${onboardingData.superReaderName}! Que bom te ver por aqui.`,
         });
       }
     }
@@ -180,21 +201,18 @@ const RecordingScreen = () => {
     if (patternDetected && !patternNotifiedRef.current && isRecording) {
       patternNotifiedRef.current = true;
       
-      // Use speech synthesis for notification
-      if ('speechSynthesis' in window) {
-        const message = `Um padrão de ${patternType === 'music' ? 'música' : 'som repetitivo'} foi identificado!`;
-        const utterance = new SpeechSynthesisUtterance(message);
-        utterance.lang = 'pt-BR';
-        utterance.rate = 0.9; // Slightly slower for more natural sound
-        speechSynthesis.speak(utterance);
-      }
+      // Create natural message
+      const message = `Ei, detectei um padrão de ${patternType === 'music' ? 'música' : 'sons repetitivos'} na sua história! Que legal!`;
       
-      // Also show toast notification
+      // Show toast notification
       toast({
         title: "Padrão Detectado",
-        description: `Um padrão de ${patternType === 'music' ? 'música' : 'som repetitivo'} foi identificado!`,
+        description: message,
         variant: "default",
       });
+      
+      // Speak the notification
+      speakText(message);
       
       // Reset notification after a time to allow future notifications
       setTimeout(() => {
@@ -206,52 +224,42 @@ const RecordingScreen = () => {
   // Process audio with Gemini when recording stops
   useEffect(() => {
     const processAudioWithGemini = async () => {
-      if (!isRecording && audioBlob && !isProcessing) {
+      if (!isRecording && audioBlob && !isProcessing && audioBlob.size > 0) {
         setIsProcessing(true);
         try {
           setStoryTranscript("Processando áudio...");
+          toast({
+            title: "Analisando sua história",
+            description: "Estou ouvindo com atenção o que você contou...",
+          });
+          
           const response = await geminiService.processAudio(audioBlob);
           setStoryTranscript(response);
           setIsStoryMode(true);
           
-          // Speak the Gemini response with more natural voice settings
-          if ('speechSynthesis' in window) {
-            // Cancel any ongoing speech
-            if (speechSynthesis.speaking) {
-              speechSynthesis.cancel();
-            }
-            
-            const utterance = new SpeechSynthesisUtterance(response);
-            utterance.lang = 'pt-BR';
-            utterance.rate = 0.9; // Slightly slower for more natural sound
-            utterance.pitch = 1.05; // Slightly higher pitch
-            speechSynthesis.speak(utterance);
-          }
-          
-          // Show the response in toast
+          // Show response in toast
           toast({
-            title: "História Processada",
+            title: "Sua história é incrível!",
             description: response.length > 100 ? response.substring(0, 100) + "..." : response,
           });
           
+          // Speak with improved voice
+          speakText(response, true);
+          
         } catch (error) {
           console.error("Error processing audio:", error);
+          const errorMessage = "Ops! Tive um probleminha para entender sua história. Vamos tentar de novo?";
           
-          // Speak error message
-          if ('speechSynthesis' in window) {
-            const errorMessage = "Não foi possível processar o áudio. Por favor, tente novamente.";
-            const utterance = new SpeechSynthesisUtterance(errorMessage);
-            utterance.lang = 'pt-BR';
-            speechSynthesis.speak(utterance);
-          }
+          setStoryTranscript(errorMessage);
           
           toast({
-            title: "Erro de Processamento",
-            description: "Não foi possível processar o áudio com o Gemini.",
+            title: "Pequeno problema",
+            description: errorMessage,
             variant: "destructive",
           });
           
-          setStoryTranscript("");
+          // Speak error message
+          speakText(errorMessage, true);
         } finally {
           setIsProcessing(false);
         }
@@ -265,20 +273,16 @@ const RecordingScreen = () => {
     if (isRecording) {
       stopRecording();
       
-      // Use speech for notification
-      if ('speechSynthesis' in window) {
-        const stopMessage = `Gravação interrompida após ${Math.floor(recordingTime)} segundos. Processando sua história...`;
-        const utterance = new SpeechSynthesisUtterance(stopMessage);
-        utterance.lang = 'pt-BR';
-        utterance.rate = 0.9; // More natural rate
-        speechSynthesis.speak(utterance);
-      }
+      const stopMessage = `Entendi! Estou pensando sobre a sua história...`;
       
-      // Also show toast
+      // Show toast
       toast({
-        title: "Gravação interrompida",
-        description: `A visualização de áudio foi interrompida após ${Math.floor(recordingTime)} segundos.`,
+        title: "História recebida!",
+        description: `Gravação finalizada após ${Math.floor(recordingTime)} segundos.`,
       });
+      
+      // Speak notification
+      speakText(stopMessage, true);
     } else {
       // Check for microphone permission before starting
       if (!hasMicrophonePermission) {
@@ -288,33 +292,25 @@ const RecordingScreen = () => {
       
       startRecording();
       setStoryTranscript("");
+      setIsStoryMode(false);
       
-      // Use audio for interaction
-      if ('speechSynthesis' in window) {
-        // Cancel any ongoing speech
-        if (speechSynthesis.speaking) {
-          speechSynthesis.cancel();
-        }
-        
-        const startMessage = "Estou ouvindo! Conte sua história para a Esfera Sonora.";
-        const utterance = new SpeechSynthesisUtterance(startMessage);
-        utterance.lang = 'pt-BR';
-        utterance.rate = 0.9; // More natural rate
-        speechSynthesis.speak(utterance);
-      }
+      const startMessage = "Estou ouvindo! Pode começar a contar sua história...";
       
       // Show toast
       toast({
         title: "Modo História Ativado",
-        description: "Conte sua história para a Esfera Sonora. Ela está ouvindo e analisando!",
+        description: "Conte sua história para a Esfera Sonora!",
       });
+      
+      // Speak notification
+      speakText(startMessage, true);
     }
   };
 
   // Clean up speech synthesis on component unmount
   useEffect(() => {
     return () => {
-      if (speechSynthesis && speechSynthesis.speaking) {
+      if ('speechSynthesis' in window && speechSynthesis.speaking) {
         speechSynthesis.cancel();
       }
     };
@@ -355,7 +351,7 @@ const RecordingScreen = () => {
               {isProcessing ? (
                 <div className="flex flex-col items-center justify-center h-full">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <p className="text-sm mt-2">Processando com Gemini...</p>
+                  <p className="text-sm mt-2">Analisando sua história...</p>
                 </div>
               ) : (
                 <p className="text-sm">{storyTranscript}</p>
@@ -380,7 +376,7 @@ const RecordingScreen = () => {
               {isRecording ? (
                 <>
                   <Square className="w-5 h-5" />
-                  Parar Gravação
+                  Parar História
                 </>
               ) : (
                 <>
