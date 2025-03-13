@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -39,26 +38,32 @@ const App = () => {
   useEffect(() => {
     const enableFullScreen = async () => {
       try {
-        // Solicita tela cheia
+        // Request fullscreen
         if (document.documentElement.requestFullscreen) {
           await document.documentElement.requestFullscreen();
         }
         
-        // Bloqueia orientação em portrait (vertical) - usando try/catch para compatibilidade
+        // Try to lock orientation in portrait (vertical) - using safe checks for compatibility
         try {
           if (screen.orientation) {
-            // Check if lock method exists before using it
+            // Check if orientation API is supported and use it safely
             if (typeof screen.orientation.lock === 'function') {
               await screen.orientation.lock('portrait');
             } else {
               console.log("Screen orientation lock method is not available");
             }
+          } else if ((screen as any).msLockOrientation) {
+            // For IE
+            (screen as any).msLockOrientation.lock('portrait');
+          } else if ((screen as any).mozLockOrientation) {
+            // For Firefox
+            (screen as any).mozLockOrientation.lock('portrait');
           }
         } catch (orientationError) {
           console.error("Erro ao bloquear orientação:", orientationError);
         }
         
-        // Modo imersivo para Android (ocultar barra de status e navegação)
+        // Immersive mode for Android (hide status and navigation bars)
         const nav = navigator as any;
         if (nav.keyboard && nav.keyboard.lock) {
           try {
@@ -68,15 +73,15 @@ const App = () => {
           }
         }
         
-        // Mantém a tela sempre ativa
-        if (navigator.wakeLock) {
+        // Keep screen always active
+        if ((navigator as any).wakeLock) {
           try {
-            const wakeLock = await navigator.wakeLock.request('screen');
+            const wakeLock = await (navigator as any).wakeLock.request('screen');
             
-            // Reativa o wakeLock se o documento ficar visível novamente
+            // Reactivate wakeLock if document becomes visible again
             document.addEventListener('visibilitychange', async () => {
               if (document.visibilityState === 'visible') {
-                await navigator.wakeLock.request('screen');
+                await (navigator as any).wakeLock.request('screen');
               }
             });
           } catch (wakeLockError) {
@@ -88,10 +93,10 @@ const App = () => {
       }
     };
 
-    // Tenta habilitar tela cheia na interação do usuário
+    // Try to enable fullscreen on user interaction
     const handleUserInteraction = () => {
       enableFullScreen();
-      // Remove os event listeners após a primeira interação
+      // Remove event listeners after first interaction
       document.removeEventListener("click", handleUserInteraction);
       document.removeEventListener("touchstart", handleUserInteraction);
     };
@@ -99,14 +104,14 @@ const App = () => {
     document.addEventListener("click", handleUserInteraction);
     document.addEventListener("touchstart", handleUserInteraction);
 
-    // Impede que o usuário saia do modo tela cheia com ESC
+    // Prevent user from exiting fullscreen mode with ESC
     document.addEventListener('fullscreenchange', () => {
       if (!document.fullscreenElement) {
         enableFullScreen();
       }
     });
 
-    // Previne gestos de navegação (swipe back/forward) em dispositivos móveis
+    // Prevent navigation gestures (swipe back/forward) on mobile devices
     document.addEventListener('touchstart', (e) => {
       if (e.touches.length > 1) {
         e.preventDefault();
