@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -44,9 +43,8 @@ const App = () => {
         // Bloqueia orientação em portrait (vertical) - usando try/catch para compatibilidade
         try {
           if (screen.orientation) {
-            // Corrigido o método para bloquear orientação
-            await screen.orientation.lockOrientation?.('portrait') || 
-                  screen.orientation.lock?.('portrait');
+            // Método correto para bloquear orientação
+            await screen.orientation.lock?.('portrait');
           }
         } catch (orientationError) {
           console.error("Erro ao bloquear orientação:", orientationError);

@@ -1,12 +1,14 @@
 
 import { useState, useEffect, useRef } from "react";
-import { Mic, Square } from "lucide-react";
+import { Mic, Square, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import AudioSphere from "@/components/AudioSphere";
 import useAudioAnalyzer from "@/hooks/useAudioAnalyzer";
 import usePatternDetection from "@/hooks/usePatternDetection";
+import { geminiService } from "@/services/geminiService";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const RecordingScreen = () => {
   const [loaded, setLoaded] = useState(false);
@@ -17,6 +19,7 @@ const RecordingScreen = () => {
     const savedTheme = localStorage.getItem("dark-mode");
     return savedTheme === "true";
   });
+  const [isProcessing, setIsProcessing] = useState(false);
   
   const { 
     isRecording, 
@@ -24,7 +27,8 @@ const RecordingScreen = () => {
     errorMessage, 
     startRecording, 
     stopRecording,
-    recordingTime
+    recordingTime,
+    audioBlob
   } = useAudioAnalyzer();
   const { patternDetected, patternType } = usePatternDetection(audioData);
   const patternNotifiedRef = useRef(false);
@@ -82,10 +86,36 @@ const RecordingScreen = () => {
     }
   }, [patternDetected, patternType, isRecording]);
 
+  // Process audio with Gemini when recording stops
+  useEffect(() => {
+    const processAudioWithGemini = async () => {
+      if (!isRecording && audioBlob && !isProcessing) {
+        setIsProcessing(true);
+        try {
+          setStoryTranscript("Processando áudio...");
+          const response = await geminiService.processAudio(audioBlob);
+          setStoryTranscript(response);
+          setIsStoryMode(true);
+        } catch (error) {
+          console.error("Error processing audio:", error);
+          toast({
+            title: "Erro de Processamento",
+            description: "Não foi possível processar o áudio com o Gemini.",
+            variant: "destructive",
+          });
+          setStoryTranscript("");
+        } finally {
+          setIsProcessing(false);
+        }
+      }
+    };
+
+    processAudioWithGemini();
+  }, [isRecording, audioBlob]);
+
   const toggleRecording = () => {
     if (isRecording) {
       stopRecording();
-      setIsStoryMode(false);
       
       toast({
         title: "Gravação interrompida",
@@ -93,11 +123,11 @@ const RecordingScreen = () => {
       });
     } else {
       startRecording();
-      setIsStoryMode(true);
+      setStoryTranscript("");
       
       toast({
         title: "Modo História Ativado",
-        description: "Conte sua história para a Esfera Sonora. Ela está ouvindo!",
+        description: "Conte sua história para a Esfera Sonora. Ela está ouvindo e analisando!",
       });
     }
   };
@@ -117,7 +147,7 @@ const RecordingScreen = () => {
       >
         <div className="absolute top-6 left-0 right-0 text-center">
           <h1 className="text-2xl font-semibold tracking-tight text-primary">
-            {isStoryMode ? "Modo História" : "Esfera Sonora"}
+            {isRecording ? "Modo História" : "Esfera Sonora"}
           </h1>
           {isRecording && (
             <p className="text-sm text-muted-foreground mt-1">
@@ -130,9 +160,18 @@ const RecordingScreen = () => {
           <AudioSphere audioData={audioData} isRecording={isRecording} />
         </div>
         
-        {isStoryMode && storyTranscript && (
-          <div className="mb-8 px-6 max-w-md text-center">
-            <p className="text-sm opacity-75">{storyTranscript}</p>
+        {storyTranscript && (
+          <div className="absolute bottom-32 px-6 w-full max-w-md mx-auto">
+            <ScrollArea className="h-[150px] rounded-md border p-4 bg-card/50 backdrop-blur-sm">
+              {isProcessing ? (
+                <div className="flex flex-col items-center justify-center h-full">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-sm mt-2">Processando com Gemini...</p>
+                </div>
+              ) : (
+                <p className="text-sm">{storyTranscript}</p>
+              )}
+            </ScrollArea>
           </div>
         )}
         
@@ -141,6 +180,7 @@ const RecordingScreen = () => {
             onClick={toggleRecording}
             variant={isRecording ? "destructive" : "default"}
             size="lg"
+            disabled={isProcessing}
             className={`group relative overflow-hidden rounded-full shadow-md transition-all duration-300 ease-out ${
               isRecording 
                 ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" 

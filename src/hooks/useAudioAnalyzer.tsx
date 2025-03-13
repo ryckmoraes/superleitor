@@ -6,6 +6,7 @@ const useAudioAnalyzer = () => {
   const [audioData, setAudioData] = useState<Uint8Array | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   
   const streamRef = useRef<MediaStream | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -14,6 +15,8 @@ const useAudioAnalyzer = () => {
   const animationFrameRef = useRef<number | null>(null);
   const recordingStartTimeRef = useRef<number | null>(null);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<BlobPart[]>([]);
 
   const startRecording = async () => {
     try {
@@ -21,7 +24,13 @@ const useAudioAnalyzer = () => {
       setErrorMessage(null);
       
       // Request audio permission
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        } 
+      });
       streamRef.current = stream;
       
       // Create audio context and analyzer
@@ -52,6 +61,26 @@ const useAudioAnalyzer = () => {
       };
       
       analyzeAudio();
+      
+      // Set up MediaRecorder to capture audio for processing
+      audioChunksRef.current = [];
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+      
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        setAudioBlob(audioBlob);
+        audioChunksRef.current = [];
+      };
+      
+      mediaRecorder.start(1000); // Collect data in 1-second chunks
+      
       setIsRecording(true);
       
       // Iniciar o contador de tempo
@@ -71,6 +100,11 @@ const useAudioAnalyzer = () => {
   };
 
   const stopRecording = () => {
+    // Stop media recorder
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    
     // Cancel animation frame
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
@@ -120,6 +154,10 @@ const useAudioAnalyzer = () => {
       if (timerIntervalRef.current) {
         clearInterval(timerIntervalRef.current);
       }
+      
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+      }
     };
   }, []);
 
@@ -129,7 +167,8 @@ const useAudioAnalyzer = () => {
     errorMessage, 
     startRecording, 
     stopRecording,
-    recordingTime
+    recordingTime,
+    audioBlob
   };
 };
 
