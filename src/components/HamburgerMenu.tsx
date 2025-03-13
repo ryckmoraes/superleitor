@@ -1,10 +1,12 @@
+
 import { useState, useEffect, useRef } from "react";
-import { Menu, X, Settings as SettingsIcon } from "lucide-react";
+import { Menu, X, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import Settings from "./Settings";
 import PasswordDialog from "./PasswordDialog";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 
 interface HamburgerMenuProps {
   isDarkMode: boolean;
@@ -16,10 +18,11 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
   const [showTrigger, setShowTrigger] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
-  const [passwordAction, setPasswordAction] = useState<"settings" | "exit">("settings");
+  const [passwordAction, setPasswordAction] = useState<"settings" | "exit" | "logout">("settings");
   const menuRef = useRef<HTMLDivElement>(null);
   const triggerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
+  const { resetOnboarding } = useOnboarding();
 
   // Mostra o gatilho do menu quando o mouse entra na área de gatilho
   const handleTriggerAreaEnter = () => {
@@ -82,6 +85,19 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
     }
   };
 
+  const handleLogoutClick = () => {
+    const hasPassword = !!localStorage.getItem("app_password");
+    
+    if (hasPassword) {
+      setPasswordAction("logout");
+      setPasswordDialogOpen(true);
+    } else {
+      logoutApp();
+    }
+    
+    setIsOpen(false);
+  };
+
   const handlePasswordSuccess = () => {
     setPasswordDialogOpen(false);
     
@@ -89,6 +105,8 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
       setSettingsOpen(true);
     } else if (passwordAction === "exit") {
       exitApp();
+    } else if (passwordAction === "logout") {
+      logoutApp();
     }
   };
 
@@ -117,6 +135,15 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
         variant: "destructive",
       });
     }
+  };
+
+  const logoutApp = () => {
+    resetOnboarding();
+    navigate("/");
+    toast({
+      title: "Logout realizado",
+      description: "Você saiu da sua conta. Configuração inicial será necessária.",
+    });
   };
 
   return (
@@ -182,6 +209,15 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
               <SettingsIcon className="mr-2 h-4 w-4" />
               Configurações
             </Button>
+
+            <Button
+              variant="ghost"
+              className="w-full justify-start mb-2"
+              onClick={handleLogoutClick}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Reiniciar Configuração
+            </Button>
           </div>
           
           <div className="mt-auto">
@@ -209,7 +245,13 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
         onClose={() => setPasswordDialogOpen(false)}
         onSuccess={handlePasswordSuccess}
         mode="verify"
-        title={passwordAction === "settings" ? "Acessar Configurações" : "Sair do Aplicativo"}
+        title={
+          passwordAction === "settings" 
+            ? "Acessar Configurações" 
+            : passwordAction === "logout"
+            ? "Reiniciar Configuração"
+            : "Sair do Aplicativo"
+        }
       />
     </>
   );

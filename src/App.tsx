@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,6 +9,7 @@ import { CSSTransition, TransitionGroup } from "react-transition-group";
 import SplashScreen from "./pages/SplashScreen";
 import RecordingScreen from "./pages/RecordingScreen";
 import NotFound from "./pages/NotFound";
+import { OnboardingProvider } from "./contexts/OnboardingContext";
 
 const queryClient = new QueryClient();
 
@@ -44,7 +46,7 @@ const App = () => {
         try {
           if (screen.orientation) {
             // Método correto para bloquear orientação
-            await screen.orientation.lock?.('portrait');
+            await screen.orientation.lock('portrait');
           }
         } catch (orientationError) {
           console.error("Erro ao bloquear orientação:", orientationError);
@@ -114,11 +116,13 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AnimatedRoutes />
-        </BrowserRouter>
+        <OnboardingProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AnimatedRoutes />
+          </BrowserRouter>
+        </OnboardingProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
