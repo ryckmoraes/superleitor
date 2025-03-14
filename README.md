@@ -70,6 +70,11 @@ This project is built with .
 - shadcn-ui
 - Tailwind CSS
 
+## Important: Dependency Management
+
+This project includes a dependency conflict between `react-day-picker` (which requires `date-fns` v2.x or v3.x) and the latest `date-fns` v4.x. 
+We've downgraded `date-fns` to v3.x to resolve this conflict. Always use `--legacy-peer-deps` when installing new packages.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/61c9c85a-521b-4753-a60e-0cdb64c7b0cc) and click on Share -> Publish.
