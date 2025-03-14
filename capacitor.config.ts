@@ -2,7 +2,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.61c9c85a521b4753a60e0cdb64c7b0cc',
+  appId: 'com.lovable.esferasonora',
   appName: 'Esfera Sonora',
   webDir: 'dist',
   server: {
