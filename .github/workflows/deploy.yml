@@ -45,6 +45,13 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
+      - name: Configure Java Compatibility
+        run: |
+          echo "org.gradle.java.home=$JAVA_HOME" > android/gradle.properties
+          echo "android.java.source.version=11" >> android/gradle.properties
+          echo "android.java.target.version=11" >> android/gradle.properties
+          echo "org.gradle.jvmargs=-Xmx2048m" >> android/gradle.properties
+
       - name: Build Android APK
         run: |
           cd android
