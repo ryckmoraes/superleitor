@@ -18,6 +18,12 @@ const config: CapacitorConfig = {
       keystoreAliasPassword: null,
       releaseType: 'APK'
     }
+  },
+  plugins: {
+    SplashScreen: {
+      launchAutoHide: false,
+      showSpinner: true
+    }
   }
 };
 

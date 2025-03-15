@@ -7,8 +7,8 @@ export const showToastOnly = (title: string, description: string, variant: "defa
     title,
     description,
     variant,
-    duration: 8000, // Mais longo ainda para ter certeza que está aparecendo
-    className: "toast-notification bottom-4 opacity-100 border border-primary shadow-lg", // Mais visibilidade
+    duration: 8000, // Longer duration to ensure visibility
+    className: "toast-notification bottom-4 opacity-100 border border-primary shadow-lg fixed z-50", // Improved visibility
   });
 };
 
@@ -24,7 +24,7 @@ export const showToastWithDuration = (
     description,
     variant,
     duration,
-    className: "toast-notification bottom-4 opacity-100 border border-primary shadow-lg", // Mais visibilidade
+    className: "toast-notification bottom-4 opacity-100 border border-primary shadow-lg fixed z-50", // Improved visibility
   });
 };
 
@@ -39,7 +39,7 @@ export const showMobileNotification = (
     title,
     description,
     variant,
-    duration: 8000,
-    className: "mobile-notification toast-small bottom-4 opacity-100 border border-primary shadow-lg", // Mais visibilidade
+    duration: 10000, // Even longer for mobile
+    className: "mobile-notification toast-small bottom-4 opacity-100 border border-primary shadow-lg fixed z-50", // Improved visibility
   });
 };
