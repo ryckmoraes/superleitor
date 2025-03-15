@@ -27,6 +27,7 @@ export const requestMicrophonePermission = async (): Promise<boolean> => {
   }
   
   try {
+    // Import required plugins
     const { Permissions } = await import('@capacitor/core');
     
     // Check current permission status
@@ -52,6 +53,14 @@ export const requestMicrophonePermission = async (): Promise<boolean> => {
     console.error('Error requesting microphone permission:', error);
     return false;
   }
+};
+
+/**
+ * Alternative method to request Android permissions
+ * This is called from App.tsx
+ */
+export const requestAndroidPermissions = async (): Promise<boolean> => {
+  return requestMicrophonePermission();
 };
 
 /**
@@ -88,6 +97,14 @@ export const preventBackButton = async (callback?: () => void): Promise<void> =>
 };
 
 /**
+ * Blocks back button navigation 
+ * This is called from App.tsx
+ */
+export const blockBackNavigation = async (callback?: () => void): Promise<void> => {
+  return preventBackButton(callback);
+};
+
+/**
  * Sets the app to immersive mode (Android only)
  */
 export const setImmersiveMode = async (): Promise<void> => {
@@ -106,6 +123,31 @@ export const setImmersiveMode = async (): Promise<void> => {
     }
   } catch (error) {
     console.error('Error setting immersive mode:', error);
+  }
+};
+
+/**
+ * Enter fullscreen mode for the app
+ * This is called from App.tsx and RecordingScreen.tsx
+ */
+export const enterFullscreenMode = async (): Promise<void> => {
+  if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+    try {
+      await document.documentElement.requestFullscreen();
+      console.log("Entered fullscreen mode");
+      
+      // Also try native immersive mode if on Android
+      if (isAndroid() && isCapacitorApp()) {
+        await setImmersiveMode();
+      }
+    } catch (error) {
+      console.error("Error entering fullscreen:", error);
+    }
+  }
+  
+  // Also set immersive mode on Android
+  if (isAndroid() && isCapacitorApp()) {
+    await setImmersiveMode();
   }
 };
 
@@ -132,6 +174,20 @@ export const enableKioskMode = async (): Promise<void> => {
 };
 
 /**
+ * Prevents app from being minimized
+ * This is called from App.tsx
+ */
+export const preventMinimize = async (): Promise<void> => {
+  // Use kiosk mode to prevent minimizing on Android
+  if (isAndroid() && isCapacitorApp()) {
+    await enableKioskMode();
+  }
+  
+  // For web, this would be handled by the fullscreen approach
+  // Add web-specific code here if needed
+};
+
+/**
  * Set screen orientation to portrait and lock it (Android only)
  */
 export const lockPortraitOrientation = async (): Promise<void> => {
@@ -151,6 +207,101 @@ export const lockPortraitOrientation = async (): Promise<void> => {
 };
 
 /**
+ * Keep device screen on (prevent display sleep)
+ * This is called from App.tsx and RecordingScreen.tsx
+ */
+export const keepScreenOn = async (): Promise<void> => {
+  if (!isCapacitorApp()) {
+    // For web, use the Screen Wake Lock API if available
+    try {
+      if ('wakeLock' in navigator) {
+        // @ts-ignore - wakeLock API might not be typed yet
+        const wakeLock = await navigator.wakeLock.request('screen');
+        console.log('Screen wake lock activated');
+        
+        // Release wake lock when page visibility changes
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible' && wakeLock) {
+            // @ts-ignore
+            navigator.wakeLock.request('screen');
+          }
+        });
+      }
+    } catch (err) {
+      console.error('Error keeping screen on (web):', err);
+    }
+    
+    return;
+  }
+  
+  // For native platforms
+  try {
+    if (Capacitor.isPluginAvailable('ScreenKeepOn')) {
+      const { ScreenKeepOn } = Capacitor.Plugins;
+      // @ts-ignore - plugin might not be typed
+      await ScreenKeepOn.keepOn();
+    } else {
+      console.warn('ScreenKeepOn plugin not available');
+    }
+  } catch (error) {
+    console.error('Error keeping screen on (native):', error);
+  }
+};
+
+/**
+ * Check and initialize Text-to-Speech functionality 
+ * This is called from RecordingScreen.tsx
+ */
+export const checkAndInitTTS = async (): Promise<boolean> => {
+  // For web
+  if (!isCapacitorApp()) {
+    return new Promise((resolve) => {
+      // Check if speech synthesis is available
+      if ('speechSynthesis' in window) {
+        // Check if voices are loaded
+        if (speechSynthesis.getVoices().length > 0) {
+          resolve(true);
+        } else {
+          // Wait for voices to be loaded
+          speechSynthesis.onvoiceschanged = () => {
+            resolve(speechSynthesis.getVoices().length > 0);
+          };
+          
+          // Timeout after 3 seconds
+          setTimeout(() => resolve(false), 3000);
+        }
+      } else {
+        resolve(false);
+      }
+    });
+  }
+  
+  // For Android native implementation
+  try {
+    if (Capacitor.isPluginAvailable('TextToSpeech')) {
+      const { TextToSpeech } = Capacitor.Plugins;
+      
+      // Test TTS with a simple utterance
+      // @ts-ignore - plugin might not be typed
+      await TextToSpeech.speak({
+        text: 'Teste de inicialização',
+        lang: 'pt-BR',
+        rate: 1.0,
+        pitch: 1.0,
+        volume: 1.0,
+        category: 'ambient'
+      });
+      
+      return true;
+    }
+  } catch (error) {
+    console.error('Error checking TTS capabilities:', error);
+  }
+  
+  return false;
+};
+
+/**
  * Initialize all Android-specific settings
  */
 export const initializeAndroid = async (): Promise<void> => {
@@ -164,6 +315,7 @@ export const initializeAndroid = async (): Promise<void> => {
       // Show a toast or dialog instead of exiting
     });
     await requestMicrophonePermission();
+    await keepScreenOn();
     // Enable kiosk mode if needed - uncomment the line below
     // await enableKioskMode();
   } catch (error) {
