@@ -7,6 +7,7 @@ export const showToastOnly = (title: string, description: string, variant: "defa
     title,
     description,
     variant,
+    duration: 3000, // Shorter duration for mobile
   });
 };
 
@@ -22,5 +23,21 @@ export const showToastWithDuration = (
     description,
     variant,
     duration,
+  });
+};
+
+// Special mobile-friendly notification
+export const showMobileNotification = (
+  title: string,
+  description: string,
+  variant: "default" | "destructive" = "default"
+) => {
+  // Use a shorter duration and simpler display for mobile
+  toast({
+    title,
+    description,
+    variant,
+    duration: 2500,
+    className: "mobile-notification",
   });
 };

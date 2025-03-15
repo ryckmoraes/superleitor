@@ -13,16 +13,24 @@ class WebSpeechService {
   private interimTranscript: string = '';
 
   constructor() {
-    // Check if browser supports speech recognition
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    // Check if browser supports speech recognition (safely for mobile)
+    if (typeof window !== 'undefined') {
       // Initialize the SpeechRecognition object
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      this.recognition = new SpeechRecognition();
+      const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
       
-      // Configure recognition settings
-      this.recognition.continuous = true;
-      this.recognition.interimResults = true;
-      this.recognition.lang = 'pt-BR'; // Set language to Brazilian Portuguese
+      if (SpeechRecognitionAPI) {
+        try {
+          this.recognition = new SpeechRecognitionAPI();
+          
+          // Configure recognition settings
+          this.recognition.continuous = true;
+          this.recognition.interimResults = true;
+          this.recognition.lang = 'pt-BR'; // Set language to Brazilian Portuguese
+          this.recognition.maxAlternatives = 1;
+        } catch (error) {
+          console.error("Error initializing speech recognition:", error);
+        }
+      }
     }
   }
 
@@ -36,7 +44,7 @@ class WebSpeechService {
     onError: (error: string) => void
   ): void {
     if (!this.recognition) {
-      onError('Speech recognition not supported in this browser');
+      onError('Reconhecimento de fala não suportado neste dispositivo');
       return;
     }
 

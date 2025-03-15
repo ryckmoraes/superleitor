@@ -1,0 +1,77 @@
+/**
+ * Utility functions for Android-specific behaviors
+ */
+
+// Check if running on Android
+export const isAndroid = (): boolean => {
+  return /Android/i.test(navigator.userAgent);
+};
+
+// Keep screen on (prevents Android device from sleeping)
+export const keepScreenOn = async (): Promise<boolean> => {
+  try {
+    if ('wakeLock' in navigator) {
+      // @ts-ignore - TypeScript doesn't know about wakeLock API yet
+      const wakeLock = await navigator.wakeLock.request('screen');
+      console.log('Wake Lock active');
+      
+      // Release on page visibility change
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          // @ts-ignore
+          navigator.wakeLock.request('screen');
+        }
+      });
+      
+      return true;
+    } else {
+      console.log('Wake Lock API not supported');
+      return false;
+    }
+  } catch (err) {
+    console.error('Error keeping screen on:', err);
+    return false;
+  }
+};
+
+// Request permissions needed for Android
+export const requestAndroidPermissions = async (): Promise<boolean> => {
+  try {
+    // Only if the app is running in Capacitor (Android native)
+    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+      // @ts-ignore - Permissions plugin might not be typed correctly
+      const { Permissions } = window.Capacitor.Plugins;
+      
+      if (Permissions) {
+        // Request microphone permission
+        const micStatus = await Permissions.query({ name: 'microphone' });
+        
+        if (micStatus.state !== 'granted') {
+          await Permissions.request({ name: 'microphone' });
+        }
+        
+        return true;
+      }
+    }
+    
+    // Fallback to browser permissions for testing
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      return true;
+    }
+    
+    return false;
+  } catch (err) {
+    console.error('Error requesting Android permissions:', err);
+    return false;
+  }
+};
+
+// Set appropriate Android gradle properties
+export const setupAndroidGradleProperties = (): void => {
+  // This function would be used during build time
+  // For debugging purposes, we log the configuration that should be applied
+  console.log("Android gradle properties needed:");
+  console.log("android.useAndroidX=true");
+  console.log("android.enableJetifier=true");
+};

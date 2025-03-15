@@ -6,10 +6,16 @@ interface StoryTranscriptProps {
   storyTranscript: string;
   isProcessing: boolean;
   isInterim?: boolean;
+  recognitionStatus?: string;
 }
 
-const StoryTranscript = ({ storyTranscript, isProcessing, isInterim = false }: StoryTranscriptProps) => {
-  if (!storyTranscript && !isProcessing) return null;
+const StoryTranscript = ({ 
+  storyTranscript, 
+  isProcessing, 
+  isInterim = false,
+  recognitionStatus
+}: StoryTranscriptProps) => {
+  if (!storyTranscript && !isProcessing && !recognitionStatus) return null;
   
   return (
     <div className="absolute bottom-32 px-6 w-full max-w-md mx-auto">
@@ -20,10 +26,17 @@ const StoryTranscript = ({ storyTranscript, isProcessing, isInterim = false }: S
             <p className="text-sm mt-2">Analisando sua história...</p>
           </div>
         ) : (
-          <p className={`text-sm ${isInterim ? 'opacity-70' : ''}`}>
-            {storyTranscript}
-            {isInterim && <span className="animate-pulse">...</span>}
-          </p>
+          <div>
+            <p className={`text-sm ${isInterim ? 'opacity-70' : ''}`}>
+              {storyTranscript}
+              {isInterim && <span className="animate-pulse">...</span>}
+            </p>
+            {recognitionStatus && (
+              <p className="text-xs text-muted-foreground mt-2 italic">
+                {recognitionStatus}
+              </p>
+            )}
+          </div>
         )}
       </ScrollArea>
     </div>
