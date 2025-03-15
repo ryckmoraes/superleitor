@@ -1,3 +1,4 @@
+
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.lovable.superleitor">
@@ -23,7 +24,7 @@
             android:showWhenLocked="true"
             android:turnScreenOn="true"
             android:windowSoftInputMode="adjustResize"
-            android:lockTaskMode="if_whitelisted"
+            android:lockTaskMode="normal"
             android:excludeFromRecents="false">
 
             <intent-filter>

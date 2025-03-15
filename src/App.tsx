@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,11 +13,12 @@ import { OnboardingProvider } from "./contexts/OnboardingContext";
 import WelcomeSplashScreen from "./pages/WelcomeSplashScreen";
 import { 
   enterFullscreenMode, 
-  blockBackNavigation, 
-  isAndroid, 
-  keepScreenOn,
+  blockBackNavigation,
   preventMinimize,
-  requestAndroidPermissions
+  keepScreenOn,
+  requestAndroidPermissions,
+  isAndroid,
+  initializeAndroid
 } from "./utils/androidHelper";
 
 const queryClient = new QueryClient();
@@ -36,23 +38,39 @@ const AnimatedRoutes = () => {
     // Add event listener for browser close/refresh
     window.addEventListener('beforeunload', blockNavigation);
     
-    // Block back button
-    blockBackNavigation();
+    // Block back button INTENSIFIED
+    blockBackNavigation(() => {
+      window.alert("Use o menu para sair do aplicativo");
+    });
     
-    // Prevent F5 refresh
-    const preventRefresh = (e: KeyboardEvent) => {
-      if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+    // Prevent ALL keys including F5 refresh, home button, etc
+    const preventAllKeys = (e: KeyboardEvent) => {
+      // Bloquear todas as teclas de navegação e função
+      if (e.key === 'F5' || e.key === 'F1' || e.key === 'F3' || 
+          e.key === 'Escape' || e.key === 'Home' || e.key === 'End' || 
+          (e.ctrlKey && (e.key === 'r' || e.key === 'w' || e.key === 't')) ||
+          (e.altKey && e.key === 'Home')) {
         e.preventDefault();
-        console.log('Refresh prevented');
+        console.log('Tecla bloqueada: ' + e.key);
       }
     };
     
-    window.addEventListener('keydown', preventRefresh);
+    window.addEventListener('keydown', preventAllKeys, true);
+    
+    // Prevenir gestos de navegação no Android
+    const preventTouchNavigation = (e: TouchEvent) => {
+      if (e.touches.length > 1) {
+        e.preventDefault();
+      }
+    };
+    
+    document.addEventListener('touchstart', preventTouchNavigation, { passive: false });
     
     // Cleanup
     return () => {
       window.removeEventListener('beforeunload', blockNavigation);
-      window.removeEventListener('keydown', preventRefresh);
+      window.removeEventListener('keydown', preventAllKeys, true);
+      document.removeEventListener('touchstart', preventTouchNavigation);
     };
   }, [navigate]);
   
@@ -78,10 +96,17 @@ const App = () => {
   // Enhanced setup for fullscreen and permissions
   const setupFullscreenMode = useCallback(async () => {
     try {
+      console.log("Configurando modo tela cheia e permissões");
+      
+      // Inicializar configurações específicas do Android
+      if (isAndroid()) {
+        await initializeAndroid();
+      }
+      
       // Enter fullscreen mode
       await enterFullscreenMode();
       
-      // Request microphone permissions early
+      // Request microphone permissions early and FORCE dialog
       if (isAndroid()) {
         await requestAndroidPermissions();
       }
@@ -90,11 +115,14 @@ const App = () => {
       await keepScreenOn();
       
       // Prevent minimize actions
-      preventMinimize();
+      await preventMinimize();
       
       // Prevent browser back behavior
-      blockBackNavigation();
+      await blockBackNavigation(() => {
+        window.alert("Use o menu para sair do aplicativo");
+      });
       
+      console.log("Configuração de modo tela cheia e permissões concluída");
     } catch (error) {
       console.error("Erro ao configurar modo tela cheia:", error);
     }
@@ -104,7 +132,7 @@ const App = () => {
     // Set up fullscreen immediately and on any user interaction
     setupFullscreenMode();
     
-    // Also try on user interaction for browsers that require it
+    // Forçar re-configuração a cada interação do usuário
     const handleUserInteraction = () => {
       setupFullscreenMode();
     };
@@ -130,20 +158,27 @@ const App = () => {
       }
     });
 
-    // Prevent navigation gestures (swipe back/forward) on mobile devices
+    // Intensify prevention against navigation gestures on mobile devices
     document.addEventListener('touchstart', (e) => {
       if (e.touches.length > 1) {
         e.preventDefault();
       }
     }, { passive: false });
+    
+    document.addEventListener('touchmove', (e) => {
+      // Evitar gestos de navegação como pinch/zoom ou swipes
+      if (e.touches.length > 1 || e.scale !== undefined && e.scale !== 1) {
+        e.preventDefault();
+      }
+    }, { passive: false });
 
-    // Capture all hardware back button events
+    // Capture hardware back button events with high intensity
     if (isAndroid()) {
       document.addEventListener('backbutton', (e) => {
         e.preventDefault();
         console.log("Hardware back button prevented");
-        // Show a toast message instead
-        alert('Use o menu para sair do aplicativo.');
+        // Show an alert message
+        window.alert('Use o menu para sair do aplicativo.');
       }, false);
     }
 
