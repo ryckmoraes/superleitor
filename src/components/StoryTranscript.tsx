@@ -1,6 +1,6 @@
 
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2 } from "lucide-react";
+import { Loader2, BookOpen } from "lucide-react";
 
 interface StoryTranscriptProps {
   storyTranscript: string;
@@ -28,7 +28,8 @@ const StoryTranscript = ({
             <p className="text-sm mt-1 font-medium">Analisando sua história...</p>
           </div>
         ) : (
-          <div>
+          <div className="relative pl-7">
+            <BookOpen className="absolute left-0 top-1 h-4 w-4 text-primary opacity-70" />
             <p className={`text-sm ${isInterim ? 'opacity-80' : 'font-medium'}`}>
               {storyTranscript}
               {isInterim && <span className="animate-pulse">...</span>}

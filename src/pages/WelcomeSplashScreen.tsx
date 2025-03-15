@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, BookOpen } from "lucide-react";
 
 const WelcomeSplashScreen = () => {
   const navigate = useNavigate();
@@ -49,38 +49,19 @@ const WelcomeSplashScreen = () => {
           <div className="absolute inset-0 rounded-full bg-primary/15 animate-pulse" 
                style={{ animationDelay: "1s", width: "160px", height: "160px", transform: "translate(-20%, -20%)" }} />
           <div className="relative z-10 w-32 h-32 bg-gradient-to-br from-primary to-primary/70 rounded-full flex items-center justify-center animate-float shadow-xl">
-            <svg 
-              width="80" 
-              height="80" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              xmlns="http://www.w3.org/2000/svg"
-              className="text-primary-foreground"
-            >
-              <path 
-                d="M12 14a2 2 0 100-4 2 2 0 000 4z" 
-                fill="currentColor" 
-              />
-              <path 
-                d="M16.24 7.76a6 6 0 010 8.49m-8.48-.01a6 6 0 010-8.49m11.31-2.82a10 10 0 010 14.14m-14.14 0a10 10 0 010-14.14" 
-                stroke="currentColor" 
-                strokeWidth="1.5" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
-              />
-            </svg>
+            <BookOpen className="w-16 h-16 text-primary-foreground" />
           </div>
         </div>
         
         <h1 className="text-4xl font-bold tracking-tight mb-3 text-primary">
-          Bem-vindo à
+          Bem-vindo ao
         </h1>
-        <h2 className="text-5xl font-extrabold tracking-tight mb-6 bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
-          Esfera Sonora
+        <h2 className="text-5xl font-extrabold tracking-tight mb-6 bg-gradient-to-r from-primary to-[#FFA000] bg-clip-text text-transparent">
+          Superleitor
         </h2>
         
         <p className="text-muted-foreground max-w-md mb-8 text-lg">
-          Visualize suas frequências sonoras com uma esfera reativa interativa
+          Seu aplicativo para histórias interativas e controle parental
         </p>
         
         <div className="space-y-4">
