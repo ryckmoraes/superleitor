@@ -46,8 +46,8 @@ const addNaturalVariations = (text: string): string => {
 // Improved voice configuration for more natural speech
 export const configureNaturalVoice = (utterance: SpeechSynthesisUtterance): void => {
   utterance.lang = 'pt-BR';
-  utterance.rate = 0.95; // Slightly slower for clarity
-  utterance.pitch = 1.05; // Higher pitch for more expressive voice
+  utterance.rate = 0.85; // Even slower for better clarity
+  utterance.pitch = 1.1; // Higher pitch for more expressive voice
   utterance.volume = 1.0;
   
   // Try to select a more natural female voice if available
@@ -120,24 +120,27 @@ export const initVoices = (): Promise<boolean> => {
   });
 };
 
-// Speaks text with a natural, expressive voice
+// Speaks text with a natural, expressive voice - FIXING THE ISSUES WITH SPEECH
 export const speakNaturally = (text: string, priority: boolean = false): void => {
   if (!('speechSynthesis' in window)) {
     console.error("Speech synthesis not supported");
     return;
   }
   
-  // Cancel previous speech if priority message
-  if (priority && speechSynthesis.speaking) {
+  // Force cancel any existing speech to ensure our new speech is heard
+  if (speechSynthesis.speaking) {
     speechSynthesis.cancel();
+    // Small delay to ensure cancellation completes
+    setTimeout(() => {
+      actuallySpeak(text, priority);
+    }, 100);
+  } else {
+    actuallySpeak(text, priority);
   }
-  
-  // Don't interrupt if already speaking and not priority
-  if (!priority && speechSynthesis.speaking) {
-    console.log("Already speaking, skipping non-priority speech");
-    return;
-  }
-  
+};
+
+// Helper function to actually perform speech
+const actuallySpeak = (text: string, priority: boolean): void => {
   // Add human-like variations to the text to make it sound more natural
   const naturalText = addNaturalVariations(text);
   
@@ -147,7 +150,7 @@ export const speakNaturally = (text: string, priority: boolean = false): void =>
   console.log("Speaking text:", processedText);
   
   // For longer texts, split by sentences to improve naturalness
-  const MAX_CHUNK_LENGTH = 50; // Even shorter chunks for more natural delivery
+  const MAX_CHUNK_LENGTH = 30; // Even shorter chunks for more natural delivery
   
   if (processedText.length > MAX_CHUNK_LENGTH) {
     // Split by sentence markers but keep the markers
@@ -158,8 +161,8 @@ export const speakNaturally = (text: string, priority: boolean = false): void =>
       configureNaturalVoice(utterance);
       
       // Additional tweaks for more natural voice
-      utterance.pitch += (Math.random() * 0.2) - 0.1; // More random pitch variation
-      utterance.rate += (Math.random() * 0.15) - 0.075;  // More random rate variation
+      utterance.pitch += (Math.random() * 0.3) - 0.15; // More random pitch variation
+      utterance.rate += (Math.random() * 0.25) - 0.125;  // More random rate variation
       
       // Mobile browser workaround - add utterance events for reliability
       utterance.onstart = () => console.log('Speech started:', sentence.substring(0, 20) + '...');
@@ -172,8 +175,16 @@ export const speakNaturally = (text: string, priority: boolean = false): void =>
           speechSynthesis.speak(utterance);
         } catch (e) {
           console.error('Error speaking:', e);
+          // Try again with a simpler approach if the first attempt fails
+          try {
+            const simpleUtterance = new SpeechSynthesisUtterance(sentence);
+            simpleUtterance.lang = 'pt-BR';
+            speechSynthesis.speak(simpleUtterance);
+          } catch (e2) {
+            console.error('Final speech attempt failed:', e2);
+          }
         }
-      }, index * 400); // Longer pause between sentences
+      }, index * 600); // Longer pause between sentences for better understanding
     });
   } else {
     // For shorter texts, speak as single utterance
@@ -181,8 +192,8 @@ export const speakNaturally = (text: string, priority: boolean = false): void =>
     configureNaturalVoice(utterance);
     
     // Additional tweaks for more natural voice
-    utterance.pitch += (Math.random() * 0.15) - 0.075; // Random pitch variation
-    utterance.rate += (Math.random() * 0.1) - 0.05;  // Random rate variation
+    utterance.pitch += (Math.random() * 0.25) - 0.125; // Random pitch variation
+    utterance.rate += (Math.random() * 0.2) - 0.1;  // Random rate variation
     
     // Mobile browser workaround
     utterance.onstart = () => console.log('Speech started:', processedText.substring(0, 20) + '...');
@@ -193,6 +204,14 @@ export const speakNaturally = (text: string, priority: boolean = false): void =>
       speechSynthesis.speak(utterance);
     } catch (e) {
       console.error('Error speaking:', e);
+      // Try again with a simpler approach
+      try {
+        const simpleUtterance = new SpeechSynthesisUtterance(processedText);
+        simpleUtterance.lang = 'pt-BR';
+        speechSynthesis.speak(simpleUtterance);
+      } catch (e2) {
+        console.error('Final speech attempt failed:', e2);
+      }
     }
   }
 };
