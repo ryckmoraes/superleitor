@@ -1,4 +1,5 @@
-// Enhanced text processor for more natural speech with pauses and intonation
+
+// Enhanced text processor for more natural speech with improved pauses and intonation
 export const processTextForSpeech = (text: string): string => {
   return text
     .replace(/\.\s+/g, '... ') // Add longer pause after periods
@@ -45,8 +46,8 @@ const addNaturalVariations = (text: string): string => {
 // Improved voice configuration for more natural speech
 export const configureNaturalVoice = (utterance: SpeechSynthesisUtterance): void => {
   utterance.lang = 'pt-BR';
-  utterance.rate = 0.88; // Slower for more natural pacing
-  utterance.pitch = 1.02; // Slightly higher for children's content
+  utterance.rate = 0.85; // Even slower for more natural pacing
+  utterance.pitch = 1.05; // Slightly higher for children's content
   utterance.volume = 1.0;
   
   // Try to select a more natural female voice if available
@@ -72,6 +73,9 @@ export const configureNaturalVoice = (utterance: SpeechSynthesisUtterance): void
   
   if (selectedVoice) {
     utterance.voice = selectedVoice;
+    console.log("Using voice:", selectedVoice.name);
+  } else {
+    console.log("No Portuguese voice found, using default voice");
   }
 };
 
@@ -79,6 +83,7 @@ export const configureNaturalVoice = (utterance: SpeechSynthesisUtterance): void
 export const initVoices = (): Promise<boolean> => {
   return new Promise((resolve) => {
     if (!('speechSynthesis' in window)) {
+      console.error("Speech synthesis not supported");
       resolve(false);
       return;
     }
@@ -86,12 +91,17 @@ export const initVoices = (): Promise<boolean> => {
     // Check if voices are already loaded
     const voices = speechSynthesis.getVoices();
     if (voices && voices.length > 0) {
+      console.log("Voices already loaded:", voices.length, "voices available");
+      console.log("Available Portuguese voices:", voices.filter(v => v.lang.includes('pt')).map(v => v.name).join(', '));
       resolve(true);
       return;
     }
     
     // Wait for voices to be loaded (important for mobile browsers)
     const voicesChanged = () => {
+      const availableVoices = speechSynthesis.getVoices();
+      console.log("Voices loaded:", availableVoices.length, "voices available");
+      console.log("Available Portuguese voices:", availableVoices.filter(v => v.lang.includes('pt')).map(v => v.name).join(', '));
       window.speechSynthesis.removeEventListener('voiceschanged', voicesChanged);
       resolve(true);
     };
@@ -101,6 +111,7 @@ export const initVoices = (): Promise<boolean> => {
     // Set a timeout in case voices never load
     setTimeout(() => {
       window.speechSynthesis.removeEventListener('voiceschanged', voicesChanged);
+      console.warn("Timed out waiting for voices to load");
       resolve(false);
     }, 3000);
   });
@@ -108,7 +119,10 @@ export const initVoices = (): Promise<boolean> => {
 
 // Speaks text with a natural, expressive voice
 export const speakNaturally = (text: string, priority: boolean = false): void => {
-  if (!('speechSynthesis' in window)) return;
+  if (!('speechSynthesis' in window)) {
+    console.error("Speech synthesis not supported");
+    return;
+  }
   
   // Cancel previous speech if priority message
   if (priority && speechSynthesis.speaking) {
@@ -116,7 +130,10 @@ export const speakNaturally = (text: string, priority: boolean = false): void =>
   }
   
   // Don't interrupt if already speaking and not priority
-  if (!priority && speechSynthesis.speaking) return;
+  if (!priority && speechSynthesis.speaking) {
+    console.log("Already speaking, skipping non-priority speech");
+    return;
+  }
   
   // Add human-like variations to the text to make it sound more natural
   const naturalText = addNaturalVariations(text);
@@ -124,8 +141,10 @@ export const speakNaturally = (text: string, priority: boolean = false): void =>
   // Process the text for better speech patterns
   const processedText = processTextForSpeech(naturalText);
   
+  console.log("Speaking text:", processedText);
+  
   // For longer texts, split by sentences to improve naturalness
-  const MAX_CHUNK_LENGTH = 120;
+  const MAX_CHUNK_LENGTH = 100; // Shorter chunks for more natural delivery
   
   if (processedText.length > MAX_CHUNK_LENGTH) {
     // Split by sentence markers but keep the markers
@@ -138,7 +157,7 @@ export const speakNaturally = (text: string, priority: boolean = false): void =>
       // Mobile browser workaround - add utterance events for reliability
       utterance.onstart = () => console.log('Speech started:', sentence.substring(0, 20) + '...');
       utterance.onerror = (e) => console.error('Speech error:', e);
-      utterance.onend = () => console.log('Speech ended');
+      utterance.onend = () => console.log('Speech chunk ended');
       
       // Add a slight delay between sentences for more natural pacing
       setTimeout(() => {
@@ -147,7 +166,7 @@ export const speakNaturally = (text: string, priority: boolean = false): void =>
         } catch (e) {
           console.error('Error speaking:', e);
         }
-      }, index * 250);
+      }, index * 300); // Longer pause between sentences
     });
   } else {
     // For shorter texts, speak as single utterance
@@ -157,6 +176,7 @@ export const speakNaturally = (text: string, priority: boolean = false): void =>
     // Mobile browser workaround
     utterance.onstart = () => console.log('Speech started:', processedText.substring(0, 20) + '...');
     utterance.onerror = (e) => console.error('Speech error:', e);
+    utterance.onend = () => console.log('Speech ended');
     
     try {
       speechSynthesis.speak(utterance);

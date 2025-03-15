@@ -36,7 +36,17 @@ jobs:
       - name: Install Capacitor Android
         run: npm install @capacitor/android --legacy-peer-deps
 
+      - name: Check if Android platform exists
+        id: check_android
+        run: |
+          if [ -d "android" ]; then
+            echo "platform_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "platform_exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Add Android platform
+        if: steps.check_android.outputs.platform_exists == 'false'
         run: npx cap add android
 
       - name: Update Capacitor
@@ -45,12 +55,10 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Configure Java Compatibility
+      - name: Ensure gradle properties
         run: |
-          echo "org.gradle.java.home=$JAVA_HOME" > android/gradle.properties
-          echo "android.java.source.version=11" >> android/gradle.properties
-          echo "android.java.target.version=11" >> android/gradle.properties
-          echo "org.gradle.jvmargs=-Xmx2048m" >> android/gradle.properties
+          echo "android.useAndroidX=true" >> android/gradle.properties
+          echo "android.enableJetifier=true" >> android/gradle.properties
 
       - name: Build Android APK
         run: |

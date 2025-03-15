@@ -8,6 +8,7 @@ export const showToastOnly = (title: string, description: string, variant: "defa
     description,
     variant,
     duration: 3000, // Shorter duration for mobile
+    className: "toast-notification bottom-8", // Position at bottom
   });
 };
 
@@ -23,6 +24,7 @@ export const showToastWithDuration = (
     description,
     variant,
     duration,
+    className: "toast-notification bottom-8", // Position at bottom
   });
 };
 
@@ -38,6 +40,6 @@ export const showMobileNotification = (
     description,
     variant,
     duration: 2500,
-    className: "mobile-notification",
+    className: "mobile-notification toast-small bottom-0", // Smaller and at bottom
   });
 };
