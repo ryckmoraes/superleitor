@@ -49,6 +49,15 @@ jobs:
         if: steps.check_android.outputs.platform_exists == 'false'
         run: npx cap add android
 
+      - name: Create assets directory if it doesn't exist
+        run: mkdir -p android/app/src/main/assets
+
+      - name: Create empty capacitor.plugins.json if it doesn't exist
+        run: |
+          if [ ! -f "android/app/src/main/assets/capacitor.plugins.json" ]; then
+            echo "[]" > android/app/src/main/assets/capacitor.plugins.json
+          fi
+
       - name: Update Capacitor
         run: npx cap update android
 

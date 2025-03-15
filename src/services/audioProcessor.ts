@@ -16,10 +16,10 @@ export const processTextForSpeech = (text: string): string => {
 const addNaturalVariations = (text: string): string => {
   // Add occasional filler words that Brazilians use in casual speech
   const fillers = [
-    { probability: 0.1, pattern: /^/g, replacements: ['Bem, ', 'Olha, ', 'Veja, ', 'Ah, ', ''] },
-    { probability: 0.2, pattern: /\.\s+/g, replacements: ['. Hmm, ', '. Então, ', '. Agora, ', '. Sabe, ', '. '] },
-    { probability: 0.1, pattern: /\?/g, replacements: ['? Né?', '?', '? Sabe?', '?'] },
-    { probability: 0.15, pattern: /!/g, replacements: ['! Nossa!', '! Caramba!', '! Poxa!', '!'] }
+    { probability: 0.15, pattern: /^/g, replacements: ['Bem, ', 'Olha, ', 'Veja, ', 'Ah, ', ''] },
+    { probability: 0.25, pattern: /\.\s+/g, replacements: ['. Hmm, ', '. Então, ', '. Agora, ', '. Sabe, ', '. '] },
+    { probability: 0.15, pattern: /\?/g, replacements: ['? Né?', '?', '? Sabe?', '?'] },
+    { probability: 0.2, pattern: /!/g, replacements: ['! Nossa!', '! Caramba!', '! Poxa!', '!'] }
   ];
   
   let result = text;
@@ -32,7 +32,7 @@ const addNaturalVariations = (text: string): string => {
   });
   
   // Occasionally emphasize with repetition (Brazilian way)
-  if (Math.random() < 0.05) {
+  if (Math.random() < 0.08) {
     const words = result.split(' ');
     const wordToEmphasize = words[Math.floor(Math.random() * words.length)];
     if (wordToEmphasize.length > 3) {
@@ -46,19 +46,22 @@ const addNaturalVariations = (text: string): string => {
 // Improved voice configuration for more natural speech
 export const configureNaturalVoice = (utterance: SpeechSynthesisUtterance): void => {
   utterance.lang = 'pt-BR';
-  utterance.rate = 0.85; // Even slower for more natural pacing
-  utterance.pitch = 1.05; // Slightly higher for children's content
+  utterance.rate = 0.9; // Slightly faster but still natural
+  utterance.pitch = 1.1; // Higher pitch for more child-friendly voice
   utterance.volume = 1.0;
   
   // Try to select a more natural female voice if available
   const voices = speechSynthesis.getVoices();
+  
+  // Debug available voices
+  console.log("All available voices:", voices.map(v => `${v.name} (${v.lang})`).join(", "));
   
   // First try to find a Brazilian Portuguese female voice
   let selectedVoice = voices.find(voice => 
     voice.lang.includes('pt-BR') && 
     (voice.name.toLowerCase().includes('female') || 
      voice.name.toLowerCase().includes('mulher') ||
-     voice.name.toLowerCase().includes('feminin'))
+     voice.name.toLowerCase().includes('femin'))
   );
   
   // If not found, try any Brazilian Portuguese voice
@@ -144,7 +147,7 @@ export const speakNaturally = (text: string, priority: boolean = false): void =>
   console.log("Speaking text:", processedText);
   
   // For longer texts, split by sentences to improve naturalness
-  const MAX_CHUNK_LENGTH = 100; // Shorter chunks for more natural delivery
+  const MAX_CHUNK_LENGTH = 80; // Even shorter chunks for more natural delivery
   
   if (processedText.length > MAX_CHUNK_LENGTH) {
     // Split by sentence markers but keep the markers
@@ -153,6 +156,10 @@ export const speakNaturally = (text: string, priority: boolean = false): void =>
     sentences.forEach((sentence, index) => {
       const utterance = new SpeechSynthesisUtterance(sentence);
       configureNaturalVoice(utterance);
+      
+      // Additional tweaks for more natural voice
+      utterance.pitch += (Math.random() * 0.1) - 0.05; // Slight random pitch variation
+      utterance.rate += (Math.random() * 0.1) - 0.05;  // Slight random rate variation
       
       // Mobile browser workaround - add utterance events for reliability
       utterance.onstart = () => console.log('Speech started:', sentence.substring(0, 20) + '...');
@@ -166,12 +173,16 @@ export const speakNaturally = (text: string, priority: boolean = false): void =>
         } catch (e) {
           console.error('Error speaking:', e);
         }
-      }, index * 300); // Longer pause between sentences
+      }, index * 350); // Longer pause between sentences
     });
   } else {
     // For shorter texts, speak as single utterance
     const utterance = new SpeechSynthesisUtterance(processedText);
     configureNaturalVoice(utterance);
+    
+    // Additional tweaks for more natural voice
+    utterance.pitch += (Math.random() * 0.05) - 0.025; // Smaller random pitch variation
+    utterance.rate += (Math.random() * 0.05) - 0.025;  // Smaller random rate variation
     
     // Mobile browser workaround
     utterance.onstart = () => console.log('Speech started:', processedText.substring(0, 20) + '...');

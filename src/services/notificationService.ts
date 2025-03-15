@@ -7,8 +7,8 @@ export const showToastOnly = (title: string, description: string, variant: "defa
     title,
     description,
     variant,
-    duration: 3000, // Shorter duration for mobile
-    className: "toast-notification bottom-8", // Position at bottom
+    duration: 2000, // Even shorter duration
+    className: "toast-notification bottom-0 opacity-80", // Position at bottom with opacity
   });
 };
 
@@ -17,14 +17,14 @@ export const showToastWithDuration = (
   title: string, 
   description: string, 
   variant: "default" | "destructive" = "default",
-  duration: number = 5000
+  duration: number = 3000
 ) => {
   toast({
     title,
     description,
     variant,
     duration,
-    className: "toast-notification bottom-8", // Position at bottom
+    className: "toast-notification bottom-0 opacity-80", // Position at bottom with opacity
   });
 };
 
@@ -39,7 +39,7 @@ export const showMobileNotification = (
     title,
     description,
     variant,
-    duration: 2500,
-    className: "mobile-notification toast-small bottom-0", // Smaller and at bottom
+    duration: 1500,
+    className: "mobile-notification toast-small bottom-0 opacity-80", // Smaller and at bottom with opacity
   });
 };
