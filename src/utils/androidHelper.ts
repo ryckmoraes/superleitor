@@ -1,6 +1,20 @@
+
 /**
  * Utility functions for Android-specific behaviors
  */
+
+// Interface for Capacitor on the window object
+interface CapacitorWindow extends Window {
+  Capacitor?: {
+    isNativePlatform: () => boolean;
+    Plugins?: {
+      Permissions?: {
+        query: (options: { name: string }) => Promise<{ state: string }>;
+        request: (options: { name: string }) => Promise<{ state: string }>;
+      };
+    };
+  };
+}
 
 // Check if running on Android
 export const isAndroid = (): boolean => {
@@ -37,10 +51,12 @@ export const keepScreenOn = async (): Promise<boolean> => {
 // Request permissions needed for Android
 export const requestAndroidPermissions = async (): Promise<boolean> => {
   try {
+    // Cast window to include Capacitor
+    const capacitorWindow = window as CapacitorWindow;
+    
     // Only if the app is running in Capacitor (Android native)
-    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-      // @ts-ignore - Permissions plugin might not be typed correctly
-      const { Permissions } = window.Capacitor.Plugins;
+    if (capacitorWindow.Capacitor && capacitorWindow.Capacitor.isNativePlatform()) {
+      const Permissions = capacitorWindow.Capacitor.Plugins?.Permissions;
       
       if (Permissions) {
         // Request microphone permission

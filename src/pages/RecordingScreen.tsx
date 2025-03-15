@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import AudioSphere from "@/components/AudioSphere";
@@ -6,15 +5,18 @@ import RecordingControls from "@/components/RecordingControls";
 import StoryTranscript from "@/components/StoryTranscript";
 import useAudioAnalyzer from "@/hooks/useAudioAnalyzer";
 import usePatternDetection from "@/hooks/usePatternDetection";
-import { geminiService } from "@/services/geminiService";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { speakNaturally } from "@/services/audioProcessor";
+import { speakNaturally, processRecognitionResult, generateSimpleResponse, initVoices } from "@/services/audioProcessor";
 import { showToastOnly } from "@/services/notificationService";
+import webSpeechService from "@/services/webSpeechService";
+import { isAndroid, keepScreenOn, requestAndroidPermissions } from "@/utils/androidHelper";
 
 const RecordingScreen = () => {
   const [loaded, setLoaded] = useState(false);
   const [isStoryMode, setIsStoryMode] = useState(false);
   const [storyTranscript, setStoryTranscript] = useState("");
+  const [interimTranscript, setInterimTranscript] = useState("");
+  const [recognitionStatus, setRecognitionStatus] = useState("");
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Retrieve theme from localStorage or default to false (light mode)
     const savedTheme = localStorage.getItem("dark-mode");
@@ -36,11 +38,31 @@ const RecordingScreen = () => {
   const { patternDetected, patternType } = usePatternDetection(audioData);
   const patternNotifiedRef = useRef(false);
   const welcomeSpokenRef = useRef(false);
+  const lastTranscriptRef = useRef("");
+  const speechInitializedRef = useRef(false);
+
+  // Initialize voices
+  useEffect(() => {
+    if (!speechInitializedRef.current) {
+      initVoices().then((initialized) => {
+        speechInitializedRef.current = initialized;
+        console.log("Speech synthesis initialized:", initialized);
+      });
+    }
+  }, []);
 
   // Check for microphone permission
   useEffect(() => {
     const checkMicrophonePermission = async () => {
       try {
+        // For Android native, use Capacitor Permissions
+        if (isAndroid()) {
+          const granted = await requestAndroidPermissions();
+          setHasMicrophonePermission(granted);
+          return;
+        }
+        
+        // For web browser
         const result = await navigator.permissions.query({ name: 'microphone' as PermissionName });
         setHasMicrophonePermission(result.state === 'granted');
         
@@ -56,6 +78,13 @@ const RecordingScreen = () => {
     };
     
     checkMicrophonePermission();
+    
+    // Try to keep screen on for Android
+    if (isAndroid()) {
+      keepScreenOn().catch(error => {
+        console.error("Error keeping screen on:", error);
+      });
+    }
   }, []);
 
   // Function to request microphone permission
@@ -89,7 +118,7 @@ const RecordingScreen = () => {
 
   // Function to speak welcome message using Web Speech API
   const speakWelcomeMessage = () => {
-    if ('speechSynthesis' in window && onboardingData.superReaderName) {
+    if (onboardingData.superReaderName) {
       // Create welcome message with just the SuperLeitor name
       const welcomeMessage = `Olá ${onboardingData.superReaderName}! Que bom te ver! Que história você quer me contar hoje?`;
       console.log("Speaking welcome message:", welcomeMessage);
@@ -100,15 +129,12 @@ const RecordingScreen = () => {
       // Speak with natural voice
       speakNaturally(welcomeMessage, true);
     } else {
-      console.error("Speech synthesis not supported or name not set", {
-        speechSynthesisSupported: 'speechSynthesis' in window,
+      console.error("Name not set", {
         superReaderName: onboardingData.superReaderName
       });
       
-      // Show toast if speech synthesis fails
-      if (onboardingData.superReaderName) {
-        showToastOnly("Bem-vindo!", `Olá ${onboardingData.superReaderName}! Que bom te ver!`);
-      }
+      // Show generic toast if name is not set
+      showToastOnly("Bem-vindo!", "Olá! Que bom te ver! Que história você quer me contar hoje?");
     }
   };
 
@@ -165,57 +191,68 @@ const RecordingScreen = () => {
     }
   }, [patternDetected, patternType, isRecording]);
 
-  // Process audio with Gemini when recording stops
-  useEffect(() => {
-    const processAudioWithGemini = async () => {
-      if (!isRecording && audioBlob && !isProcessing && audioBlob.size > 0) {
-        setIsProcessing(true);
+  // Process transcript from speech recognition
+  const handleRecognitionResult = (result: { transcript: string, isFinal: boolean }) => {
+    const cleanTranscript = processRecognitionResult(result.transcript);
+    
+    if (result.isFinal) {
+      setStoryTranscript(cleanTranscript);
+      setInterimTranscript("");
+      lastTranscriptRef.current = cleanTranscript;
+    } else {
+      setInterimTranscript(cleanTranscript);
+    }
+  };
+  
+  // Handle errors from speech recognition
+  const handleRecognitionError = (error: string, technical?: string) => {
+    console.error("Speech recognition error:", error, technical);
+    setRecognitionStatus(error);
+    
+    // Only show toast for serious errors
+    if (error.includes("Permissão") || error.includes("acesso ao microfone")) {
+      showToastOnly("Erro de Reconhecimento", error, "destructive");
+    }
+  };
+  
+  // Handle when speech recognition ends
+  const handleRecognitionEnd = () => {
+    setRecognitionStatus("Reconhecimento finalizado");
+    
+    // Only respond if there's meaningful transcript
+    if (lastTranscriptRef.current && lastTranscriptRef.current.length > 5) {
+      setIsProcessing(true);
+      setTimeout(() => {
         try {
-          setStoryTranscript("Processando áudio...");
-          showToastOnly(
-            "Analisando sua história",
-            "Estou ouvindo com atenção o que você contou..."
-          );
+          // Generate response to the transcript
+          const response = generateSimpleResponse(lastTranscriptRef.current);
+          showToastOnly("Sua história é incrível!", response);
           
-          const response = await geminiService.processAudio(audioBlob);
+          // Update the transcript to show the response
           setStoryTranscript(response);
-          setIsStoryMode(true);
           
-          // Show response in toast only
-          showToastOnly(
-            "Sua história é incrível!",
-            response.length > 100 ? response.substring(0, 100) + "..." : response
-          );
-          
-          // Speak with natural voice
+          // Speak the response
           speakNaturally(response, true);
-          
         } catch (error) {
-          console.error("Error processing audio:", error);
-          const errorMessage = "Puxa! Não consegui entender sua história. Vamos tentar de novo?";
-          
-          setStoryTranscript(errorMessage);
-          
-          showToastOnly(
-            "Ops!",
-            errorMessage,
-            "destructive"
-          );
-          
-          // Speak error message with natural voice
-          speakNaturally(errorMessage, true);
+          console.error("Error generating response:", error);
         } finally {
           setIsProcessing(false);
         }
-      }
-    };
-
-    processAudioWithGemini();
-  }, [isRecording, audioBlob]);
+      }, 500);
+    }
+  };
+  
+  // Handle speech recognition start
+  const handleRecognitionStart = () => {
+    setRecognitionStatus("Ouvindo...");
+  };
 
   const toggleRecording = () => {
     if (isRecording) {
       stopRecording();
+      
+      // Stop speech recognition
+      webSpeechService.stopRecognition();
       
       const stopMessage = `Legal! Deixa eu pensar sobre essa história...`;
       
@@ -227,6 +264,12 @@ const RecordingScreen = () => {
       
       // Speak notification with natural voice
       speakNaturally(stopMessage, true);
+      
+      // Process the story
+      setIsProcessing(true);
+      setTimeout(() => {
+        setIsProcessing(false);
+      }, 1000);
     } else {
       // Check for microphone permission before starting
       if (!hasMicrophonePermission) {
@@ -236,7 +279,25 @@ const RecordingScreen = () => {
       
       startRecording();
       setStoryTranscript("");
-      setIsStoryMode(false);
+      setInterimTranscript("");
+      setIsStoryMode(true);
+      
+      // Start speech recognition
+      if (webSpeechService.isSupported()) {
+        webSpeechService.startRecognition(
+          handleRecognitionResult,
+          handleRecognitionEnd,
+          handleRecognitionError,
+          handleRecognitionStart
+        );
+      } else {
+        setRecognitionStatus("Reconhecimento de fala não disponível neste dispositivo");
+        showToastOnly(
+          "Aviso",
+          "Reconhecimento de fala não está disponível neste dispositivo.",
+          "destructive"
+        );
+      }
       
       const startMessage = "Estou ouvindo! Pode contar sua história...";
       
@@ -251,12 +312,14 @@ const RecordingScreen = () => {
     }
   };
 
-  // Clean up speech synthesis on component unmount
+  // Clean up speech synthesis and recognition on component unmount
   useEffect(() => {
     return () => {
       if ('speechSynthesis' in window && speechSynthesis.speaking) {
         speechSynthesis.cancel();
       }
+      
+      webSpeechService.stopRecognition();
     };
   }, []);
 
@@ -278,6 +341,7 @@ const RecordingScreen = () => {
           isProcessing={isProcessing}
           recordingTime={recordingTime}
           toggleRecording={toggleRecording}
+          recognitionStatus={recognitionStatus}
         />
         
         <div className="w-full max-w-[500px] h-[500px] flex items-center justify-center">
@@ -285,8 +349,10 @@ const RecordingScreen = () => {
         </div>
         
         <StoryTranscript 
-          storyTranscript={storyTranscript}
+          storyTranscript={interimTranscript || storyTranscript}
           isProcessing={isProcessing}
+          isInterim={!!interimTranscript}
+          recognitionStatus={recognitionStatus}
         />
       </div>
     </div>

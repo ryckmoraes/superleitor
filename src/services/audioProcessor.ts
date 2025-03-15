@@ -1,4 +1,3 @@
-
 // Enhanced text processor for more natural speech with pauses and intonation
 export const processTextForSpeech = (text: string): string => {
   return text
@@ -7,14 +6,47 @@ export const processTextForSpeech = (text: string): string => {
     .replace(/(!|\?)\s+/g, '$1... ') // Add pause after exclamation/question marks
     .replace(/:\s+/g, '... ') // Add pause after colons
     .replace(/(\w+)(\W+)$/g, '$1...') // Add pause at the end of sentences
-    .replace(/\s{2,}/g, ' '); // Remove extra spaces
+    .replace(/\s{2,}/g, ' ') // Remove extra spaces
+    .replace(/\b(e|mas|porém|contudo|entretanto)\b/gi, '... $1') // Add pauses before conjunctions
+    .replace(/\b(então|assim|portanto|logo)\b/gi, '... $1... '); // Add pauses around conclusive conjunctions
+};
+
+// Helper to add more human-like variations to speech
+const addNaturalVariations = (text: string): string => {
+  // Add occasional filler words that Brazilians use in casual speech
+  const fillers = [
+    { probability: 0.1, pattern: /^/g, replacements: ['Bem, ', 'Olha, ', 'Veja, ', 'Ah, ', ''] },
+    { probability: 0.2, pattern: /\.\s+/g, replacements: ['. Hmm, ', '. Então, ', '. Agora, ', '. Sabe, ', '. '] },
+    { probability: 0.1, pattern: /\?/g, replacements: ['? Né?', '?', '? Sabe?', '?'] },
+    { probability: 0.15, pattern: /!/g, replacements: ['! Nossa!', '! Caramba!', '! Poxa!', '!'] }
+  ];
+  
+  let result = text;
+  
+  fillers.forEach(({ probability, pattern, replacements }) => {
+    if (Math.random() < probability) {
+      const replacement = replacements[Math.floor(Math.random() * replacements.length)];
+      result = result.replace(pattern, replacement);
+    }
+  });
+  
+  // Occasionally emphasize with repetition (Brazilian way)
+  if (Math.random() < 0.05) {
+    const words = result.split(' ');
+    const wordToEmphasize = words[Math.floor(Math.random() * words.length)];
+    if (wordToEmphasize.length > 3) {
+      result = result.replace(new RegExp(`\\b${wordToEmphasize}\\b`), `${wordToEmphasize}, ${wordToEmphasize}`);
+    }
+  }
+  
+  return result;
 };
 
 // Improved voice configuration for more natural speech
 export const configureNaturalVoice = (utterance: SpeechSynthesisUtterance): void => {
   utterance.lang = 'pt-BR';
-  utterance.rate = 0.85; // Slower for more natural pacing
-  utterance.pitch = 1.05; // Slightly higher for children's content
+  utterance.rate = 0.88; // Slower for more natural pacing
+  utterance.pitch = 1.02; // Slightly higher for children's content
   utterance.volume = 1.0;
   
   // Try to select a more natural female voice if available
@@ -43,6 +75,37 @@ export const configureNaturalVoice = (utterance: SpeechSynthesisUtterance): void
   }
 };
 
+// Handle voice initialization for mobile
+export const initVoices = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if (!('speechSynthesis' in window)) {
+      resolve(false);
+      return;
+    }
+    
+    // Check if voices are already loaded
+    const voices = speechSynthesis.getVoices();
+    if (voices && voices.length > 0) {
+      resolve(true);
+      return;
+    }
+    
+    // Wait for voices to be loaded (important for mobile browsers)
+    const voicesChanged = () => {
+      window.speechSynthesis.removeEventListener('voiceschanged', voicesChanged);
+      resolve(true);
+    };
+    
+    window.speechSynthesis.addEventListener('voiceschanged', voicesChanged);
+    
+    // Set a timeout in case voices never load
+    setTimeout(() => {
+      window.speechSynthesis.removeEventListener('voiceschanged', voicesChanged);
+      resolve(false);
+    }, 3000);
+  });
+};
+
 // Speaks text with a natural, expressive voice
 export const speakNaturally = (text: string, priority: boolean = false): void => {
   if (!('speechSynthesis' in window)) return;
@@ -55,22 +118,52 @@ export const speakNaturally = (text: string, priority: boolean = false): void =>
   // Don't interrupt if already speaking and not priority
   if (!priority && speechSynthesis.speaking) return;
   
-  // Split long text into smaller chunks for more natural delivery
-  const MAX_CHUNK_LENGTH = 100;
-  const processedText = processTextForSpeech(text);
+  // Add human-like variations to the text to make it sound more natural
+  const naturalText = addNaturalVariations(text);
   
-  // Split by sentence markers but keep the markers
-  const sentences = processedText.match(/[^.!?]+[.!?]+/g) || [processedText];
+  // Process the text for better speech patterns
+  const processedText = processTextForSpeech(naturalText);
   
-  sentences.forEach((sentence, index) => {
-    const utterance = new SpeechSynthesisUtterance(sentence);
+  // For longer texts, split by sentences to improve naturalness
+  const MAX_CHUNK_LENGTH = 120;
+  
+  if (processedText.length > MAX_CHUNK_LENGTH) {
+    // Split by sentence markers but keep the markers
+    const sentences = processedText.match(/[^.!?]+[.!?]+/g) || [processedText];
+    
+    sentences.forEach((sentence, index) => {
+      const utterance = new SpeechSynthesisUtterance(sentence);
+      configureNaturalVoice(utterance);
+      
+      // Mobile browser workaround - add utterance events for reliability
+      utterance.onstart = () => console.log('Speech started:', sentence.substring(0, 20) + '...');
+      utterance.onerror = (e) => console.error('Speech error:', e);
+      utterance.onend = () => console.log('Speech ended');
+      
+      // Add a slight delay between sentences for more natural pacing
+      setTimeout(() => {
+        try {
+          speechSynthesis.speak(utterance);
+        } catch (e) {
+          console.error('Error speaking:', e);
+        }
+      }, index * 250);
+    });
+  } else {
+    // For shorter texts, speak as single utterance
+    const utterance = new SpeechSynthesisUtterance(processedText);
     configureNaturalVoice(utterance);
     
-    // Add a slight delay between sentences for more natural pacing
-    setTimeout(() => {
+    // Mobile browser workaround
+    utterance.onstart = () => console.log('Speech started:', processedText.substring(0, 20) + '...');
+    utterance.onerror = (e) => console.error('Speech error:', e);
+    
+    try {
       speechSynthesis.speak(utterance);
-    }, index * 200);
-  });
+    } catch (e) {
+      console.error('Error speaking:', e);
+    }
+  }
 };
 
 // Process speech recognition results

@@ -1,205 +1,145 @@
+import { useState, useEffect, useRef } from 'react';
 
-import { useState, useEffect, useRef } from "react";
-
-type PatternType = 'music' | 'repetitive' | null;
+type PatternType = 'music' | 'rhythm' | null;
 
 const usePatternDetection = (audioData: Uint8Array | null) => {
   const [patternDetected, setPatternDetected] = useState(false);
   const [patternType, setPatternType] = useState<PatternType>(null);
   
-  const historicalDataRef = useRef<Array<Uint8Array>>([]);
-  const analysisCounterRef = useRef(0);
-  const lastPatternDetectionRef = useRef<number>(0);
+  // Refs for pattern detection
+  const frameCountRef = useRef(0);
+  const lastPatternsRef = useRef<number[]>([]);
+  const detectionCooldownRef = useRef(0);
+  const baselineRef = useRef<number[]>([]);
   
-  // Stores the last N frames of audio for analysis
+  // More robust constants for pattern detection
+  const DETECTION_THRESHOLD = 0.75;  // Increased from previous value
+  const REQUIRED_CONSISTENT_FRAMES = 20; // Increased for more reliable detection
+  const COOLDOWN_FRAMES = 180; // ~3 seconds at 60fps to prevent repeated detections
+  const PATTERN_MEMORY = 10; // Number of frames to keep for pattern comparison
+  const MIN_AMPLITUDE = 10; // Minimum amplitude to consider (avoid detecting silence)
+  
   useEffect(() => {
-    if (!audioData) {
+    if (!audioData || audioData.length === 0) {
       return;
     }
     
-    // Add current audio data to history
-    historicalDataRef.current.push(new Uint8Array(audioData));
-    
-    // Limit history size to last 60 frames
-    if (historicalDataRef.current.length > 60) {
-      historicalDataRef.current.shift();
+    // Skip processing if in cooldown
+    if (detectionCooldownRef.current > 0) {
+      detectionCooldownRef.current--;
+      return;
     }
     
-    // Analyze patterns every 30 frames to save resources and reduce false positives
-    analysisCounterRef.current += 1;
-    if (analysisCounterRef.current >= 30) {  // Increased from 15 to 30
-      analysisCounterRef.current = 0;
-      detectPatterns();
+    // Process only every other frame to reduce CPU usage
+    frameCountRef.current++;
+    if (frameCountRef.current % 2 !== 0) {
+      return;
+    }
+    
+    // Reduce the audio data to a simple pattern signature (sum of frequency bands)
+    const currentPattern = Array.from(audioData).slice(1, 12);
+    
+    // Calculate average amplitude of current pattern
+    const avgAmplitude = currentPattern.reduce((sum, val) => sum + val, 0) / currentPattern.length;
+    
+    // Skip low amplitude audio (silence or background noise)
+    if (avgAmplitude < MIN_AMPLITUDE) {
+      return;
+    }
+    
+    // Store the pattern
+    lastPatternsRef.current.push(...currentPattern);
+    
+    // Keep only the most recent patterns
+    if (lastPatternsRef.current.length > PATTERN_MEMORY * currentPattern.length) {
+      lastPatternsRef.current = lastPatternsRef.current.slice(-PATTERN_MEMORY * currentPattern.length);
+    }
+    
+    // Initialize baseline if needed
+    if (baselineRef.current.length === 0 && lastPatternsRef.current.length >= currentPattern.length * 5) {
+      baselineRef.current = lastPatternsRef.current.slice(0, currentPattern.length);
+    }
+    
+    // Need enough data for pattern detection
+    if (lastPatternsRef.current.length < currentPattern.length * 2 || !baselineRef.current.length) {
+      return;
+    }
+    
+    // Look for repeating patterns
+    let patternDetected = false;
+    
+    // Check for rhythm/music patterns (repeating amplitude patterns)
+    const chunks = [];
+    for (let i = 0; i < lastPatternsRef.current.length; i += currentPattern.length) {
+      if (i + currentPattern.length <= lastPatternsRef.current.length) {
+        chunks.push(lastPatternsRef.current.slice(i, i + currentPattern.length));
+      }
+    }
+    
+    if (chunks.length >= 3) {
+      // Compare chunks to detect repetition
+      let similarChunks = 0;
+      
+      for (let i = 1; i < chunks.length; i++) {
+        const similarity = calculateSimilarity(chunks[i-1], chunks[i]);
+        if (similarity > DETECTION_THRESHOLD) {
+          similarChunks++;
+        }
+      }
+      
+      // If we have enough similar consecutive chunks, pattern detected
+      if (similarChunks >= Math.min(3, chunks.length - 1)) {
+        // Detect pattern type based on frequency distribution
+        const isMusic = isMusicPattern(chunks.flat());
+        
+        setPatternType(isMusic ? 'music' : 'rhythm');
+        patternDetected = true;
+      }
+    }
+    
+    // Update detection state
+    if (patternDetected) {
+      setPatternDetected(true);
+      // Set cooldown to prevent repeated detections
+      detectionCooldownRef.current = COOLDOWN_FRAMES;
     }
   }, [audioData]);
   
-  const detectPatterns = () => {
-    const history = historicalDataRef.current;
-    if (history.length < 40) {  // Increased from 30 to 40
-      return; // Need at least 40 frames for reliable analysis
-    }
+  // Calculate similarity between two patterns
+  const calculateSimilarity = (pattern1: number[], pattern2: number[]): number => {
+    if (pattern1.length !== pattern2.length) return 0;
     
-    // Implement cooldown period to prevent excessive pattern detection
-    const now = Date.now();
-    if (now - lastPatternDetectionRef.current < 15000) { // Increased from 10s to 15s cooldown
-      return;
-    }
-    
-    // Check for background noise level
-    const isQuiet = isBackgroundQuiet(history);
-    if (isQuiet) {
-      setPatternDetected(false);
-      setPatternType(null);
-      return; // Skip pattern detection during quiet periods
-    }
-    
-    // Musical rhythm pattern detection
-    const rhythmDetected = detectRhythmPattern(history);
-    if (rhythmDetected) {
-      setPatternDetected(true);
-      setPatternType('music');
-      lastPatternDetectionRef.current = now;
-      return;
-    }
-    
-    // Repetitive sound pattern detection with higher threshold
-    const repetitiveDetected = detectRepetitivePattern(history);
-    if (repetitiveDetected) {
-      setPatternDetected(true);
-      setPatternType('repetitive');
-      lastPatternDetectionRef.current = now;
-      return;
-    }
-    
-    // No pattern detected
-    setPatternDetected(false);
-    setPatternType(null);
-  };
-  
-  // Check if audio is mostly quiet/background noise
-  const isBackgroundQuiet = (history: Array<Uint8Array>): boolean => {
-    // Calculate average energy across all frames
-    const avgEnergy = history.reduce((sum, frame) => {
-      const frameEnergy = Array.from(frame).reduce((e, val) => e + val, 0) / frame.length;
-      return sum + frameEnergy;
-    }, 0) / history.length;
-    
-    // If average energy is low, consider it background noise
-    return avgEnergy < 40;  // Increased from 30 to 40
-  };
-  
-  // Detect rhythmic patterns based on audio energy
-  const detectRhythmPattern = (history: Array<Uint8Array>): boolean => {
-    // Calculate energy per frame
-    const energies = history.map(frame => {
-      let sum = 0;
-      for (let i = 0; i < frame.length; i++) {
-        sum += frame[i];
-      }
-      return sum / frame.length;
-    });
-    
-    // Find energy peaks
-    const peakIndices: number[] = [];
-    for (let i = 2; i < energies.length - 2; i++) {
-      // More strict peak detection - must be significantly higher than neighbors
-      if (energies[i] > energies[i-1] * 1.8 &&  // Increased from 1.5 to 1.8
-          energies[i] > energies[i-2] * 1.8 &&  // Increased from 1.5 to 1.8
-          energies[i] > energies[i+1] * 1.8 &&  // Increased from 1.5 to 1.8
-          energies[i] > energies[i+2] * 1.8) {  // Increased from 1.5 to 1.8
-        // Only consider significant peaks
-        if (energies[i] > 90) { // Increased from 70 to 90
-          peakIndices.push(i);
-        }
-      }
-    }
-    
-    // Need at least 4 peaks for reliable rhythm detection
-    if (peakIndices.length < 5) {  // Increased from 4 to 5
-      return false;
-    }
-    
-    // Calculate intervals between peaks
-    const intervals: number[] = [];
-    for (let i = 1; i < peakIndices.length; i++) {
-      intervals.push(peakIndices[i] - peakIndices[i-1]);
-    }
-    
-    // Calculate variance of intervals (lower = more regular)
-    const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
-    const variance = intervals.reduce((sum, interval) => {
-      return sum + Math.pow(interval - avgInterval, 2);
-    }, 0) / intervals.length;
-    
-    // Stricter test for regular rhythm - lower variance and consistent interval
-    return variance < 1.5 && avgInterval < 10 && avgInterval > 4;  // Stricter conditions
-  };
-  
-  // Detect repetitive patterns based on frame correlation
-  const detectRepetitivePattern = (history: Array<Uint8Array>): boolean => {
-    // Compare current frame with previous frames for repetition
-    const currentFrame = history[history.length - 1];
-    
-    // Check for repetitions in the last 15 frames
-    let repetitionCount = 0;
-    let totalComparisons = 0;
-    
-    for (let i = history.length - 10; i < history.length - 1; i++) {
-      if (i < 0) continue;
+    let similarity = 0;
+    for (let i = 0; i < pattern1.length; i++) {
+      // Calculate how similar the two values are (0-1)
+      const maxVal = Math.max(pattern1[i], pattern2[i]);
+      const minVal = Math.min(pattern1[i], pattern2[i]);
       
-      const pastFrame = history[i];
-      const correlation = calculateCorrelation(currentFrame, pastFrame);
-      totalComparisons++;
+      // Avoid division by zero
+      if (maxVal < 1) continue;
       
-      if (correlation > 0.95) { // Higher threshold (from 0.92 to 0.95)
-        repetitionCount++;
-      }
+      similarity += minVal / maxVal;
     }
     
-    // Require more consistent repetitions - at least 70% of comparisons must show high similarity
-    return totalComparisons > 0 && (repetitionCount / totalComparisons) > 0.7;  // Increased from 0.6 to 0.7
+    return similarity / pattern1.length;
   };
   
-  // Calculate correlation (similarity) between two audio arrays
-  const calculateCorrelation = (a: Uint8Array, b: Uint8Array): number => {
-    if (a.length !== b.length) return 0;
+  // Determine if a pattern is likely music vs. rhythm
+  const isMusicPattern = (pattern: number[]): boolean => {
+    // Music typically has more frequencies in mid-high range
+    const lowFreqs = pattern.slice(0, Math.floor(pattern.length / 3));
+    const midFreqs = pattern.slice(Math.floor(pattern.length / 3), Math.floor(2 * pattern.length / 3));
+    const highFreqs = pattern.slice(Math.floor(2 * pattern.length / 3));
     
-    let sum = 0;
-    let sumA = 0;
-    let sumB = 0;
+    const lowAvg = lowFreqs.reduce((sum, val) => sum + val, 0) / lowFreqs.length;
+    const midAvg = midFreqs.reduce((sum, val) => sum + val, 0) / midFreqs.length;
+    const highAvg = highFreqs.reduce((sum, val) => sum + val, 0) / highFreqs.length;
     
-    for (let i = 0; i < a.length; i++) {
-      sumA += a[i];
-      sumB += b[i];
-    }
-    
-    const avgA = sumA / a.length;
-    const avgB = sumB / b.length;
-    
-    // If either array has very low average energy, skip correlation
-    if (avgA < 25 || avgB < 25) return 0;  // Increased from 20 to 25
-    
-    let numerator = 0;
-    let denominatorA = 0;
-    let denominatorB = 0;
-    
-    for (let i = 0; i < a.length; i++) {
-      const diffA = a[i] - avgA;
-      const diffB = b[i] - avgB;
-      numerator += diffA * diffB;
-      denominatorA += diffA * diffA;
-      denominatorB += diffB * diffB;
-    }
-    
-    if (denominatorA === 0 || denominatorB === 0) return 0;
-    
-    return numerator / Math.sqrt(denominatorA * denominatorB);
+    // Music often has more balanced frequency distribution
+    return (midAvg > lowAvg * 0.5) && (highAvg > lowAvg * 0.3);
   };
   
-  return {
-    patternDetected,
-    patternType
-  };
+  return { patternDetected, patternType };
 };
 
 export default usePatternDetection;
