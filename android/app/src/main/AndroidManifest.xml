@@ -23,7 +23,7 @@
             android:showWhenLocked="true"
             android:turnScreenOn="true"
             android:windowSoftInputMode="adjustResize"
-            android:lockTaskMode="normal"
+            android:lockTaskMode="if_whitelisted"
             android:excludeFromRecents="false">
 
             <intent-filter>

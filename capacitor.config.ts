@@ -32,11 +32,11 @@ const config: CapacitorConfig = {
       "android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
       "android.permission.POST_NOTIFICATIONS"
     ],
-    // Configurações adicionais para modo imersivo
+    // Add more Android specific options for better immersive experience
     backgroundColor: "#FFFFFF",
     overrideUserAgent: null,
     alwaysShow: true,
-    minSdkVersion: 22,
+    minSdkVersion: 21,
     targetSdkVersion: 33
   },
   plugins: {
@@ -47,11 +47,11 @@ const config: CapacitorConfig = {
     Permissions: {
       permissions: ["android.permission.RECORD_AUDIO"]
     },
-    // Forçar diálogo de permissões em tempo de execução
+    // Force runtime permissions dialog
     CapacitorHttp: {
       enabled: true
     },
-    // Melhorar TTS e reconhecimento de voz
+    // Improve TTS and voice recognition
     CapacitorVoice: {
       speechRecognition: true,
       textToSpeech: true
