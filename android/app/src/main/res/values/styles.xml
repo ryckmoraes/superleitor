@@ -2,19 +2,11 @@
     <!-- Base application theme -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Customize your theme here -->
-        <item name="colorPrimary">#4CAF50</item>
-        <item name="colorPrimaryDark">#388E3C</item>
-        <item name="colorAccent">#FFA000</item>
-        <item name="android:windowFullscreen">true</item>
-        <item name="android:immersive">true</item>
-        <item name="android:windowTranslucentStatus">true</item>
-        <item name="android:windowTranslucentNavigation">true</item>
-        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
-        <!-- Added for better immersive mode -->
-        <item name="android:fitsSystemWindows">false</item>
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="colorPrimary">#3F51B5</item>
+        <item name="colorPrimaryDark">#303F9F</item>
+        <item name="colorAccent">#FF4081</item>
+        <!-- Use the correct attribute name for allowing cleartext traffic -->
+        <item name="android:usesCleartextTraffic">true</item>
     </style>
 
     <!-- Theme applied to the Android Window while the process is starting -->
@@ -22,13 +14,7 @@
         <item name="android:windowBackground">@android:color/white</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
-        <item name="android:windowFullscreen">true</item>
-        <item name="android:immersive">true</item>
-        <item name="android:windowTranslucentStatus">true</item>
-        <item name="android:windowTranslucentNavigation">true</item>
-        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
-        <!-- Added for better immersive mode -->
-        <item name="android:fitsSystemWindows">false</item>
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <!-- Use the correct attribute name for allowing cleartext traffic -->
+        <item name="android:usesCleartextTraffic">true</item>
     </style>
 </resources>

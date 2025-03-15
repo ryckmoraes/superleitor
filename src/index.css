@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -12,21 +11,21 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
     
-    /* Cheerful green theme for book reader */
-    --primary: 142 76% 36%;
+    /* Cheerful purple theme for calendar */
+    --primary: 263 85% 60%;
     --primary-foreground: 210 40% 98%;
     
-    --secondary: 142 55% 90%;
+    --secondary: 262 83% 92%;
     --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 142 50% 96%;
+    --muted: 263 50% 96%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 142 50% 96%;
+    --accent: 263 50% 96%;
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 142 30% 91.4%;
-    --input: 142 30% 91.4%;
-    --ring: 142 76% 36%;
+    --border: 263 30% 91.4%;
+    --input: 263 30% 91.4%;
+    --ring: 263 85% 60%;
     --radius: 1rem;
   }
 
@@ -38,8 +37,8 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
     
-    /* Dark green theme */
-    --primary: 142 70% 50%;
+    /* Cheerful purple theme for calendar */
+    --primary: 263 75% 65%;
     --primary-foreground: 222.2 47.4% 11.2%;
     
     --secondary: 217.2 32.6% 17.5%;
@@ -52,7 +51,7 @@
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 142 70% 50%;
+    --ring: 263 75% 65%;
   }
 }
 

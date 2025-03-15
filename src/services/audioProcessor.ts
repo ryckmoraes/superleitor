@@ -15,10 +15,10 @@ export const processTextForSpeech = (text: string): string => {
 const addNaturalVariations = (text: string): string => {
   // Add occasional filler words that Brazilians use in casual speech
   const fillers = [
-    { probability: 0.05, pattern: /^/g, replacements: ['Bem, ', 'Olha, ', 'Veja, ', ''] },
-    { probability: 0.07, pattern: /\.\s+/g, replacements: ['. Então, ', '. Agora, ', '. '] },
-    { probability: 0.05, pattern: /\?/g, replacements: ['?', '? Entende?', '?'] },
-    { probability: 0.05, pattern: /!/g, replacements: ['!', '! Poxa!', '!'] }
+    { probability: 0.1, pattern: /^/g, replacements: ['Bem, ', 'Olha, ', 'Veja, ', ''] },
+    { probability: 0.15, pattern: /\.\s+/g, replacements: ['. Então, ', '. Agora, ', '. '] },
+    { probability: 0.1, pattern: /\?/g, replacements: ['?', '? Entende?', '?'] },
+    { probability: 0.1, pattern: /!/g, replacements: ['!', '! Poxa!', '!'] }
   ];
   
   let result = text;
@@ -38,9 +38,9 @@ export const configureNaturalVoice = (utterance: SpeechSynthesisUtterance): void
   // Set language to Brazilian Portuguese
   utterance.lang = 'pt-BR';
   
-  // More natural rate settings - slightly slower for better clarity
-  utterance.rate = 0.95;  // Slightly slower for better comprehension
-  utterance.pitch = 1.05; // Slightly higher pitch for children's content
+  // More natural rate settings
+  utterance.rate = 1.1;  // More moderate rate
+  utterance.pitch = 1.0; // Natural pitch
   utterance.volume = 1.0; // Maximum volume
   
   // Try to select a more natural female voice if available
@@ -69,12 +69,7 @@ export const configureNaturalVoice = (utterance: SpeechSynthesisUtterance): void
   
   // Final fallback to any available voice if no Portuguese voice is found
   if (!selectedVoice && voices.length > 0) {
-    // Try to find a female voice in any language as last resort
-    selectedVoice = voices.find(voice => 
-      voice.name.toLowerCase().includes('female') || 
-      voice.name.toLowerCase().includes('woman') || 
-      voice.name.toLowerCase().includes('girl')
-    ) || voices[0];
+    selectedVoice = voices[0];
   }
   
   if (selectedVoice) {
@@ -85,7 +80,7 @@ export const configureNaturalVoice = (utterance: SpeechSynthesisUtterance): void
   }
 };
 
-// Enhanced voice initialization for mobile - with retry mechanism
+// Handle voice initialization for mobile
 export const initVoices = (): Promise<boolean> => {
   return new Promise((resolve) => {
     if (!('speechSynthesis' in window)) {
@@ -94,33 +89,11 @@ export const initVoices = (): Promise<boolean> => {
       return;
     }
     
-    // Force init speech synthesis
-    try {
-      // Sometimes this helps kickstart the TTS system
-      speechSynthesis.cancel();
-    } catch (e) {
-      console.error("Error initializing speech synthesis", e);
-    }
-    
     // Check if voices are already loaded
     const voices = window.speechSynthesis.getVoices();
     if (voices && voices.length > 0) {
       console.log("Voices already loaded:", voices.length, "voices available");
       console.log("Available Portuguese voices:", voices.filter(v => v.lang.includes('pt')).map(v => v.name).join(', '));
-      
-      // Force immediate test speech to activate TTS engine
-      setTimeout(() => {
-        try {
-          const testUtterance = new SpeechSynthesisUtterance("Teste");
-          testUtterance.volume = 0; // Silent test
-          testUtterance.rate = 1;
-          testUtterance.lang = 'pt-BR';
-          speechSynthesis.speak(testUtterance);
-        } catch (e) {
-          console.error("Error in test speech", e);
-        }
-      }, 500);
-      
       resolve(true);
       return;
     }
@@ -131,62 +104,21 @@ export const initVoices = (): Promise<boolean> => {
       console.log("Voices loaded:", availableVoices.length, "voices available");
       console.log("Available Portuguese voices:", availableVoices.filter(v => v.lang.includes('pt')).map(v => v.name).join(', '));
       window.speechSynthesis.removeEventListener('voiceschanged', voicesChanged);
-      
-      // Force immediate test speech to activate TTS engine
-      setTimeout(() => {
-        try {
-          const testUtterance = new SpeechSynthesisUtterance("Teste");
-          testUtterance.volume = 0; // Silent test
-          testUtterance.rate = 1;
-          testUtterance.lang = 'pt-BR';
-          speechSynthesis.speak(testUtterance);
-        } catch (e) {
-          console.error("Error in test speech", e);
-        }
-      }, 500);
-      
       resolve(true);
     };
     
     window.speechSynthesis.addEventListener('voiceschanged', voicesChanged);
     
-    // Set a timeout in case voices never load - try another approach
+    // Set a timeout in case voices never load
     setTimeout(() => {
-      if (window.speechSynthesis.getVoices().length === 0) {
-        window.speechSynthesis.removeEventListener('voiceschanged', voicesChanged);
-        console.warn("Timed out waiting for voices to load, trying alternative approach");
-        
-        // Try an alternative approach - sometimes just trying to speak triggers voice loading
-        try {
-          // Cancel any existing speech
-          window.speechSynthesis.cancel();
-          
-          // Create and speak a test utterance to trigger voice loading
-          const utterance = new SpeechSynthesisUtterance("Teste de inicialização");
-          utterance.lang = 'pt-BR';
-          utterance.volume = 1.0;
-          utterance.rate = 0.9;
-          window.speechSynthesis.speak(utterance);
-          
-          // Check again after a moment
-          setTimeout(() => {
-            const finalVoices = window.speechSynthesis.getVoices();
-            console.log("After forcing speech, voices available:", finalVoices.length);
-            if (finalVoices.length > 0) {
-              console.log("Available voices after force:", finalVoices.map(v => `${v.name} (${v.lang})`).join(", "));
-            }
-            resolve(finalVoices.length > 0);
-          }, 1000);
-        } catch (e) {
-          console.error("Error in alternative voice loading approach", e);
-          resolve(false);
-        }
-      }
-    }, 3000);
+      window.speechSynthesis.removeEventListener('voiceschanged', voicesChanged);
+      console.warn("Timed out waiting for voices to load");
+      resolve(true); // Still resolve true to allow fallback mechanisms
+    }, 5000); // Extended timeout
   });
 };
 
-// Redesigned speech system for improved naturalness with multiple retries
+// Redesigned speech system for improved naturalness
 export const speakNaturally = (text: string, priority: boolean = false): void => {
   if (!('speechSynthesis' in window)) {
     console.error("Speech synthesis not supported");
@@ -204,112 +136,68 @@ export const speakNaturally = (text: string, priority: boolean = false): void =>
     console.error("Error cancelling speech:", e);
   }
   
-  let attemptCount = 0;
-  const maxAttempts = 3;
-  
-  const attemptSpeech = () => {
-    attemptCount++;
-    console.log(`Speech attempt ${attemptCount} of ${maxAttempts}`);
-    
-    // Short delay to ensure cancellation completes
-    setTimeout(() => {
+  // Short delay to ensure cancellation completes
+  setTimeout(() => {
+    try {
+      // Force device volume to be high using web audio API
       try {
-        // Force device volume to be high using web audio API
-        try {
-          const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-          const gainNode = audioCtx.createGain();
-          gainNode.gain.value = 1.0; // max volume
-          gainNode.connect(audioCtx.destination);
-        } catch (e) {
-          console.error("Could not initialize audio context for volume", e);
-        }
-        
-        // Use the Web Speech API's standard utterance mechanism but with optimal settings
-        const utterance = new SpeechSynthesisUtterance();
-        
-        // Add random natural variations to text for more human-like speech
-        const naturalText = addNaturalVariations(text);
-        
-        // Process the text for better speech patterns
-        const processedText = processTextForSpeech(naturalText);
-        
-        console.log("Speaking processed text:", processedText);
-        
-        // Configure the utterance
-        utterance.text = processedText;
-        utterance.rate = 0.95; // Slightly slower for better comprehension
-        utterance.pitch = 1.05; // Slightly higher pitch for children's content
-        utterance.volume = 1.0; // Maximum volume
-        utterance.lang = 'pt-BR';
-        
-        // Set voice
-        configureNaturalVoice(utterance);
-        
-        // Track if speech actually started
-        let speechStarted = false;
-        
-        // Monitor speech
-        utterance.onstart = () => {
-          speechStarted = true;
-          console.log("Speech started successfully");
-        };
-        
-        // Error handling
-        utterance.onerror = (event) => {
-          console.error("Speech error:", event);
-          
-          // Retry if we haven't exceeded max attempts
-          if (attemptCount < maxAttempts) {
-            console.log(`Retrying speech, attempt ${attemptCount + 1}`);
-            attemptSpeech();
-          } else {
-            // Fallback to simple speech on error
-            simpleSpeakFallback(text);
-          }
-        };
-        
-        // Start speaking
-        window.speechSynthesis.speak(utterance);
-        
-        // For mobile Safari which tends to cut off speech
-        if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-          // Keep the speech synthesis active on iOS
-          const keepAlive = () => {
-            if (window.speechSynthesis.speaking) {
-              window.speechSynthesis.pause();
-              window.speechSynthesis.resume();
-              setTimeout(keepAlive, 5000);
-            }
-          };
-          setTimeout(keepAlive, 5000);
-        }
-        
-        // Verify speech actually started
-        setTimeout(() => {
-          if (!speechStarted && attemptCount < maxAttempts) {
-            console.log("Speech didn't start properly, retrying...");
-            window.speechSynthesis.cancel();
-            attemptSpeech();
-          }
-        }, 1000);
-        
+        const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.value = 1.0; // max volume
+        gainNode.connect(audioCtx.destination);
       } catch (e) {
-        console.error("Error in speech synthesis:", e);
-        
-        // Retry if we haven't exceeded max attempts
-        if (attemptCount < maxAttempts) {
-          console.log(`Retrying speech after error, attempt ${attemptCount + 1}`);
-          attemptSpeech();
-        } else {
-          // Fallback to simple speech on error
-          simpleSpeakFallback(text);
-        }
+        console.error("Could not initialize audio context for volume", e);
       }
-    }, 200);
-  };
-  
-  // Start the first attempt
-  attemptSpeech();
+      
+      // Use the Web Speech API's standard utterance mechanism but with optimal settings
+      const utterance = new SpeechSynthesisUtterance();
+      
+      // Add random natural variations to text for more human-like speech
+      const naturalText = addNaturalVariations(text);
+      
+      // Process the text for better speech patterns
+      const processedText = processTextForSpeech(naturalText);
+      
+      console.log("Speaking processed text:", processedText);
+      
+      // Configure the utterance
+      utterance.text = processedText;
+      utterance.rate = 1.1; // More natural rate
+      utterance.pitch = 1.0; // Natural pitch
+      utterance.volume = 1.0; // Maximum volume
+      utterance.lang = 'pt-BR';
+      
+      // Set voice
+      configureNaturalVoice(utterance);
+      
+      // Error handling
+      utterance.onerror = (event) => {
+        console.error("Speech error:", event);
+        // Fallback to simple speech on error
+        simpleSpeakFallback(text);
+      };
+      
+      // Start speaking
+      window.speechSynthesis.speak(utterance);
+      
+      // For mobile Safari which tends to cut off speech
+      if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+        // Keep the speech synthesis active on iOS
+        const keepAlive = () => {
+          if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.pause();
+            window.speechSynthesis.resume();
+            setTimeout(keepAlive, 5000);
+          }
+        };
+        setTimeout(keepAlive, 5000);
+      }
+    } catch (e) {
+      console.error("Error in speech synthesis:", e);
+      // Fallback to simple speech on error
+      simpleSpeakFallback(text);
+    }
+  }, 200);
 };
 
 // Super simplified fallback for speech when everything else fails
@@ -318,21 +206,12 @@ const simpleSpeakFallback = (text: string): void => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'pt-BR';
     utterance.volume = 1.0;
-    utterance.rate = 0.9; // Slower for more clarity
+    utterance.rate = 1.1; // More natural rate
     utterance.pitch = 1.0;
     window.speechSynthesis.speak(utterance);
     console.log("Using simple fallback speech");
   } catch (e) {
     console.error("Even fallback speech failed:", e);
-    
-    // Last resort - try with default settings and no configuration
-    try {
-      speechSynthesis.cancel();
-      speechSynthesis.speak(new SpeechSynthesisUtterance(text));
-      console.log("Using absolute minimal speech fallback");
-    } catch (finalError) {
-      console.error("All speech attempts failed:", finalError);
-    }
   }
 };
 

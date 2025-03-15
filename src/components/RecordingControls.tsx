@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { BookOpen, Square, Loader2 } from "lucide-react";
+import { Mic, Square, Loader2 } from "lucide-react";
 
 interface RecordingControlsProps {
   isRecording: boolean;
@@ -20,7 +20,7 @@ const RecordingControls = ({
   return (
     <div className="absolute top-6 left-0 right-0 text-center">
       <h1 className="text-2xl font-semibold tracking-tight text-primary">
-        {isRecording ? "Modo História" : "Superleitor"}
+        {isRecording ? "Modo História" : "Esfera Sonora"}
       </h1>
       {isRecording && (
         <p className="text-sm text-muted-foreground mt-1">
@@ -51,7 +51,7 @@ const RecordingControls = ({
               </>
             ) : (
               <>
-                <BookOpen className="w-5 h-5" />
+                <Mic className="w-5 h-5" />
                 Iniciar História
               </>
             )}
