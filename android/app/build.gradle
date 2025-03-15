@@ -2,10 +2,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace 'com.lovable.esferasonora'
+    namespace 'com.lovable.superleitor'
     compileSdkVersion 33
     defaultConfig {
-        applicationId "com.lovable.esferasonora"
+        applicationId "com.lovable.superleitor"
         minSdkVersion 22
         targetSdkVersion 33
         versionCode 1

@@ -2,8 +2,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.lovable.esferasonora',
-  appName: 'Esfera Sonora',
+  appId: 'com.lovable.superleitor',
+  appName: 'Superleitor',
   webDir: 'dist',
   server: {
     url: "https://61c9c85a-521b-4753-a60e-0cdb64c7b0cc.lovableproject.com?forceHideBadge=true",
