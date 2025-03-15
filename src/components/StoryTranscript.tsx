@@ -17,22 +17,28 @@ const StoryTranscript = ({
 }: StoryTranscriptProps) => {
   if (!storyTranscript && !isProcessing && !recognitionStatus) return null;
   
+  // Don't show the box if it's just the "Reconhecimento finalizado" status
+  if (!storyTranscript && !isProcessing && 
+      recognitionStatus && recognitionStatus.includes("finalizado")) {
+    return null;
+  }
+  
   return (
-    <div className="absolute bottom-32 px-6 w-full max-w-md mx-auto">
-      <ScrollArea className="h-[150px] rounded-md border p-4 bg-card/50 backdrop-blur-sm">
+    <div className="fixed bottom-4 left-4 right-4 max-w-md mx-auto z-10">
+      <ScrollArea className="max-h-[100px] rounded-md border p-2 bg-background/70 backdrop-blur-sm">
         {isProcessing ? (
           <div className="flex flex-col items-center justify-center h-full">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm mt-2">Analisando sua história...</p>
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            <p className="text-xs mt-1">Analisando sua história...</p>
           </div>
         ) : (
           <div>
-            <p className={`text-sm ${isInterim ? 'opacity-70' : ''}`}>
+            <p className={`text-xs ${isInterim ? 'opacity-70' : ''}`}>
               {storyTranscript}
               {isInterim && <span className="animate-pulse">...</span>}
             </p>
-            {recognitionStatus && (
-              <p className="text-xs text-muted-foreground mt-2 italic">
+            {recognitionStatus && !recognitionStatus.includes("finalizado") && (
+              <p className="text-xs text-muted-foreground mt-1 italic">
                 {recognitionStatus}
               </p>
             )}

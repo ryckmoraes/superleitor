@@ -57,17 +57,22 @@ jobs:
           if [ ! -f "android/app/src/main/assets/capacitor.plugins.json" ]; then
             echo "[]" > android/app/src/main/assets/capacitor.plugins.json
           fi
-
-      - name: Update Capacitor
-        run: npx cap update android
+          
+      - name: Ensure AndroidX is enabled
+        run: |
+          echo "android.useAndroidX=true" >> android/gradle.properties
+          echo "android.enableJetifier=true" >> android/gradle.properties
 
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Ensure gradle properties
+      - name: Create Gradle wrapper if it doesn't exist
         run: |
-          echo "android.useAndroidX=true" >> android/gradle.properties
-          echo "android.enableJetifier=true" >> android/gradle.properties
+          cd android
+          if [ ! -f "gradlew" ]; then
+            gradle wrapper
+          fi
+          chmod +x ./gradlew
 
       - name: Build Android APK
         run: |

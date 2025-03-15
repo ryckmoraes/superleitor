@@ -217,7 +217,8 @@ const RecordingScreen = () => {
   
   // Handle when speech recognition ends
   const handleRecognitionEnd = () => {
-    setRecognitionStatus("Reconhecimento finalizado");
+    // Update status but don't display it prominently
+    setRecognitionStatus("");
     
     // Only respond if there's meaningful transcript
     if (lastTranscriptRef.current && lastTranscriptRef.current.length > 5) {
