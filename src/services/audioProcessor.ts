@@ -1,3 +1,4 @@
+
 // Enhanced text processor for more natural speech with improved pauses and intonation
 export const processTextForSpeech = (text: string): string => {
   return text
@@ -47,10 +48,10 @@ export const configureNaturalVoice = (utterance: SpeechSynthesisUtterance): void
   // Set language to Brazilian Portuguese
   utterance.lang = 'pt-BR';
   
-  // Set natural speaking parameters - more dynamic values
-  utterance.rate = 0.9 + (Math.random() * 0.2 - 0.1); // Range between 0.8-1.0
-  utterance.pitch = 1.1 + (Math.random() * 0.3 - 0.15); // Range between 0.95-1.25
-  utterance.volume = 1.0;
+  // Set natural speaking parameters - FIXED VALUES for reliability
+  utterance.rate = 0.95;  // Slightly slower than normal
+  utterance.pitch = 1.1;  // Slightly higher pitch
+  utterance.volume = 1.0; // Maximum volume
   
   // Try to select a more natural female voice if available
   const voices = window.speechSynthesis.getVoices();
@@ -123,11 +124,11 @@ export const initVoices = (): Promise<boolean> => {
       window.speechSynthesis.removeEventListener('voiceschanged', voicesChanged);
       console.warn("Timed out waiting for voices to load");
       resolve(true); // Still resolve true to allow fallback mechanisms
-    }, 3000);
+    }, 5000); // Extended timeout
   });
 };
 
-// Speaks text with a natural, expressive voice - FIXING THE ISSUES WITH SPEECH
+// IMPORTANTE: COMPLETA REVISÃO DO SISTEMA DE FALA
 export const speakNaturally = (text: string, priority: boolean = false): void => {
   if (!('speechSynthesis' in window)) {
     console.error("Speech synthesis not supported");
@@ -145,10 +146,41 @@ export const speakNaturally = (text: string, priority: boolean = false): void =>
     console.error("Error cancelling speech:", e);
   }
   
-  // Small delay to ensure cancellation completes
+  // Longer delay to ensure cancellation completes
   setTimeout(() => {
-    actuallySpeak(text, priority);
-  }, 50);
+    try {
+      // Forçar que o volume do dispositivo seja alto usando web audio API
+      try {
+        const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.value = 1.0; // max volume
+        gainNode.connect(audioCtx.destination);
+      } catch (e) {
+        console.error("Could not initialize audio context for volume", e);
+      }
+      
+      actuallySpeak(text, priority);
+    } catch (e) {
+      console.error("Error initializing speech:", e);
+      // Fallback to simple speech on error
+      simpleSpeakFallback(text);
+    }
+  }, 300); // Longer delay to ensure previous speech is canceled
+};
+
+// Super simplified fallback for speech when everything else fails
+const simpleSpeakFallback = (text: string): void => {
+  try {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'pt-BR';
+    utterance.volume = 1.0;
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    window.speechSynthesis.speak(utterance);
+    console.log("Using simple fallback speech");
+  } catch (e) {
+    console.error("Even fallback speech failed:", e);
+  }
 };
 
 // Helper function to actually perform speech
@@ -163,7 +195,7 @@ const actuallySpeak = (text: string, priority: boolean): void => {
     console.log("Speaking processed text:", processedText);
     
     // For longer texts, split by sentences to improve naturalness
-    const MAX_CHUNK_LENGTH = 25; // Even shorter chunks for more natural delivery
+    const MAX_CHUNK_LENGTH = 15; // MUCH shorter chunks for more reliable delivery
     
     if (processedText.length > MAX_CHUNK_LENGTH) {
       // Split by sentence markers but keep the markers
@@ -182,77 +214,89 @@ const actuallySpeak = (text: string, priority: boolean): void => {
           const utterance = new SpeechSynthesisUtterance(sentence);
           configureNaturalVoice(utterance);
           
-          // Additional tweaks for more natural voice
-          utterance.pitch += (Math.random() * 0.4) - 0.2; // More random pitch variation
-          utterance.rate += (Math.random() * 0.3) - 0.15;  // More random rate variation
+          // Fixed speech parameters for more reliable delivery
+          utterance.volume = 1.0; // Maximum volume always
           
           // Events
           utterance.onstart = () => console.log('Speech started:', sentence.substring(0, 20) + '...');
           utterance.onerror = (e) => {
             console.error('Speech error:', e);
             // Try next sentence on error
-            speakNextSentence();
+            setTimeout(speakNextSentence, 300);
           };
           utterance.onend = () => {
             console.log('Speech chunk ended');
-            // Small pause between sentences
-            setTimeout(speakNextSentence, 150);
+            // Larger pause between sentences for reliability
+            setTimeout(speakNextSentence, 300);
           };
           
           // Speak
           window.speechSynthesis.speak(utterance);
         } catch (e) {
           console.error('Error in speech synthesis:', e);
-          // Try fallback approach
-          try {
-            const simpleUtterance = new SpeechSynthesisUtterance(sentence);
-            simpleUtterance.lang = 'pt-BR';
-            
-            // Set direct events for fallback
-            simpleUtterance.onend = () => setTimeout(speakNextSentence, 150);
-            simpleUtterance.onerror = () => setTimeout(speakNextSentence, 150);
-            
-            window.speechSynthesis.speak(simpleUtterance);
-          } catch (e2) {
-            console.error('Fallback speech failed:', e2);
-            // Continue to next sentence anyway
-            setTimeout(speakNextSentence, 150);
-          }
+          // Try fallback approach with longer delay
+          setTimeout(() => {
+            try {
+              const simpleUtterance = new SpeechSynthesisUtterance(sentence);
+              simpleUtterance.lang = 'pt-BR';
+              simpleUtterance.volume = 1.0;
+              
+              // Set direct events for fallback
+              simpleUtterance.onend = () => setTimeout(speakNextSentence, 300);
+              simpleUtterance.onerror = () => setTimeout(speakNextSentence, 300);
+              
+              window.speechSynthesis.speak(simpleUtterance);
+            } catch (e2) {
+              console.error('Fallback speech failed:', e2);
+              // Continue to next sentence anyway
+              setTimeout(speakNextSentence, 300);
+            }
+          }, 300);
         }
       };
       
       // Start speaking sentences
       speakNextSentence();
     } else {
-      // For shorter texts, speak as single utterance
-      try {
-        const utterance = new SpeechSynthesisUtterance(processedText);
-        configureNaturalVoice(utterance);
-        
-        // Additional tweaks for more natural voice
-        utterance.pitch += (Math.random() * 0.3) - 0.15; // Random pitch variation
-        utterance.rate += (Math.random() * 0.2) - 0.1;  // Random rate variation
-        
-        // Mobile browser event handlers
-        utterance.onstart = () => console.log('Speech started:', processedText.substring(0, 20) + '...');
-        utterance.onerror = (e) => console.error('Speech error:', e);
-        utterance.onend = () => console.log('Speech ended');
-        
-        window.speechSynthesis.speak(utterance);
-      } catch (e) {
-        console.error('Error in speech synthesis:', e);
-        // Try again with a simpler approach
-        try {
-          const simpleUtterance = new SpeechSynthesisUtterance(processedText);
-          simpleUtterance.lang = 'pt-BR';
-          window.speechSynthesis.speak(simpleUtterance);
-        } catch (e2) {
-          console.error('Fallback speech failed:', e2);
+      // For shorter texts, speak as single utterance with multiple attempts
+      const attemptSpeech = (attemptCount = 0) => {
+        if (attemptCount > 2) {
+          console.error("Failed after multiple speech attempts");
+          simpleSpeakFallback(processedText);
+          return;
         }
-      }
+        
+        try {
+          const utterance = new SpeechSynthesisUtterance(processedText);
+          configureNaturalVoice(utterance);
+          
+          // Fixed reliable parameters
+          utterance.volume = 1.0; // Always maximum volume
+          
+          // Mobile browser event handlers with error recovery
+          utterance.onstart = () => console.log('Speech started:', processedText.substring(0, 20) + '...');
+          utterance.onerror = (e) => {
+            console.error('Speech error:', e);
+            // Try again on error
+            setTimeout(() => attemptSpeech(attemptCount + 1), 300);
+          };
+          utterance.onend = () => console.log('Speech ended');
+          
+          window.speechSynthesis.speak(utterance);
+        } catch (e) {
+          console.error('Error in speech synthesis, attempt ' + attemptCount + ':', e);
+          // Try again with a delay
+          setTimeout(() => attemptSpeech(attemptCount + 1), 300);
+        }
+      };
+      
+      // Start first attempt
+      attemptSpeech();
     }
   } catch (error) {
     console.error("Error in speech processing:", error);
+    // Use the simplest possible fallback
+    simpleSpeakFallback(text);
   }
 };
 

@@ -36,26 +36,8 @@ jobs:
       - name: Install Capacitor Android
         run: npm install @capacitor/android --legacy-peer-deps
 
-      - name: Initialize Capacitor if needed
-        run: |
-          if [ ! -f "capacitor.config.ts" ]; then
-            npx cap init
-          fi
-
-      - name: Check if Android platform exists
-        id: check_android
-        run: |
-          if [ -d "android" ]; then
-            echo "platform_exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "platform_exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Add Android platform if needed
-        if: steps.check_android.outputs.platform_exists == 'false'
-        run: npx cap add android
-
-      - name: Initialize capacitor.config.ts if needed
+      # Inicializar o Capacitor com valores específicos
+      - name: Initialize Capacitor
         run: |
           if [ ! -f "capacitor.config.ts" ]; then
             echo 'import { CapacitorConfig } from "@capacitor/cli";
@@ -74,50 +56,119 @@ jobs:
             export default config;' > capacitor.config.ts
           fi
 
+      # Verificar se a plataforma Android existe
+      - name: Check if Android platform exists
+        id: check_android
+        run: |
+          if [ -d "android" ]; then
+            echo "platform_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "platform_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Adicionar a plataforma Android se necessário
+      - name: Add Android platform if needed
+        if: steps.check_android.outputs.platform_exists == 'false'
+        run: npx cap add android
+
+      # Criar diretório de assets se não existir
       - name: Create assets directory if it doesn't exist
         run: mkdir -p android/app/src/main/assets
 
+      # Criar arquivo capacitor.plugins.json vazio se não existir
       - name: Create empty capacitor.plugins.json if it doesn't exist
         run: |
           if [ ! -f "android/app/src/main/assets/capacitor.plugins.json" ]; then
             echo "[]" > android/app/src/main/assets/capacitor.plugins.json
           fi
           
+      # Garantir que AndroidX está habilitado
       - name: Ensure AndroidX is enabled
         run: |
           mkdir -p android
           echo "android.useAndroidX=true" >> android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
+          echo "org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8" >> android/gradle.properties
+          echo "android.useNewApkCreator=true" >> android/gradle.properties
+          echo "android.enableAppCompilationFeatureFlagForCurrentConfig=true" >> android/gradle.properties
 
-      - name: Create basic Gradle project structure if not exists
+      # Criar estrutura básica do projeto Gradle se não existir
+      - name: Create basic Gradle project structure
         run: |
-          if [ ! -f "android/settings.gradle" ]; then
-            mkdir -p android
-            echo "rootProject.name = 'esferasonora'" > android/settings.gradle
-            mkdir -p android/app
-            echo "plugins { id 'com.android.application' }" > android/app/build.gradle
-          fi
+          mkdir -p android
+          echo "rootProject.name = 'esferasonora'" > android/settings.gradle
+          
+          # Criar build.gradle no diretório raiz
+          echo "buildscript {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+              dependencies {
+                  classpath 'com.android.tools.build:gradle:7.3.1'
+              }
+          }
+          
+          allprojects {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }" > android/build.gradle
+          
+          # Criar diretório e build.gradle para o app
+          mkdir -p android/app
+          echo "plugins {
+              id 'com.android.application'
+          }
+          
+          android {
+              compileSdkVersion 33
+              defaultConfig {
+                  applicationId \"com.lovable.esferasonora\"
+                  minSdkVersion 22
+                  targetSdkVersion 33
+                  versionCode 1
+                  versionName \"1.0\"
+                  testInstrumentationRunner \"androidx.test.runner.AndroidJUnitRunner\"
+              }
+              buildTypes {
+                  release {
+                      minifyEnabled false
+                      proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+                  }
+              }
+          }
+          
+          dependencies {
+              implementation 'androidx.appcompat:appcompat:1.6.1'
+          }" > android/app/build.gradle
 
+      # Criar Gradle wrapper com versão específica
       - name: Create Gradle wrapper with specific version
         run: |
           cd android
           gradle wrapper --gradle-version 7.6
           chmod +x ./gradlew
 
+      # Sincronizar Capacitor (após todas as configurações)
       - name: Sync Capacitor
         run: npx cap sync android
 
+      # Construir o APK do Android
       - name: Build Android APK
         run: |
           cd android
           ./gradlew assembleDebug
 
+      # Fazer upload do artefato APK
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: esfera-sonora-app
           path: android/app/build/outputs/apk/debug/app-debug.apk
 
+      # Implantação no servidor (desativada por enquanto)
       - name: Deploy to server
         if: false # Disable server deployment for now
         run: ./deploy.sh

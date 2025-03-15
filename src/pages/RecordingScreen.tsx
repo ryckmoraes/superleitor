@@ -10,6 +10,7 @@ import { speakNaturally, processRecognitionResult, generateSimpleResponse, initV
 import { showToastOnly } from "@/services/notificationService";
 import webSpeechService from "@/services/webSpeechService";
 import { isAndroid, keepScreenOn, requestAndroidPermissions } from "@/utils/androidHelper";
+import { geminiService } from "@/services/geminiService";
 
 const RecordingScreen = () => {
   const [loaded, setLoaded] = useState(false);
@@ -40,8 +41,36 @@ const RecordingScreen = () => {
   const welcomeSpokenRef = useRef(false);
   const lastTranscriptRef = useRef("");
   const speechInitializedRef = useRef(false);
+  const audioTestPerformedRef = useRef(false);
 
-  // Initialize voices
+  // NOVO: Testar o áudio na inicialização
+  useEffect(() => {
+    if (loaded && !audioTestPerformedRef.current) {
+      audioTestPerformedRef.current = true;
+      
+      // Breve delay para garantir que a página esteja completamente carregada
+      setTimeout(async () => {
+        try {
+          // Tentar tocar um som de teste
+          const testSound = new Audio();
+          testSound.src = "data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU..."
+          testSound.volume = 1.0;
+          
+          // Forçar contexto de áudio para desbloquear áudio no iOS/Safari
+          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+          await audioContext.resume();
+          
+          // Testar a síntese de voz
+          const testText = "Testando o sistema de áudio...";
+          console.log("Teste inicial de áudio:", testText);
+          speakNaturally(testText, true);
+        } catch (e) {
+          console.error("Erro no teste de áudio:", e);
+        }
+      }, 1500);
+    }
+  }, [loaded]);
+
   useEffect(() => {
     if (!speechInitializedRef.current) {
       initVoices().then((initialized) => {
@@ -51,35 +80,29 @@ const RecordingScreen = () => {
     }
   }, []);
 
-  // Check for microphone permission
   useEffect(() => {
     const checkMicrophonePermission = async () => {
       try {
-        // For Android native, use Capacitor Permissions
         if (isAndroid()) {
           const granted = await requestAndroidPermissions();
           setHasMicrophonePermission(granted);
           return;
         }
         
-        // For web browser
         const result = await navigator.permissions.query({ name: 'microphone' as PermissionName });
         setHasMicrophonePermission(result.state === 'granted');
         
-        // If not granted, request permission
         if (result.state !== 'granted') {
           requestMicrophonePermission();
         }
       } catch (error) {
         console.error("Error checking microphone permission:", error);
-        // Fallback to requesting directly if query is not supported
         requestMicrophonePermission();
       }
     };
     
     checkMicrophonePermission();
     
-    // Try to keep screen on for Android
     if (isAndroid()) {
       keepScreenOn().catch(error => {
         console.error("Error keeping screen on:", error);
@@ -87,12 +110,9 @@ const RecordingScreen = () => {
     }
   }, []);
 
-  // Function to request microphone permission
   const requestMicrophonePermission = async () => {
     try {
-      // Just requesting permission will trigger the browser's permission dialog
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // Immediately stop the stream since we only needed to request permission
       stream.getTracks().forEach(track => track.stop());
       setHasMicrophonePermission(true);
     } catch (error) {
@@ -105,18 +125,16 @@ const RecordingScreen = () => {
     }
   };
 
-  // Apply theme class to document
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
-    // Save theme preference to localStorage
     localStorage.setItem("dark-mode", isDarkMode.toString());
   }, [isDarkMode]);
 
-  // Function to speak welcome message using Web Speech API
+  // Função melhorada para falar mensagem de boas-vindas
   const speakWelcomeMessage = () => {
     if (onboardingData.superReaderName) {
       // Create welcome message with just the SuperLeitor name
@@ -126,8 +144,11 @@ const RecordingScreen = () => {
       // Show toast message
       showToastOnly("Bem-vindo!", welcomeMessage);
       
-      // Speak with natural voice
-      speakNaturally(welcomeMessage, true);
+      // IMPORTANTE: Garantir que o áudio seja reproduzido com prioridade
+      setTimeout(() => {
+        console.log("Attempting to speak welcome message with delay");
+        speakNaturally(welcomeMessage, true);
+      }, 1000);
     } else {
       console.error("Name not set", {
         superReaderName: onboardingData.superReaderName
@@ -135,27 +156,29 @@ const RecordingScreen = () => {
       
       // Show generic toast if name is not set
       showToastOnly("Bem-vindo!", "Olá! Que bom te ver! Que história você quer me contar hoje?");
+      
+      // Speak generic welcome
+      setTimeout(() => {
+        speakNaturally("Olá! Que bom te ver! Que história você quer me contar hoje?", true);
+      }, 1000);
     }
   };
 
-  // Speak welcome message when component is loaded
   useEffect(() => {
     if (loaded && !welcomeSpokenRef.current && onboardingData.superReaderName) {
       welcomeSpokenRef.current = true;
       
-      // Slight delay to ensure everything is ready
+      // Longer delay to ensure everything is ready
       setTimeout(() => {
         speakWelcomeMessage();
-      }, 1000);
+      }, 2000);
     }
   }, [loaded, onboardingData.superReaderName]);
 
-  // Toggle theme function
   const toggleTheme = () => {
     setIsDarkMode(prev => !prev);
   };
 
-  // Animation when component is mounted
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoaded(true);
@@ -170,7 +193,6 @@ const RecordingScreen = () => {
     }
   }, [errorMessage]);
 
-  // Notify user when a pattern is detected
   useEffect(() => {
     if (patternDetected && !patternNotifiedRef.current && isRecording) {
       patternNotifiedRef.current = true;
@@ -181,8 +203,10 @@ const RecordingScreen = () => {
       // Show toast notification only
       showToastOnly("Padrão Detectado", message);
       
-      // Speak the notification with natural voice
-      speakNaturally(message);
+      // IMPORTANTE: Garantir que a notificação seja falada
+      setTimeout(() => {
+        speakNaturally(message, true);
+      }, 500);
       
       // Reset notification after a time to allow future notifications
       setTimeout(() => {
@@ -218,28 +242,64 @@ const RecordingScreen = () => {
   // Handle when speech recognition ends
   const handleRecognitionEnd = () => {
     // Update status but don't display it prominently
-    setRecognitionStatus("");
+    setRecognitionStatus("Finalizando reconhecimento...");
     
-    // Only respond if there's meaningful transcript
+    // Only respond if there's meaningful transcript and we have an audio blob
     if (lastTranscriptRef.current && lastTranscriptRef.current.length > 5) {
       setIsProcessing(true);
+      
+      // Primeiro uma resposta rápida local
+      const quickResponse = generateSimpleResponse(lastTranscriptRef.current);
+      showToastOnly("Sua história é incrível!", quickResponse);
+      
+      // Falar a resposta rápida
       setTimeout(() => {
-        try {
-          // Generate response to the transcript
-          const response = generateSimpleResponse(lastTranscriptRef.current);
-          showToastOnly("Sua história é incrível!", response);
-          
-          // Update the transcript to show the response
-          setStoryTranscript(response);
-          
-          // Speak the response
-          speakNaturally(response, true);
-        } catch (error) {
-          console.error("Error generating response:", error);
-        } finally {
+        speakNaturally(quickResponse, true);
+      }, 300);
+      
+      // Se temos um blob de áudio, processar com o Gemini para resposta mais complexa
+      if (audioBlob && audioBlob.size > 1000) {
+        console.log("Processing audio with Gemini, size:", audioBlob.size);
+        
+        // Mostrar feedback durante o processamento
+        setTimeout(() => {
+          showToastOnly("Analisando", "Estou analisando sua história com mais detalhes...");
+        }, 3000);
+        
+        // Processar o áudio com o Gemini
+        geminiService.processAudio(audioBlob)
+          .then(response => {
+            console.log("Gemini response:", response);
+            
+            if (response) {
+              // Atualizar o transcript com a resposta do Gemini
+              setStoryTranscript(response);
+              
+              // Mostrar como toast
+              showToastOnly("Análise completa!", response);
+              
+              // Falar a resposta do Gemini
+              setTimeout(() => {
+                speakNaturally(response, true);
+              }, 500);
+            }
+          })
+          .catch(error => {
+            console.error("Error processing with Gemini:", error);
+            // Em caso de erro, ainda mostrar alguma resposta
+            showToastOnly("Hmm...", "Sua história é fascinante! Pode me contar mais?");
+          })
+          .finally(() => {
+            setIsProcessing(false);
+          });
+      } else {
+        // Finalizar processamento após um tempo se não houver blob de áudio
+        setTimeout(() => {
           setIsProcessing(false);
-        }
-      }, 500);
+        }, 2000);
+      }
+    } else {
+      setIsProcessing(false);
     }
   };
   
@@ -248,6 +308,7 @@ const RecordingScreen = () => {
     setRecognitionStatus("Ouvindo...");
   };
 
+  // Toggle recording with improved audio feedback
   const toggleRecording = () => {
     if (isRecording) {
       stopRecording();
@@ -255,7 +316,7 @@ const RecordingScreen = () => {
       // Stop speech recognition
       webSpeechService.stopRecognition();
       
-      const stopMessage = `Legal! Deixa eu pensar sobre essa história...`;
+      const stopMessage = `Legal! Vou analisar sua história...`;
       
       // Show toast only
       showToastOnly(
@@ -263,14 +324,13 @@ const RecordingScreen = () => {
         `Gravação finalizada após ${Math.floor(recordingTime)} segundos.`
       );
       
-      // Speak notification with natural voice
-      speakNaturally(stopMessage, true);
+      // IMPORTANTE: Garantir que a mensagem seja falada
+      setTimeout(() => {
+        speakNaturally(stopMessage, true);
+      }, 300);
       
       // Process the story
       setIsProcessing(true);
-      setTimeout(() => {
-        setIsProcessing(false);
-      }, 1000);
     } else {
       // Check for microphone permission before starting
       if (!hasMicrophonePermission) {
@@ -278,9 +338,12 @@ const RecordingScreen = () => {
         return;
       }
       
-      startRecording();
+      // Limpar estado anterior
       setStoryTranscript("");
       setInterimTranscript("");
+      
+      // Iniciar gravação
+      startRecording();
       setIsStoryMode(true);
       
       // Start speech recognition
@@ -292,7 +355,7 @@ const RecordingScreen = () => {
           handleRecognitionStart
         );
       } else {
-        setRecognitionStatus("Reconhecimento de fala não disponível neste dispositivo");
+        setRecognitionStatus("Reconhecimento de fala não disponível");
         showToastOnly(
           "Aviso",
           "Reconhecimento de fala não está disponível neste dispositivo.",
@@ -302,18 +365,19 @@ const RecordingScreen = () => {
       
       const startMessage = "Estou ouvindo! Pode contar sua história...";
       
-      // Show toast only
+      // Show toast
       showToastOnly(
         "Modo História Ativado",
         "Conte sua história para a Esfera Sonora!"
       );
       
-      // Speak notification with natural voice
-      speakNaturally(startMessage, true);
+      // IMPORTANTE: Garantir que a mensagem seja falada
+      setTimeout(() => {
+        speakNaturally(startMessage, true);
+      }, 300);
     }
   };
 
-  // Clean up speech synthesis and recognition on component unmount
   useEffect(() => {
     return () => {
       if ('speechSynthesis' in window && speechSynthesis.speaking) {
