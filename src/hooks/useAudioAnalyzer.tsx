@@ -17,11 +17,14 @@ const useAudioAnalyzer = () => {
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
+  const significantAudioDetectedRef = useRef(false);
 
   const startRecording = async () => {
     try {
-      // Reset error state
+      // Reset states
       setErrorMessage(null);
+      setRecordingTime(0);
+      significantAudioDetectedRef.current = false;
       
       // Request audio permission
       const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -50,11 +53,35 @@ const useAudioAnalyzer = () => {
       const dataArray = new Uint8Array(bufferLength);
       dataArrayRef.current = dataArray;
       
-      // Start analysis loop
+      // Start analysis loop with audio detection
       const analyzeAudio = () => {
         if (!analyserRef.current || !dataArrayRef.current) return;
         
         analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+        
+        // IMPROVED: Check for significant audio before starting timer
+        const significantAudio = Array.from(dataArrayRef.current).some(val => val > 25);
+        
+        if (significantAudio && !significantAudioDetectedRef.current) {
+          // Start the timer only when actual audio is detected
+          significantAudioDetectedRef.current = true;
+          console.log("Significant audio detected, starting timer now");
+          
+          // Start timer now
+          recordingStartTimeRef.current = Date.now();
+          
+          if (timerIntervalRef.current) {
+            clearInterval(timerIntervalRef.current);
+          }
+          
+          timerIntervalRef.current = setInterval(() => {
+            if (recordingStartTimeRef.current) {
+              const elapsed = (Date.now() - recordingStartTimeRef.current) / 1000;
+              setRecordingTime(elapsed);
+            }
+          }, 1000);
+        }
+        
         setAudioData(new Uint8Array(dataArrayRef.current));
         
         animationFrameRef.current = requestAnimationFrame(analyzeAudio);
@@ -82,15 +109,6 @@ const useAudioAnalyzer = () => {
       mediaRecorder.start(1000); // Collect data in 1-second chunks
       
       setIsRecording(true);
-      
-      // Iniciar o contador de tempo
-      recordingStartTimeRef.current = Date.now();
-      timerIntervalRef.current = setInterval(() => {
-        if (recordingStartTimeRef.current) {
-          const elapsed = (Date.now() - recordingStartTimeRef.current) / 1000;
-          setRecordingTime(elapsed);
-        }
-      }, 1000);
       
     } catch (error) {
       console.error("Error accessing microphone:", error);
@@ -123,17 +141,19 @@ const useAudioAnalyzer = () => {
       audioContextRef.current = null;
     }
     
-    // Parar o contador de tempo
+    // Stop the timer
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
       timerIntervalRef.current = null;
     }
     
+    // Reset refs
     analyserRef.current = null;
     dataArrayRef.current = null;
+    significantAudioDetectedRef.current = false;
     setAudioData(null);
     setIsRecording(false);
-    // Não resetamos o recordingTime aqui para exibir o tempo total ao final
+    // Don't reset recordingTime here to display total time at the end
   };
 
   // Clean up on unmount

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import AudioSphere from "@/components/AudioSphere";
@@ -36,31 +37,33 @@ const RecordingScreen = () => {
     recordingTime,
     audioBlob
   } = useAudioAnalyzer();
-  const { patternDetected, patternType } = usePatternDetection(audioData);
+  const { patternDetected, patternType, resetDetection } = usePatternDetection(audioData);
   const patternNotifiedRef = useRef(false);
   const welcomeSpokenRef = useRef(false);
   const lastTranscriptRef = useRef("");
   const speechInitializedRef = useRef(false);
   const audioTestPerformedRef = useRef(false);
+  const processingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasAudioDataRef = useRef(false);
 
-  // NOVO: Testar o áudio na inicialização
+  // Test audio on initialization
   useEffect(() => {
     if (loaded && !audioTestPerformedRef.current) {
       audioTestPerformedRef.current = true;
       
-      // Breve delay para garantir que a página esteja completamente carregada
+      // Brief delay to ensure page is fully loaded
       setTimeout(async () => {
         try {
-          // Tentar tocar um som de teste
+          // Try to play a test sound
           const testSound = new Audio();
           testSound.src = "data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU..."
           testSound.volume = 1.0;
           
-          // Forçar contexto de áudio para desbloquear áudio no iOS/Safari
+          // Force audio context to unlock audio on iOS/Safari
           const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
           await audioContext.resume();
           
-          // Testar a síntese de voz
+          // Test speech synthesis
           const testText = "Testando o sistema de áudio...";
           console.log("Teste inicial de áudio:", testText);
           speakNaturally(testText, true);
@@ -71,6 +74,7 @@ const RecordingScreen = () => {
     }
   }, [loaded]);
 
+  // Initialize speech synthesis
   useEffect(() => {
     if (!speechInitializedRef.current) {
       initVoices().then((initialized) => {
@@ -80,6 +84,7 @@ const RecordingScreen = () => {
     }
   }, []);
 
+  // Check microphone permissions
   useEffect(() => {
     const checkMicrophonePermission = async () => {
       try {
@@ -110,6 +115,7 @@ const RecordingScreen = () => {
     }
   }, []);
 
+  // Request microphone permission
   const requestMicrophonePermission = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -125,6 +131,7 @@ const RecordingScreen = () => {
     }
   };
 
+  // Handle dark mode
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add("dark");
@@ -134,17 +141,17 @@ const RecordingScreen = () => {
     localStorage.setItem("dark-mode", isDarkMode.toString());
   }, [isDarkMode]);
 
-  // Função melhorada para falar mensagem de boas-vindas
+  // Improved welcome message function
   const speakWelcomeMessage = () => {
     if (onboardingData.superReaderName) {
-      // Create welcome message with just the SuperLeitor name
+      // Create welcome message with the SuperLeitor name
       const welcomeMessage = `Olá ${onboardingData.superReaderName}! Que bom te ver! Que história você quer me contar hoje?`;
       console.log("Speaking welcome message:", welcomeMessage);
       
       // Show toast message
       showToastOnly("Bem-vindo!", welcomeMessage);
       
-      // IMPORTANTE: Garantir que o áudio seja reproduzido com prioridade
+      // Ensure audio is played with priority
       setTimeout(() => {
         console.log("Attempting to speak welcome message with delay");
         speakNaturally(welcomeMessage, true);
@@ -164,6 +171,7 @@ const RecordingScreen = () => {
     }
   };
 
+  // Speak welcome message once loaded
   useEffect(() => {
     if (loaded && !welcomeSpokenRef.current && onboardingData.superReaderName) {
       welcomeSpokenRef.current = true;
@@ -175,10 +183,12 @@ const RecordingScreen = () => {
     }
   }, [loaded, onboardingData.superReaderName]);
 
+  // Toggle dark mode
   const toggleTheme = () => {
     setIsDarkMode(prev => !prev);
   };
 
+  // Set loaded state
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoaded(true);
@@ -187,12 +197,27 @@ const RecordingScreen = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Show error messages
   useEffect(() => {
     if (errorMessage) {
       showToastOnly("Erro", errorMessage, "destructive");
     }
   }, [errorMessage]);
 
+  // Track audio data presence to only start timer when audio is detected
+  useEffect(() => {
+    if (audioData && audioData.length > 0) {
+      // Check if there's actual audio data (not just silence)
+      const hasSignificantAudio = Array.from(audioData).some(val => val > 20);
+      
+      if (hasSignificantAudio && !hasAudioDataRef.current && isRecording) {
+        hasAudioDataRef.current = true;
+        console.log("Significant audio detected, starting timer");
+      }
+    }
+  }, [audioData, isRecording]);
+
+  // Handle pattern detection
   useEffect(() => {
     if (patternDetected && !patternNotifiedRef.current && isRecording) {
       patternNotifiedRef.current = true;
@@ -203,7 +228,7 @@ const RecordingScreen = () => {
       // Show toast notification only
       showToastOnly("Padrão Detectado", message);
       
-      // IMPORTANTE: Garantir que a notificação seja falada
+      // Ensure notification is spoken
       setTimeout(() => {
         speakNaturally(message, true);
       }, 500);
@@ -248,37 +273,57 @@ const RecordingScreen = () => {
     if (lastTranscriptRef.current && lastTranscriptRef.current.length > 5) {
       setIsProcessing(true);
       
-      // Primeiro uma resposta rápida local
+      // First a quick local response
       const quickResponse = generateSimpleResponse(lastTranscriptRef.current);
       showToastOnly("Sua história é incrível!", quickResponse);
       
-      // Falar a resposta rápida
+      // Speak the quick response
       setTimeout(() => {
         speakNaturally(quickResponse, true);
       }, 300);
       
-      // Se temos um blob de áudio, processar com o Gemini para resposta mais complexa
+      // If we have an audio blob, process with Gemini for more complex response
       if (audioBlob && audioBlob.size > 1000) {
         console.log("Processing audio with Gemini, size:", audioBlob.size);
         
-        // Mostrar feedback durante o processamento
+        // Show feedback during processing
         setTimeout(() => {
           showToastOnly("Analisando", "Estou analisando sua história com mais detalhes...");
         }, 3000);
         
-        // Processar o áudio com o Gemini
+        // FIX: Set a timeout to make sure we finish processing eventually
+        if (processingTimeoutRef.current) {
+          clearTimeout(processingTimeoutRef.current);
+        }
+        
+        processingTimeoutRef.current = setTimeout(() => {
+          if (isProcessing) {
+            console.log("Processing timeout reached, showing fallback response");
+            setIsProcessing(false);
+            showToastOnly("Análise completa!", "Adorei sua história! Continue contando mais!");
+            speakNaturally("Adorei sua história! Continue contando mais!", true);
+          }
+        }, 20000); // 20 second timeout
+        
+        // Process the audio with Gemini
         geminiService.processAudio(audioBlob)
           .then(response => {
+            // Clear the timeout since we got a response
+            if (processingTimeoutRef.current) {
+              clearTimeout(processingTimeoutRef.current);
+              processingTimeoutRef.current = null;
+            }
+            
             console.log("Gemini response:", response);
             
             if (response) {
-              // Atualizar o transcript com a resposta do Gemini
+              // Update the transcript with the Gemini response
               setStoryTranscript(response);
               
-              // Mostrar como toast
+              // Show as toast
               showToastOnly("Análise completa!", response);
               
-              // Falar a resposta do Gemini
+              // Speak the Gemini response
               setTimeout(() => {
                 speakNaturally(response, true);
               }, 500);
@@ -286,16 +331,24 @@ const RecordingScreen = () => {
           })
           .catch(error => {
             console.error("Error processing with Gemini:", error);
-            // Em caso de erro, ainda mostrar alguma resposta
+            // In case of error, still show some response
             showToastOnly("Hmm...", "Sua história é fascinante! Pode me contar mais?");
+            speakNaturally("Sua história é fascinante! Pode me contar mais?", true);
           })
           .finally(() => {
             setIsProcessing(false);
+            
+            // Clear the timeout if it's still active
+            if (processingTimeoutRef.current) {
+              clearTimeout(processingTimeoutRef.current);
+              processingTimeoutRef.current = null;
+            }
           });
       } else {
-        // Finalizar processamento após um tempo se não houver blob de áudio
+        // Finish processing after a time if there's no audio blob
         setTimeout(() => {
           setIsProcessing(false);
+          speakNaturally("Que história legal! Conte-me mais!", true);
         }, 2000);
       }
     } else {
@@ -324,13 +377,16 @@ const RecordingScreen = () => {
         `Gravação finalizada após ${Math.floor(recordingTime)} segundos.`
       );
       
-      // IMPORTANTE: Garantir que a mensagem seja falada
+      // Ensure the message is spoken
       setTimeout(() => {
         speakNaturally(stopMessage, true);
       }, 300);
       
       // Process the story
       setIsProcessing(true);
+      
+      // Reset audio data detection flag
+      hasAudioDataRef.current = false;
     } else {
       // Check for microphone permission before starting
       if (!hasMicrophonePermission) {
@@ -338,13 +394,17 @@ const RecordingScreen = () => {
         return;
       }
       
-      // Limpar estado anterior
+      // Clear previous state
       setStoryTranscript("");
       setInterimTranscript("");
+      resetDetection(); // Reset pattern detection
       
-      // Iniciar gravação
+      // Start recording
       startRecording();
       setIsStoryMode(true);
+      
+      // Reset audio detection flag
+      hasAudioDataRef.current = false;
       
       // Start speech recognition
       if (webSpeechService.isSupported()) {
@@ -371,13 +431,14 @@ const RecordingScreen = () => {
         "Conte sua história para a Esfera Sonora!"
       );
       
-      // IMPORTANTE: Garantir que a mensagem seja falada
+      // Ensure the message is spoken
       setTimeout(() => {
         speakNaturally(startMessage, true);
       }, 300);
     }
   };
 
+  // Clean up on unmount
   useEffect(() => {
     return () => {
       if ('speechSynthesis' in window && speechSynthesis.speaking) {
@@ -385,6 +446,11 @@ const RecordingScreen = () => {
       }
       
       webSpeechService.stopRecognition();
+      
+      // Clear any processing timeouts
+      if (processingTimeoutRef.current) {
+        clearTimeout(processingTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -404,7 +470,7 @@ const RecordingScreen = () => {
         <RecordingControls 
           isRecording={isRecording}
           isProcessing={isProcessing}
-          recordingTime={recordingTime}
+          recordingTime={hasAudioDataRef.current ? recordingTime : 0} // Only show time if audio detected
           toggleRecording={toggleRecording}
           recognitionStatus={recognitionStatus}
         />

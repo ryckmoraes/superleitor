@@ -48,9 +48,9 @@ export const configureNaturalVoice = (utterance: SpeechSynthesisUtterance): void
   // Set language to Brazilian Portuguese
   utterance.lang = 'pt-BR';
   
-  // NEW: Faster rate for more natural sound (increased from 0.95)
-  utterance.rate = 1.15;  // Slightly faster than normal for more natural flow
-  utterance.pitch = 1.05; // Slightly higher pitch sounds more engaging
+  // IMPROVED: MUCH faster rate for more natural sound (increased from 1.15)
+  utterance.rate = 1.4;  // Significantly faster than normal for more natural flow
+  utterance.pitch = 1.2; // Slightly higher pitch sounds more engaging
   utterance.volume = 1.0; // Maximum volume
   
   // Try to select a more natural female voice if available
@@ -128,7 +128,7 @@ export const initVoices = (): Promise<boolean> => {
   });
 };
 
-// IMPROVED: SPEECH SYSTEM COMPLETELY REVISED FOR MORE NATURAL SPEECH
+// SIGNIFICANTLY IMPROVED: SPEECH SYSTEM COMPLETELY REVISED FOR MORE NATURAL SPEECH
 export const speakNaturally = (text: string, priority: boolean = false): void => {
   if (!('speechSynthesis' in window)) {
     console.error("Speech synthesis not supported");
@@ -174,8 +174,8 @@ const simpleSpeakFallback = (text: string): void => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'pt-BR';
     utterance.volume = 1.0;
-    // NEW: Faster rate for more natural speech
-    utterance.rate = 1.2;
+    // NEW: MUCH faster rate for more natural speech
+    utterance.rate = 1.5;
     utterance.pitch = 1.0;
     window.speechSynthesis.speak(utterance);
     console.log("Using simple fallback speech");
@@ -196,7 +196,7 @@ const actuallySpeak = (text: string, priority: boolean): void => {
     console.log("Speaking processed text:", processedText);
     
     // For longer texts, split by sentences to improve naturalness
-    const MAX_CHUNK_LENGTH = 15; // MUCH shorter chunks for more reliable delivery
+    const MAX_CHUNK_LENGTH = 15; // Short chunks for more reliable delivery
     
     if (processedText.length > MAX_CHUNK_LENGTH) {
       // Split by sentence markers but keep the markers
@@ -215,8 +215,8 @@ const actuallySpeak = (text: string, priority: boolean): void => {
           const utterance = new SpeechSynthesisUtterance(sentence);
           configureNaturalVoice(utterance);
           
-          // NEW: Increased speed for more natural flow
-          utterance.rate = 1.15; // Faster rate makes it sound more natural
+          // SIGNIFICANTLY IMPROVED: MUCH faster rate for more natural flow
+          utterance.rate = 1.4; // Much faster rate makes it sound more natural
           utterance.volume = 1.0; // Maximum volume always
           
           // Events
@@ -229,7 +229,7 @@ const actuallySpeak = (text: string, priority: boolean): void => {
           utterance.onend = () => {
             console.log('Speech chunk ended');
             // Smaller pause between sentences for more natural flow
-            setTimeout(speakNextSentence, 200); // Quicker transition feels more natural
+            setTimeout(speakNextSentence, 150); // Quicker transition feels more natural
           };
           
           // Speak
@@ -242,19 +242,19 @@ const actuallySpeak = (text: string, priority: boolean): void => {
               const simpleUtterance = new SpeechSynthesisUtterance(sentence);
               simpleUtterance.lang = 'pt-BR';
               simpleUtterance.volume = 1.0;
-              simpleUtterance.rate = 1.2; // Faster for more natural sound
+              simpleUtterance.rate = 1.5; // Much faster for more natural sound
               
               // Set direct events for fallback
-              simpleUtterance.onend = () => setTimeout(speakNextSentence, 200);
-              simpleUtterance.onerror = () => setTimeout(speakNextSentence, 200);
+              simpleUtterance.onend = () => setTimeout(speakNextSentence, 150);
+              simpleUtterance.onerror = () => setTimeout(speakNextSentence, 150);
               
               window.speechSynthesis.speak(simpleUtterance);
             } catch (e2) {
               console.error('Fallback speech failed:', e2);
               // Continue to next sentence anyway
-              setTimeout(speakNextSentence, 200);
+              setTimeout(speakNextSentence, 150);
             }
-          }, 200);
+          }, 150);
         }
       };
       
@@ -273,8 +273,8 @@ const actuallySpeak = (text: string, priority: boolean): void => {
           const utterance = new SpeechSynthesisUtterance(processedText);
           configureNaturalVoice(utterance);
           
-          // NEW: Override with faster rate
-          utterance.rate = 1.15; // Faster rate sounds more natural
+          // SIGNIFICANTLY IMPROVED: MUCH faster rate
+          utterance.rate = 1.4; // Much faster rate sounds more natural
           utterance.volume = 1.0; // Always maximum volume
           
           // Mobile browser event handlers with error recovery

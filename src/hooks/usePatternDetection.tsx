@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 
 type PatternType = 'music' | 'rhythm' | null;
@@ -11,13 +12,15 @@ const usePatternDetection = (audioData: Uint8Array | null) => {
   const lastPatternsRef = useRef<number[]>([]);
   const detectionCooldownRef = useRef(0);
   const baselineRef = useRef<number[]>([]);
+  const initialDataCollectedRef = useRef(false);
   
-  // More robust constants for pattern detection
-  const DETECTION_THRESHOLD = 0.75;  // Increased from previous value
-  const REQUIRED_CONSISTENT_FRAMES = 20; // Increased for more reliable detection
+  // More robust constants for pattern detection (MODIFIED FOR LESS FALSE POSITIVES)
+  const DETECTION_THRESHOLD = 0.85;  // Increased from 0.75 for less sensitivity
+  const REQUIRED_CONSISTENT_FRAMES = 30; // Increased from 20 for more reliable detection
   const COOLDOWN_FRAMES = 180; // ~3 seconds at 60fps to prevent repeated detections
-  const PATTERN_MEMORY = 10; // Number of frames to keep for pattern comparison
-  const MIN_AMPLITUDE = 10; // Minimum amplitude to consider (avoid detecting silence)
+  const PATTERN_MEMORY = 20; // Increased from 10 for better detection
+  const MIN_AMPLITUDE = 30; // Increased from 10 to avoid false positives
+  const INITIAL_COLLECTION_FRAMES = 60; // Collect baseline data for 1 second before detection
   
   useEffect(() => {
     if (!audioData || audioData.length === 0) {
@@ -55,6 +58,20 @@ const usePatternDetection = (audioData: Uint8Array | null) => {
       lastPatternsRef.current = lastPatternsRef.current.slice(-PATTERN_MEMORY * currentPattern.length);
     }
     
+    // NEW: Wait for initial data collection before starting detection
+    // This prevents false positives in the first few seconds of recording
+    if (!initialDataCollectedRef.current) {
+      if (frameCountRef.current > INITIAL_COLLECTION_FRAMES) {
+        initialDataCollectedRef.current = true;
+        // Initialize baseline with current data
+        baselineRef.current = lastPatternsRef.current.slice(0, currentPattern.length);
+        console.log("Initial audio data collected, pattern detection active");
+      } else {
+        // Still collecting initial data
+        return;
+      }
+    }
+    
     // Initialize baseline if needed
     if (baselineRef.current.length === 0 && lastPatternsRef.current.length >= currentPattern.length * 5) {
       baselineRef.current = lastPatternsRef.current.slice(0, currentPattern.length);
@@ -76,7 +93,7 @@ const usePatternDetection = (audioData: Uint8Array | null) => {
       }
     }
     
-    if (chunks.length >= 3) {
+    if (chunks.length >= 4) { // Require more chunks for detection (increased from 3)
       // Compare chunks to detect repetition
       let similarChunks = 0;
       
@@ -88,7 +105,8 @@ const usePatternDetection = (audioData: Uint8Array | null) => {
       }
       
       // If we have enough similar consecutive chunks, pattern detected
-      if (similarChunks >= Math.min(3, chunks.length - 1)) {
+      // Require more consecutive similar chunks (increased from 3)
+      if (similarChunks >= Math.min(4, chunks.length - 1)) {
         // Detect pattern type based on frequency distribution
         const isMusic = isMusicPattern(chunks.flat());
         
@@ -139,7 +157,18 @@ const usePatternDetection = (audioData: Uint8Array | null) => {
     return (midAvg > lowAvg * 0.5) && (highAvg > lowAvg * 0.3);
   };
   
-  return { patternDetected, patternType };
+  // Reset detection state when needed (e.g., when starting a new recording)
+  const resetDetection = () => {
+    setPatternDetected(false);
+    setPatternType(null);
+    initialDataCollectedRef.current = false;
+    frameCountRef.current = 0;
+    lastPatternsRef.current = [];
+    baselineRef.current = [];
+    detectionCooldownRef.current = 0;
+  };
+  
+  return { patternDetected, patternType, resetDetection };
 };
 
 export default usePatternDetection;
