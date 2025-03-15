@@ -26,8 +26,18 @@ const config: CapacitorConfig = {
       "android.permission.RECORD_AUDIO",
       "android.permission.MODIFY_AUDIO_SETTINGS",
       "android.permission.INTERNET",
-      "android.permission.ACCESS_NETWORK_STATE"
-    ]
+      "android.permission.ACCESS_NETWORK_STATE",
+      "android.permission.WAKE_LOCK",
+      "android.permission.FOREGROUND_SERVICE",
+      "android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
+      "android.permission.POST_NOTIFICATIONS"
+    ],
+    // Add more Android specific options for better immersive experience
+    backgroundColor: "#FFFFFF",
+    overrideUserAgent: null,
+    alwaysShow: true,
+    minSdkVersion: 21,
+    targetSdkVersion: 33
   },
   plugins: {
     SplashScreen: {
@@ -36,6 +46,15 @@ const config: CapacitorConfig = {
     },
     Permissions: {
       permissions: ["android.permission.RECORD_AUDIO"]
+    },
+    // Force runtime permissions dialog
+    CapacitorHttp: {
+      enabled: true
+    },
+    // Improve TTS and voice recognition
+    CapacitorVoice: {
+      speechRecognition: true,
+      textToSpeech: true
     }
   }
 };

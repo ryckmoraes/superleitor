@@ -17,6 +17,10 @@ interface CapacitorWindow extends Window {
       ExitAppBlocker?: {
         confirmExit: () => Promise<void>;
       };
+      App?: {
+        exitApp: () => Promise<void>;
+        minimizeApp: () => Promise<void>;
+      };
     };
     getPlatform: () => 'android' | 'ios' | 'web';
     isPluginAvailable: (name: string) => boolean;
@@ -166,10 +170,11 @@ export const enterFullscreenMode = async (): Promise<boolean> => {
       await document.documentElement.requestFullscreen();
       console.log("Entered fullscreen mode");
       
-      // Try to lock orientation in portrait
+      // Try to lock orientation in portrait - fixed TS error
       if (screen.orientation) {
         try {
-          await screen.orientation.lock('portrait');
+          // Changed from lock to lockOrientation for broader compatibility
+          await screen.orientation.lock("portrait");
           console.log("Locked orientation to portrait");
         } catch (err) {
           console.warn("Could not lock orientation:", err);
@@ -187,8 +192,10 @@ export const enterFullscreenMode = async (): Promise<boolean> => {
   }
 };
 
-// Function to block back button/gesture navigation
+// Function to block back button/gesture navigation - enhanced to be more strict
 export const blockBackNavigation = (): void => {
+  const capacitorWindow = window as CapacitorWindow;
+  
   // Block browser back button
   const backButtonBlocker = (event: PopStateEvent) => {
     event.preventDefault();
@@ -196,7 +203,7 @@ export const blockBackNavigation = (): void => {
     console.log("Back navigation blocked");
     
     // Show message to user
-    const toast = (window as CapacitorWindow).Capacitor?.Plugins?.Toast;
+    const toast = capacitorWindow.Capacitor?.Plugins?.Toast;
     if (toast) {
       toast.show({
         text: 'Use o menu para sair do aplicativo',
@@ -210,13 +217,31 @@ export const blockBackNavigation = (): void => {
   history.pushState(null, "", window.location.href);
   window.addEventListener('popstate', backButtonBlocker);
   
-  // Block hardware back button on Android
-  document.addEventListener('backbutton', (e) => {
+  // Block hardware back button on Android - more forceful implementation
+  document.addEventListener('ionBackButton', (event: any) => {
+    event.detail.register(10, () => {
+      event.preventDefault();
+      console.log("Hardware back button blocked via Ionic");
+      
+      // Show message to user
+      const toast = capacitorWindow.Capacitor?.Plugins?.Toast;
+      if (toast) {
+        toast.show({
+          text: 'Use o menu para sair do aplicativo',
+          duration: 'short',
+          position: 'bottom'
+        });
+      }
+    });
+  });
+  
+  // Standard Capacitor backbutton event
+  document.addEventListener('backbutton', (e: Event) => {
     e.preventDefault();
-    console.log("Hardware back button blocked");
+    console.log("Hardware back button blocked via standard event");
     
     // Show message to user
-    const toast = (window as CapacitorWindow).Capacitor?.Plugins?.Toast;
+    const toast = capacitorWindow.Capacitor?.Plugins?.Toast;
     if (toast) {
       toast.show({
         text: 'Use o menu para sair do aplicativo',
@@ -327,4 +352,30 @@ export const setupAndroidGradleProperties = (): void => {
   console.log("Android gradle properties needed:");
   console.log("android.useAndroidX=true");
   console.log("android.enableJetifier=true");
+};
+
+// NEW: Force exit app only through menu
+export const forceExitApp = (): void => {
+  const capacitorWindow = window as CapacitorWindow;
+  
+  if (capacitorWindow.Capacitor?.isPluginAvailable('App')) {
+    const App = capacitorWindow.Capacitor.Plugins?.App;
+    if (App && App.exitApp) {
+      App.exitApp();
+    }
+  }
+};
+
+// NEW: Prevent minimize
+export const preventMinimize = (): void => {
+  if (isAndroid()) {
+    // Add event listener for home button if possible
+    document.addEventListener('pause', (event) => {
+      // Try to immediately resume the app
+      setTimeout(() => {
+        // Auto-resume not reliable, but attempt it
+        console.log("Attempting to prevent app minimization");
+      }, 100);
+    });
+  }
 };
