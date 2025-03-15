@@ -20,12 +20,22 @@ const config: CapacitorConfig = {
       keystoreAlias: null,
       keystoreAliasPassword: null,
       releaseType: 'APK'
-    }
+    },
+    useLegacyBridge: true,
+    permissions: [
+      "android.permission.RECORD_AUDIO",
+      "android.permission.MODIFY_AUDIO_SETTINGS",
+      "android.permission.INTERNET",
+      "android.permission.ACCESS_NETWORK_STATE"
+    ]
   },
   plugins: {
     SplashScreen: {
       launchAutoHide: false,
       showSpinner: true
+    },
+    Permissions: {
+      permissions: ["android.permission.RECORD_AUDIO"]
     }
   }
 };

@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for Android-specific behaviors
  */
@@ -15,12 +14,23 @@ interface CapacitorWindow extends Window {
       Toast?: {
         show: (options: { text: string, duration: string, position: string }) => Promise<void>;
       };
+      ExitAppBlocker?: {
+        confirmExit: () => Promise<void>;
+      };
     };
+    getPlatform: () => 'android' | 'ios' | 'web';
+    isPluginAvailable: (name: string) => boolean;
   };
 }
 
 // Check if running on Android
 export const isAndroid = (): boolean => {
+  const capacitorWindow = window as CapacitorWindow;
+  
+  if (capacitorWindow.Capacitor?.getPlatform) {
+    return capacitorWindow.Capacitor.getPlatform() === 'android';
+  }
+  
   return /Android/i.test(navigator.userAgent);
 };
 
@@ -57,81 +67,164 @@ export const requestAndroidPermissions = async (): Promise<boolean> => {
     // Cast window to include Capacitor
     const capacitorWindow = window as CapacitorWindow;
     
-    // If running in browser for testing, use browser APIs
-    if (!isAndroid() || !capacitorWindow.Capacitor?.isNativePlatform()) {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        try {
-          await navigator.mediaDevices.getUserMedia({ audio: true });
-          console.log("Browser microphone permission granted");
-          return true;
-        } catch (error) {
-          console.error("Browser denied microphone access:", error);
-          
-          // Show a browser notification
-          if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('Permissão de Microfone', {
-              body: 'Por favor, permita o acesso ao microfone para que a Esfera Sonora funcione.'
-            });
-          }
-          
+    // Force enter fullscreen mode
+    await enterFullscreenMode();
+    
+    // If running in a native Android context
+    if (isAndroid() && capacitorWindow.Capacitor?.isNativePlatform()) {
+      console.log("Requesting microphone permission in native Android context");
+      
+      // Using Capacitor for native Android permissions
+      if (capacitorWindow.Capacitor && capacitorWindow.Capacitor.isPluginAvailable('Permissions')) {
+        const Permissions = capacitorWindow.Capacitor.Plugins?.Permissions;
+        const Toast = capacitorWindow.Capacitor.Plugins?.Toast;
+        
+        if (!Permissions) {
+          console.error("Permissions plugin not available");
           return false;
         }
-      }
-      return false;
-    }
-    
-    // Using Capacitor for native Android permissions
-    if (capacitorWindow.Capacitor && capacitorWindow.Capacitor.Plugins?.Permissions) {
-      const Permissions = capacitorWindow.Capacitor.Plugins.Permissions;
-      const Toast = capacitorWindow.Capacitor.Plugins.Toast;
-      
-      // Check microphone permission status
-      const micStatus = await Permissions.query({ name: 'microphone' });
-      
-      if (micStatus.state !== 'granted') {
-        // Show toast before requesting permission
-        if (Toast) {
-          await Toast.show({
-            text: 'Precisamos do acesso ao microfone para a Esfera Sonora funcionar',
-            duration: 'long',
-            position: 'center'
-          });
-        }
         
-        // Request microphone permission explicitly
-        const requestResult = await Permissions.request({ name: 'microphone' });
-        console.log("Android microphone permission status:", requestResult.state);
+        // Check microphone permission status
+        const micStatus = await Permissions.query({ name: 'microphone' });
+        console.log("Current microphone permission status:", micStatus.state);
         
-        // Feedback after permission request
-        if (requestResult.state === 'granted') {
+        if (micStatus.state !== 'granted') {
+          // Show toast before requesting permission
           if (Toast) {
             await Toast.show({
-              text: 'Obrigado! Agora a Esfera Sonora pode ouvir sua história.',
-              duration: 'short',
-              position: 'bottom'
-            });
-          }
-          return true;
-        } else {
-          if (Toast) {
-            await Toast.show({
-              text: 'Sem acesso ao microfone, a Esfera Sonora não funcionará corretamente.',
+              text: 'Precisamos do acesso ao microfone para o Superleitor funcionar',
               duration: 'long',
               position: 'center'
             });
           }
-          return false;
+          
+          // Request microphone permission explicitly
+          const requestResult = await Permissions.request({ name: 'microphone' });
+          console.log("Android microphone permission request result:", requestResult.state);
+          
+          // Feedback after permission request
+          if (requestResult.state === 'granted') {
+            if (Toast) {
+              await Toast.show({
+                text: 'Obrigado! Agora o Superleitor pode ouvir sua história.',
+                duration: 'short',
+                position: 'bottom'
+              });
+            }
+            return true;
+          } else {
+            if (Toast) {
+              await Toast.show({
+                text: 'Sem acesso ao microfone, o Superleitor não funcionará corretamente.',
+                duration: 'long',
+                position: 'center'
+              });
+            }
+            return false;
+          }
         }
+        
+        return micStatus.state === 'granted';
+      } else {
+        console.error("Capacitor Permissions plugin not available");
       }
-      
-      return micStatus.state === 'granted';
     }
     
+    // If running in browser for testing or if native context fails, use browser APIs
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      console.log("Requesting microphone permission using browser API");
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log("Browser microphone permission granted");
+        return true;
+      } catch (error) {
+        console.error("Browser denied microphone access:", error);
+        
+        // Show a browser notification
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('Permissão de Microfone', {
+            body: 'Por favor, permita o acesso ao microfone para que o Superleitor funcione.'
+          });
+        }
+        
+        return false;
+      }
+    }
+    
+    console.error("No permission request method available");
     return false;
   } catch (err) {
     console.error('Error requesting Android permissions:', err);
     return false;
   }
+};
+
+// Function to enter fullscreen mode
+export const enterFullscreenMode = async (): Promise<boolean> => {
+  try {
+    if (document.documentElement.requestFullscreen) {
+      await document.documentElement.requestFullscreen();
+      console.log("Entered fullscreen mode");
+      
+      // Try to lock orientation in portrait
+      if (screen.orientation) {
+        try {
+          await screen.orientation.lock('portrait');
+          console.log("Locked orientation to portrait");
+        } catch (err) {
+          console.warn("Could not lock orientation:", err);
+        }
+      }
+      
+      return true;
+    } else {
+      console.warn("Fullscreen API not supported");
+      return false;
+    }
+  } catch (err) {
+    console.error("Error entering fullscreen mode:", err);
+    return false;
+  }
+};
+
+// Function to block back button/gesture navigation
+export const blockBackNavigation = (): void => {
+  // Block browser back button
+  const backButtonBlocker = (event: PopStateEvent) => {
+    event.preventDefault();
+    history.pushState(null, "", window.location.href);
+    console.log("Back navigation blocked");
+    
+    // Show message to user
+    const toast = (window as CapacitorWindow).Capacitor?.Plugins?.Toast;
+    if (toast) {
+      toast.show({
+        text: 'Use o menu para sair do aplicativo',
+        duration: 'short',
+        position: 'bottom'
+      });
+    }
+  };
+  
+  // Push current state to history to enable blocking
+  history.pushState(null, "", window.location.href);
+  window.addEventListener('popstate', backButtonBlocker);
+  
+  // Block hardware back button on Android
+  document.addEventListener('backbutton', (e) => {
+    e.preventDefault();
+    console.log("Hardware back button blocked");
+    
+    // Show message to user
+    const toast = (window as CapacitorWindow).Capacitor?.Plugins?.Toast;
+    if (toast) {
+      toast.show({
+        text: 'Use o menu para sair do aplicativo',
+        duration: 'short',
+        position: 'bottom'
+      });
+    }
+  }, false);
 };
 
 // Função para verificar se o Text-to-Speech está disponível e funcionando

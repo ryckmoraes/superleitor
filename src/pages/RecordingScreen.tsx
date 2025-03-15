@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import AudioSphere from "@/components/AudioSphere";
@@ -10,7 +9,7 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 import { speakNaturally, processRecognitionResult, generateSimpleResponse, initVoices } from "@/services/audioProcessor";
 import { showToastOnly } from "@/services/notificationService";
 import webSpeechService from "@/services/webSpeechService";
-import { isAndroid, keepScreenOn, requestAndroidPermissions, checkAndInitTTS } from "@/utils/androidHelper";
+import { isAndroid, keepScreenOn, requestAndroidPermissions, checkAndInitTTS, enterFullscreenMode } from "@/utils/androidHelper";
 import { geminiService } from "@/services/geminiService";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -75,7 +74,7 @@ const RecordingScreen = () => {
               setTtsStatus("error");
               // Tentar falar mesmo assim, para ver se funciona
               setTimeout(() => {
-                speakNaturally("Olá! Bem-vindo à Esfera Sonora!", true);
+                speakNaturally("Olá! Bem-vindo ao Superleitor!", true);
               }, 1000);
             }
           } else {
@@ -91,7 +90,8 @@ const RecordingScreen = () => {
             try {
               const utterance = new SpeechSynthesisUtterance("Teste de inicialização");
               utterance.volume = 1.0;
-              utterance.rate = 1.0;
+              utterance.rate = 0.9; // Slightly slower for more natural sound
+              utterance.pitch = 1.0;
               utterance.lang = 'pt-BR';
               speechSynthesis.speak(utterance);
               console.log("Tentativa direta de fala executada");
@@ -106,19 +106,23 @@ const RecordingScreen = () => {
       }
     };
     
+    // Also try to enter fullscreen mode
+    enterFullscreenMode();
+    
     setupTTS();
   }, []);
 
-  // Check microphone permissions
+  // Check microphone permissions - enhanced for immediate request
   useEffect(() => {
     const checkMicrophonePermission = async () => {
       try {
-        if (permissionCheckedRef.current) return;
-        permissionCheckedRef.current = true;
+        // Always force a permission check on load
+        permissionCheckedRef.current = false;
         
         console.log("Verificando permissões de microfone");
         
         if (isAndroid()) {
+          // Request permission immediately without waiting
           const granted = await requestAndroidPermissions();
           console.log("Permissão de microfone no Android:", granted ? "concedida" : "negada");
           setHasMicrophonePermission(granted);
@@ -127,9 +131,16 @@ const RecordingScreen = () => {
             setShowPermissionAlert(true);
             showToastOnly(
               "Permissão Necessária",
-              "Por favor, permita o acesso ao microfone para que a Esfera Sonora funcione corretamente.",
+              "Por favor, permita o acesso ao microfone para que o Superleitor funcione corretamente.",
               "destructive"
             );
+            
+            // Try again after a delay
+            setTimeout(async () => {
+              const retryGranted = await requestAndroidPermissions();
+              setHasMicrophonePermission(retryGranted);
+              setShowPermissionAlert(!retryGranted);
+            }, 3000);
           } else {
             setShowPermissionAlert(false);
             // Se tudo estiver pronto, falamos a mensagem de boas-vindas
@@ -145,35 +156,68 @@ const RecordingScreen = () => {
           return;
         }
         
-        const result = await navigator.permissions.query({ name: 'microphone' as PermissionName });
-        console.log("Status de permissão do microfone:", result.state);
-        setHasMicrophonePermission(result.state === 'granted');
-        
-        if (result.state !== 'granted') {
+        // Browser implementation
+        try {
+          const result = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+          console.log("Status de permissão do microfone:", result.state);
+          setHasMicrophonePermission(result.state === 'granted');
+          
+          if (result.state !== 'granted') {
+            setShowPermissionAlert(true);
+            requestMicrophonePermission();
+          } else {
+            setShowPermissionAlert(false);
+            // Se tudo estiver pronto, falamos a mensagem de boas-vindas
+            if (ttsStatus === "ready" && !welcomeSpokenRef.current) {
+              setTimeout(() => speakWelcomeMessage(), 1000);
+            }
+          }
+        } catch (error) {
+          console.error("Error checking microphone permission:", error);
           setShowPermissionAlert(true);
           requestMicrophonePermission();
-        } else {
-          setShowPermissionAlert(false);
-          // Se tudo estiver pronto, falamos a mensagem de boas-vindas
-          if (ttsStatus === "ready" && !welcomeSpokenRef.current) {
-            setTimeout(() => speakWelcomeMessage(), 1000);
-          }
         }
       } catch (error) {
-        console.error("Error checking microphone permission:", error);
+        console.error("Error in microphone permission check:", error);
         setShowPermissionAlert(true);
         requestMicrophonePermission();
       }
     };
     
-    if (loaded) {
-      checkMicrophonePermission();
-    }
-  }, [loaded, ttsStatus]);
+    // Check permissions immediately
+    checkMicrophonePermission();
+    
+    // And after a short delay, to handle potential initialization delays
+    setTimeout(() => {
+      if (!hasMicrophonePermission) {
+        checkMicrophonePermission();
+      }
+    }, 1500);
+  }, [ttsStatus]);
 
-  // Request microphone permission
+  // Request microphone permission - enhanced for better user experience
   const requestMicrophonePermission = async () => {
     try {
+      console.log("Explicitly requesting microphone permission");
+      
+      // Force enter fullscreen first
+      await enterFullscreenMode();
+      
+      if (isAndroid()) {
+        const granted = await requestAndroidPermissions();
+        setHasMicrophonePermission(granted);
+        setShowPermissionAlert(!granted);
+        
+        if (granted) {
+          // Se agora temos permissão e TTS está pronto, fale a mensagem de boas-vindas
+          if (ttsStatus === "ready" && !welcomeSpokenRef.current) {
+            setTimeout(() => speakWelcomeMessage(), 1000);
+          }
+        }
+        return;
+      }
+      
+      // Browser implementation
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach(track => track.stop());
       setHasMicrophonePermission(true);
@@ -188,21 +232,11 @@ const RecordingScreen = () => {
       setShowPermissionAlert(true);
       showToastOnly(
         "Permissão de Microfone",
-        "Por favor, permita o acesso ao microfone para que a Esfera Sonora funcione corretamente.",
+        "Por favor, permita o acesso ao microfone para que o Superleitor funcione corretamente.",
         "destructive"
       );
     }
   };
-
-  // Handle dark mode
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-    localStorage.setItem("dark-mode", isDarkMode.toString());
-  }, [isDarkMode]);
 
   // Improved welcome message function
   const speakWelcomeMessage = () => {
@@ -549,19 +583,19 @@ const RecordingScreen = () => {
           <AudioSphere audioData={audioData} isRecording={isRecording} />
         </div>
         
-        {/* Alerta de permissão de microfone */}
+        {/* Alert more prominent for microphone permission */}
         {showPermissionAlert && (
-          <div className="fixed bottom-4 left-4 right-4 z-50">
-            <Alert variant="destructive" className="bg-destructive text-white">
-              <AlertTitle className="text-white font-bold">Permissão de Microfone</AlertTitle>
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <Alert variant="destructive" className="bg-destructive text-white max-w-md">
+              <AlertTitle className="text-white font-bold text-xl mb-2">Permissão de Microfone Necessária</AlertTitle>
               <AlertDescription className="text-white">
-                <p className="mb-3">Por favor, permita o acesso ao microfone para que a Esfera Sonora funcione corretamente.</p>
+                <p className="mb-4 text-lg">Para que o Superleitor funcione corretamente, precisamos da permissão para usar o microfone do seu dispositivo.</p>
                 <Button 
                   onClick={requestMicrophonePermission} 
-                  className="bg-white text-destructive hover:bg-gray-100"
+                  className="bg-white text-destructive hover:bg-gray-100 w-full py-6 text-lg font-bold"
                 >
-                  <Mic className="mr-2 h-4 w-4" />
-                  Permitir Microfone
+                  <Mic className="mr-2 h-6 w-6" />
+                  Permitir Acesso ao Microfone
                 </Button>
               </AlertDescription>
             </Alert>
