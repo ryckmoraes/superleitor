@@ -53,7 +53,7 @@ export const configureNaturalVoice = (utterance: SpeechSynthesisUtterance): void
   utterance.volume = 1.0;
   
   // Try to select a more natural female voice if available
-  const voices = speechSynthesis.getVoices();
+  const voices = window.speechSynthesis.getVoices();
   
   // Debug available voices
   console.log("All available voices:", voices.map(v => `${v.name} (${v.lang})`).join(", "));
@@ -99,7 +99,7 @@ export const initVoices = (): Promise<boolean> => {
     }
     
     // Check if voices are already loaded
-    const voices = speechSynthesis.getVoices();
+    const voices = window.speechSynthesis.getVoices();
     if (voices && voices.length > 0) {
       console.log("Voices already loaded:", voices.length, "voices available");
       console.log("Available Portuguese voices:", voices.filter(v => v.lang.includes('pt')).map(v => v.name).join(', '));
@@ -109,7 +109,7 @@ export const initVoices = (): Promise<boolean> => {
     
     // Wait for voices to be loaded (important for mobile browsers)
     const voicesChanged = () => {
-      const availableVoices = speechSynthesis.getVoices();
+      const availableVoices = window.speechSynthesis.getVoices();
       console.log("Voices loaded:", availableVoices.length, "voices available");
       console.log("Available Portuguese voices:", availableVoices.filter(v => v.lang.includes('pt')).map(v => v.name).join(', '));
       window.speechSynthesis.removeEventListener('voiceschanged', voicesChanged);

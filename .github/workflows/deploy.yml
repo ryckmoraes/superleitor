@@ -45,9 +45,28 @@ jobs:
             echo "platform_exists=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Add Android platform
+      - name: Add Android platform if needed
         if: steps.check_android.outputs.platform_exists == 'false'
         run: npx cap add android
+
+      - name: Initialize capacitor.config.ts if needed
+        run: |
+          if [ ! -f "capacitor.config.ts" ]; then
+            echo 'import { CapacitorConfig } from "@capacitor/cli";
+            const config: CapacitorConfig = {
+              appId: "com.lovable.esferasonora",
+              appName: "Esfera Sonora",
+              webDir: "dist",
+              server: {
+                url: "https://61c9c85a-521b-4753-a60e-0cdb64c7b0cc.lovableproject.com?forceHideBadge=true",
+                cleartext: true
+              },
+              android: {
+                allowMixedContent: true
+              }
+            };
+            export default config;' > capacitor.config.ts
+          fi
 
       - name: Create assets directory if it doesn't exist
         run: mkdir -p android/app/src/main/assets
@@ -66,12 +85,10 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Create Gradle wrapper if it doesn't exist
+      - name: Create Gradle wrapper with specific version
         run: |
           cd android
-          if [ ! -f "gradlew" ]; then
-            gradle wrapper --gradle-version 7.6
-          fi
+          gradle wrapper --gradle-version 7.6
           chmod +x ./gradlew
 
       - name: Build Android APK
