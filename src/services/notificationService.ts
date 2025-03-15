@@ -9,3 +9,18 @@ export const showToastOnly = (title: string, description: string, variant: "defa
     variant,
   });
 };
+
+// Show toast with custom duration
+export const showToastWithDuration = (
+  title: string, 
+  description: string, 
+  variant: "default" | "destructive" = "default",
+  duration: number = 5000
+) => {
+  toast({
+    title,
+    description,
+    variant,
+    duration,
+  });
+};

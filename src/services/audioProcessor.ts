@@ -1,3 +1,4 @@
+
 // Enhanced text processor for more natural speech with pauses and intonation
 export const processTextForSpeech = (text: string): string => {
   return text
@@ -70,4 +71,61 @@ export const speakNaturally = (text: string, priority: boolean = false): void =>
       speechSynthesis.speak(utterance);
     }, index * 200);
   });
+};
+
+// Process speech recognition results
+export const processRecognitionResult = (transcript: string): string => {
+  // Clean up the transcript
+  let processedText = transcript
+    .trim()
+    .replace(/\s+/g, ' ') // Remove multiple spaces
+    .replace(/^\s+|\s+$/g, ''); // Trim leading/trailing spaces
+    
+  // Capitalize first letter of sentences
+  processedText = processedText.replace(/(^|[.!?]\s+)([a-z])/g, 
+    (match, separator, letter) => separator + letter.toUpperCase()
+  );
+  
+  return processedText;
+};
+
+// Provide simple response to recognized text
+export const generateSimpleResponse = (transcript: string): string => {
+  // Simple keyword-based responses
+  if (transcript.toLowerCase().includes('olá') || 
+      transcript.toLowerCase().includes('oi') || 
+      transcript.toLowerCase().includes('bom dia') || 
+      transcript.toLowerCase().includes('boa tarde') || 
+      transcript.toLowerCase().includes('boa noite')) {
+    return 'Olá! Que bom falar com você. Como posso ajudar com sua história hoje?';
+  }
+  
+  if (transcript.toLowerCase().includes('quem é você') || 
+      transcript.toLowerCase().includes('como você se chama') || 
+      transcript.toLowerCase().includes('qual é o seu nome')) {
+    return 'Eu sou a Esfera Sonora, sua amiga que adora ouvir e contar histórias!';
+  }
+  
+  if (transcript.toLowerCase().includes('obrigado') || 
+      transcript.toLowerCase().includes('obrigada') || 
+      transcript.toLowerCase().includes('valeu')) {
+    return 'De nada! Foi um prazer ajudar. Conte-me mais quando quiser!';
+  }
+  
+  // Default response for stories
+  if (transcript.length > 30) {
+    const responses = [
+      'Que história interessante! Conte-me mais sobre isso.',
+      'Adorei essa parte da sua história. O que aconteceu depois?',
+      'Sua história é muito criativa! Continue contando, estou adorando ouvir.',
+      'Que legal! E depois, o que aconteceu com os personagens?',
+      'Estou gostando muito da sua história. Você tem muita imaginação!'
+    ];
+    
+    // Select a random response
+    return responses[Math.floor(Math.random() * responses.length)];
+  }
+  
+  // Default fallback
+  return 'Entendi! Continue contando sua história.';
 };

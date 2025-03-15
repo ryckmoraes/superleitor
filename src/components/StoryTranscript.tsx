@@ -5,10 +5,11 @@ import { Loader2 } from "lucide-react";
 interface StoryTranscriptProps {
   storyTranscript: string;
   isProcessing: boolean;
+  isInterim?: boolean;
 }
 
-const StoryTranscript = ({ storyTranscript, isProcessing }: StoryTranscriptProps) => {
-  if (!storyTranscript) return null;
+const StoryTranscript = ({ storyTranscript, isProcessing, isInterim = false }: StoryTranscriptProps) => {
+  if (!storyTranscript && !isProcessing) return null;
   
   return (
     <div className="absolute bottom-32 px-6 w-full max-w-md mx-auto">
@@ -19,7 +20,10 @@ const StoryTranscript = ({ storyTranscript, isProcessing }: StoryTranscriptProps
             <p className="text-sm mt-2">Analisando sua história...</p>
           </div>
         ) : (
-          <p className="text-sm">{storyTranscript}</p>
+          <p className={`text-sm ${isInterim ? 'opacity-70' : ''}`}>
+            {storyTranscript}
+            {isInterim && <span className="animate-pulse">...</span>}
+          </p>
         )}
       </ScrollArea>
     </div>

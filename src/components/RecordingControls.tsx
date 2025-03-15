@@ -7,13 +7,15 @@ interface RecordingControlsProps {
   isProcessing: boolean;
   recordingTime: number;
   toggleRecording: () => void;
+  recognitionStatus?: string;
 }
 
 const RecordingControls = ({ 
   isRecording, 
   isProcessing, 
   recordingTime, 
-  toggleRecording 
+  toggleRecording,
+  recognitionStatus
 }: RecordingControlsProps) => {
   return (
     <div className="absolute top-6 left-0 right-0 text-center">
@@ -23,6 +25,9 @@ const RecordingControls = ({
       {isRecording && (
         <p className="text-sm text-muted-foreground mt-1">
           Tempo de gravação: {Math.floor(recordingTime)} segundos
+          {recognitionStatus && (
+            <span className="ml-2 text-xs opacity-70">{recognitionStatus}</span>
+          )}
         </p>
       )}
       

@@ -25,9 +25,9 @@ const usePatternDetection = (audioData: Uint8Array | null) => {
       historicalDataRef.current.shift();
     }
     
-    // Analyze patterns every 15 frames to save resources and reduce false positives
+    // Analyze patterns every 30 frames to save resources and reduce false positives
     analysisCounterRef.current += 1;
-    if (analysisCounterRef.current >= 15) {
+    if (analysisCounterRef.current >= 30) {  // Increased from 15 to 30
       analysisCounterRef.current = 0;
       detectPatterns();
     }
@@ -35,13 +35,13 @@ const usePatternDetection = (audioData: Uint8Array | null) => {
   
   const detectPatterns = () => {
     const history = historicalDataRef.current;
-    if (history.length < 30) {
-      return; // Need at least 30 frames for reliable analysis
+    if (history.length < 40) {  // Increased from 30 to 40
+      return; // Need at least 40 frames for reliable analysis
     }
     
     // Implement cooldown period to prevent excessive pattern detection
     const now = Date.now();
-    if (now - lastPatternDetectionRef.current < 10000) { // 10-second cooldown
+    if (now - lastPatternDetectionRef.current < 15000) { // Increased from 10s to 15s cooldown
       return;
     }
     
@@ -85,7 +85,7 @@ const usePatternDetection = (audioData: Uint8Array | null) => {
     }, 0) / history.length;
     
     // If average energy is low, consider it background noise
-    return avgEnergy < 30;
+    return avgEnergy < 40;  // Increased from 30 to 40
   };
   
   // Detect rhythmic patterns based on audio energy
@@ -103,19 +103,19 @@ const usePatternDetection = (audioData: Uint8Array | null) => {
     const peakIndices: number[] = [];
     for (let i = 2; i < energies.length - 2; i++) {
       // More strict peak detection - must be significantly higher than neighbors
-      if (energies[i] > energies[i-1] * 1.5 && 
-          energies[i] > energies[i-2] * 1.5 &&
-          energies[i] > energies[i+1] * 1.5 && 
-          energies[i] > energies[i+2] * 1.5) {
+      if (energies[i] > energies[i-1] * 1.8 &&  // Increased from 1.5 to 1.8
+          energies[i] > energies[i-2] * 1.8 &&  // Increased from 1.5 to 1.8
+          energies[i] > energies[i+1] * 1.8 &&  // Increased from 1.5 to 1.8
+          energies[i] > energies[i+2] * 1.8) {  // Increased from 1.5 to 1.8
         // Only consider significant peaks
-        if (energies[i] > 70) { // Higher threshold
+        if (energies[i] > 90) { // Increased from 70 to 90
           peakIndices.push(i);
         }
       }
     }
     
     // Need at least 4 peaks for reliable rhythm detection
-    if (peakIndices.length < 4) {
+    if (peakIndices.length < 5) {  // Increased from 4 to 5
       return false;
     }
     
@@ -132,7 +132,7 @@ const usePatternDetection = (audioData: Uint8Array | null) => {
     }, 0) / intervals.length;
     
     // Stricter test for regular rhythm - lower variance and consistent interval
-    return variance < 2.0 && avgInterval < 12 && avgInterval > 3;
+    return variance < 1.5 && avgInterval < 10 && avgInterval > 4;  // Stricter conditions
   };
   
   // Detect repetitive patterns based on frame correlation
@@ -151,13 +151,13 @@ const usePatternDetection = (audioData: Uint8Array | null) => {
       const correlation = calculateCorrelation(currentFrame, pastFrame);
       totalComparisons++;
       
-      if (correlation > 0.92) { // Higher threshold (92% similarity required)
+      if (correlation > 0.95) { // Higher threshold (from 0.92 to 0.95)
         repetitionCount++;
       }
     }
     
-    // Require more consistent repetitions - at least 60% of comparisons must show high similarity
-    return totalComparisons > 0 && (repetitionCount / totalComparisons) > 0.6;
+    // Require more consistent repetitions - at least 70% of comparisons must show high similarity
+    return totalComparisons > 0 && (repetitionCount / totalComparisons) > 0.7;  // Increased from 0.6 to 0.7
   };
   
   // Calculate correlation (similarity) between two audio arrays
@@ -177,7 +177,7 @@ const usePatternDetection = (audioData: Uint8Array | null) => {
     const avgB = sumB / b.length;
     
     // If either array has very low average energy, skip correlation
-    if (avgA < 20 || avgB < 20) return 0;
+    if (avgA < 25 || avgB < 25) return 0;  // Increased from 20 to 25
     
     let numerator = 0;
     let denominatorA = 0;
