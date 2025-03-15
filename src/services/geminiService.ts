@@ -103,11 +103,11 @@ export class GeminiService {
       })
       .catch(error => {
         console.error("Model fallback failed:", error);
-        return await this.getQuickFallbackResponse();
+        return this.getQuickFallbackResponse(); // Removed await here since getQuickFallbackResponse is not async
       });
     } catch (error) {
       console.error("Error processing audio with Gemini:", error);
-      return this.getQuickFallbackResponse();
+      return this.getQuickFallbackResponse(); // Removed await here as well
     }
   }
 
