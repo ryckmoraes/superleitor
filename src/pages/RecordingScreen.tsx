@@ -42,39 +42,10 @@ const RecordingScreen = () => {
   const welcomeSpokenRef = useRef(false);
   const lastTranscriptRef = useRef("");
   const speechInitializedRef = useRef(false);
-  const audioTestPerformedRef = useRef(false);
   const processingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasAudioDataRef = useRef(false);
 
-  // Test audio on initialization
-  useEffect(() => {
-    if (loaded && !audioTestPerformedRef.current) {
-      audioTestPerformedRef.current = true;
-      
-      // Brief delay to ensure page is fully loaded
-      setTimeout(async () => {
-        try {
-          // Try to play a test sound
-          const testSound = new Audio();
-          testSound.src = "data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU..."
-          testSound.volume = 1.0;
-          
-          // Force audio context to unlock audio on iOS/Safari
-          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-          await audioContext.resume();
-          
-          // Test speech synthesis
-          const testText = "Testando o sistema de áudio...";
-          console.log("Teste inicial de áudio:", testText);
-          speakNaturally(testText, true);
-        } catch (e) {
-          console.error("Erro no teste de áudio:", e);
-        }
-      }, 1500);
-    }
-  }, [loaded]);
-
-  // Initialize speech synthesis
+  // Initialize speech synthesis (without audio test)
   useEffect(() => {
     if (!speechInitializedRef.current) {
       initVoices().then((initialized) => {
@@ -236,7 +207,7 @@ const RecordingScreen = () => {
       // Reset notification after a time to allow future notifications
       setTimeout(() => {
         patternNotifiedRef.current = false;
-      }, 12000); // Longer timeout to prevent too many notifications
+      }, 15000); // Longer timeout to prevent too many notifications
     }
   }, [patternDetected, patternType, isRecording]);
 
@@ -291,7 +262,7 @@ const RecordingScreen = () => {
           showToastOnly("Analisando", "Estou analisando sua história com mais detalhes...");
         }, 3000);
         
-        // FIX: Set a timeout to make sure we finish processing eventually
+        // CRITICAL FIX: Set a strict timeout to ensure we finish processing
         if (processingTimeoutRef.current) {
           clearTimeout(processingTimeoutRef.current);
         }
@@ -300,10 +271,11 @@ const RecordingScreen = () => {
           if (isProcessing) {
             console.log("Processing timeout reached, showing fallback response");
             setIsProcessing(false);
-            showToastOnly("Análise completa!", "Adorei sua história! Continue contando mais!");
-            speakNaturally("Adorei sua história! Continue contando mais!", true);
+            const fallbackResponse = "Adorei sua história! Continue contando mais!";
+            showToastOnly("Análise completa!", fallbackResponse);
+            speakNaturally(fallbackResponse, true);
           }
-        }, 20000); // 20 second timeout
+        }, 10000); // Shorter 10 second timeout
         
         // Process the audio with Gemini
         geminiService.processAudio(audioBlob)
@@ -332,8 +304,9 @@ const RecordingScreen = () => {
           .catch(error => {
             console.error("Error processing with Gemini:", error);
             // In case of error, still show some response
-            showToastOnly("Hmm...", "Sua história é fascinante! Pode me contar mais?");
-            speakNaturally("Sua história é fascinante! Pode me contar mais?", true);
+            const errorResponse = "Sua história é fascinante! Pode me contar mais?";
+            showToastOnly("Hmm...", errorResponse);
+            speakNaturally(errorResponse, true);
           })
           .finally(() => {
             setIsProcessing(false);

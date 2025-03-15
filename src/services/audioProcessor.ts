@@ -15,10 +15,10 @@ export const processTextForSpeech = (text: string): string => {
 const addNaturalVariations = (text: string): string => {
   // Add occasional filler words that Brazilians use in casual speech
   const fillers = [
-    { probability: 0.2, pattern: /^/g, replacements: ['Bem, ', 'Olha, ', 'Veja, ', 'Ah, ', 'Hmm, ', ''] },
-    { probability: 0.3, pattern: /\.\s+/g, replacements: ['. Hmm, ', '. Então, ', '. Agora, ', '. Sabe, ', '. '] },
-    { probability: 0.2, pattern: /\?/g, replacements: ['? Né?', '?', '? Entende?', '? Sabe?', '?'] },
-    { probability: 0.25, pattern: /!/g, replacements: ['! Nossa!', '! Caramba!', '! Poxa!', '! Incrível!', '!'] }
+    { probability: 0.1, pattern: /^/g, replacements: ['Bem, ', 'Olha, ', 'Veja, ', ''] },
+    { probability: 0.15, pattern: /\.\s+/g, replacements: ['. Então, ', '. Agora, ', '. '] },
+    { probability: 0.1, pattern: /\?/g, replacements: ['?', '? Entende?', '?'] },
+    { probability: 0.1, pattern: /!/g, replacements: ['!', '! Poxa!', '!'] }
   ];
   
   let result = text;
@@ -30,15 +30,6 @@ const addNaturalVariations = (text: string): string => {
     }
   });
   
-  // Occasionally emphasize with repetition (Brazilian way)
-  if (Math.random() < 0.1) {
-    const words = result.split(' ');
-    const wordToEmphasize = words[Math.floor(Math.random() * words.length)];
-    if (wordToEmphasize.length > 3) {
-      result = result.replace(new RegExp(`\\b${wordToEmphasize}\\b`), `${wordToEmphasize}, ${wordToEmphasize}`);
-    }
-  }
-  
   return result;
 };
 
@@ -47,9 +38,9 @@ export const configureNaturalVoice = (utterance: SpeechSynthesisUtterance): void
   // Set language to Brazilian Portuguese
   utterance.lang = 'pt-BR';
   
-  // FURTHER improved rate for more natural sound
-  utterance.rate = 1.6;  // Even faster rate for more natural flow
-  utterance.pitch = 1.25; // Slightly higher pitch sounds more engaging
+  // More natural rate settings
+  utterance.rate = 1.1;  // More moderate rate
+  utterance.pitch = 1.0; // Natural pitch
   utterance.volume = 1.0; // Maximum volume
   
   // Try to select a more natural female voice if available
@@ -127,7 +118,7 @@ export const initVoices = (): Promise<boolean> => {
   });
 };
 
-// COMPLETELY REDESIGNED speech system for much more natural speech
+// Redesigned speech system for improved naturalness
 export const speakNaturally = (text: string, priority: boolean = false): void => {
   if (!('speechSynthesis' in window)) {
     console.error("Speech synthesis not supported");
@@ -145,7 +136,7 @@ export const speakNaturally = (text: string, priority: boolean = false): void =>
     console.error("Error cancelling speech:", e);
   }
   
-  // Longer delay to ensure cancellation completes
+  // Short delay to ensure cancellation completes
   setTimeout(() => {
     try {
       // Force device volume to be high using web audio API
@@ -171,8 +162,8 @@ export const speakNaturally = (text: string, priority: boolean = false): void =>
       
       // Configure the utterance
       utterance.text = processedText;
-      utterance.rate = 1.6; // Significantly faster rate makes it sound more natural
-      utterance.pitch = 1.25; // Slightly higher pitch for more engaging sound
+      utterance.rate = 1.1; // More natural rate
+      utterance.pitch = 1.0; // Natural pitch
       utterance.volume = 1.0; // Maximum volume
       utterance.lang = 'pt-BR';
       
@@ -215,8 +206,8 @@ const simpleSpeakFallback = (text: string): void => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'pt-BR';
     utterance.volume = 1.0;
-    utterance.rate = 1.6; // Even faster rate for more natural speech
-    utterance.pitch = 1.25;
+    utterance.rate = 1.1; // More natural rate
+    utterance.pitch = 1.0;
     window.speechSynthesis.speak(utterance);
     console.log("Using simple fallback speech");
   } catch (e) {

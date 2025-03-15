@@ -83,69 +83,89 @@ export class GeminiService {
         }
       ];
 
-      // Implement with shorter timeout and more reliable fallbacks
+      // Implement with shorter timeout and multiple reliable fallbacks
       return await Promise.race([
         this.callGeminiAPI(messages, this.model),
         // Set timeout that will reject if the API call takes too long
         new Promise<string>((_, reject) => 
-          setTimeout(() => reject(new Error("API timeout")), 8000)
+          setTimeout(() => reject(new Error("API timeout")), 6000)
         ) 
       ])
       .catch(async (error) => {
-        console.log(`Primary model error or timeout: ${error}. Trying fallback...`);
+        console.log(`Primary model error or timeout: ${error}. Trying fallback model...`);
         // Try fallback model with shorter timeout
         return await Promise.race([
           this.callGeminiAPI(messages, this.fallbackModel),
           new Promise<string>((_, reject) => 
-            setTimeout(() => reject(new Error("Fallback timeout")), 6000)
+            setTimeout(() => reject(new Error("Fallback timeout")), 4000)
           )
         ]);
       })
       .catch(error => {
-        console.error("All models failed:", error);
-        return "Nossa! Que história incrível! Conta mais detalhes pra mim?";
+        console.error("Model fallback failed:", error);
+        return await this.getQuickFallbackResponse();
       });
     } catch (error) {
       console.error("Error processing audio with Gemini:", error);
-      return "Puxa, adorei sua história! Me conta mais?";
+      return this.getQuickFallbackResponse();
     }
+  }
+
+  /**
+   * Get a quick fallback response when the API fails
+   */
+  private getQuickFallbackResponse(): string {
+    const fallbackResponses = [
+      "Nossa! Que história incrível! Conta mais detalhes pra mim?",
+      "Puxa, adorei sua história! Me conta mais?",
+      "Caramba, que legal o que você contou! O que aconteceu depois?",
+      "Que história divertida! Você tem muita imaginação!",
+      "Uau! Adorei ouvir isso! Me conta mais sobre os personagens?"
+    ];
+    return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
   }
 
   /**
    * Call the Gemini API with the given messages and model
    */
   private async callGeminiAPI(messages: GeminiMessage[], model: string): Promise<string> {
-    const response = await fetch(
-      `${this.apiUrl}/${model}:generateContent?key=${this.apiKey}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: messages,
-          generation_config: {
-            temperature: 1.0,
-            max_output_tokens: 100, // Shorter responses
-            top_k: 40,
-            top_p: 0.95,
+    try {
+      const response = await fetch(
+        `${this.apiUrl}/${model}:generateContent?key=${this.apiKey}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        }),
+          body: JSON.stringify({
+            contents: messages,
+            generation_config: {
+              temperature: 0.9,
+              max_output_tokens: 100, // Shorter responses
+              top_k: 40,
+              top_p: 0.95,
+            },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
       }
-    );
 
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+      const data = await response.json();
+      
+      if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content) {
+        throw new Error("Invalid response format");
+      }
+      
+      const responseText = data.candidates[0].content.parts[0].text || "";
+      return responseText || this.getQuickFallbackResponse();
     }
-
-    const data = await response.json();
-    
-    if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content) {
-      throw new Error("Invalid response format");
+    catch (error) {
+      console.error("Error calling Gemini API:", error);
+      throw error; // Let the caller handle the error with fallbacks
     }
-    
-    const responseText = data.candidates[0].content.parts[0].text || "";
-    return responseText || "Nossa, que história legal! Me conta mais!";
   }
 
   /**
