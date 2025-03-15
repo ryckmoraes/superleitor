@@ -36,6 +36,12 @@ jobs:
       - name: Install Capacitor Android
         run: npm install @capacitor/android --legacy-peer-deps
 
+      - name: Initialize Capacitor if needed
+        run: |
+          if [ ! -f "capacitor.config.ts" ]; then
+            npx cap init
+          fi
+
       - name: Check if Android platform exists
         id: check_android
         run: |
@@ -79,17 +85,27 @@ jobs:
           
       - name: Ensure AndroidX is enabled
         run: |
+          mkdir -p android
           echo "android.useAndroidX=true" >> android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
 
-      - name: Sync Capacitor
-        run: npx cap sync android
+      - name: Create basic Gradle project structure if not exists
+        run: |
+          if [ ! -f "android/settings.gradle" ]; then
+            mkdir -p android
+            echo "rootProject.name = 'esferasonora'" > android/settings.gradle
+            mkdir -p android/app
+            echo "plugins { id 'com.android.application' }" > android/app/build.gradle
+          fi
 
       - name: Create Gradle wrapper with specific version
         run: |
           cd android
           gradle wrapper --gradle-version 7.6
           chmod +x ./gradlew
+
+      - name: Sync Capacitor
+        run: npx cap sync android
 
       - name: Build Android APK
         run: |
