@@ -18,6 +18,8 @@ const useAudioAnalyzer = () => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
   const significantAudioDetectedRef = useRef(false);
+  const consecutiveAudioDetectionsRef = useRef(0);
+  const silenceCountRef = useRef(0);
 
   const startRecording = async () => {
     try {
@@ -25,6 +27,8 @@ const useAudioAnalyzer = () => {
       setErrorMessage(null);
       setRecordingTime(0);
       significantAudioDetectedRef.current = false;
+      consecutiveAudioDetectionsRef.current = 0;
+      silenceCountRef.current = 0;
       
       // Request audio permission
       const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -53,17 +57,29 @@ const useAudioAnalyzer = () => {
       const dataArray = new Uint8Array(bufferLength);
       dataArrayRef.current = dataArray;
       
-      // Start analysis loop with audio detection
+      // Start analysis loop with improved audio detection
       const analyzeAudio = () => {
         if (!analyserRef.current || !dataArrayRef.current) return;
         
         analyserRef.current.getByteFrequencyData(dataArrayRef.current);
         
-        // IMPROVED: Check for significant audio before starting timer
-        const significantAudio = Array.from(dataArrayRef.current).some(val => val > 25);
+        // IMPROVED: More reliable audio detection with threshold and consecutive frames
+        const audioValues = Array.from(dataArrayRef.current);
+        const average = audioValues.reduce((sum, val) => sum + val, 0) / audioValues.length;
+        const significantAudio = average > 15; // Lower threshold for better sensitivity
         
-        if (significantAudio && !significantAudioDetectedRef.current) {
-          // Start the timer only when actual audio is detected
+        if (significantAudio) {
+          consecutiveAudioDetectionsRef.current++;
+          silenceCountRef.current = 0;
+        } else {
+          silenceCountRef.current++;
+          if (silenceCountRef.current > 10) { // Only reset after 10 frames of silence
+            consecutiveAudioDetectionsRef.current = 0;
+          }
+        }
+        
+        // Start timer after 3 consecutive detections to avoid false triggers
+        if (consecutiveAudioDetectionsRef.current >= 3 && !significantAudioDetectedRef.current) {
           significantAudioDetectedRef.current = true;
           console.log("Significant audio detected, starting timer now");
           
@@ -101,7 +117,14 @@ const useAudioAnalyzer = () => {
       };
       
       mediaRecorder.onstop = () => {
+        if (audioChunksRef.current.length === 0) {
+          console.log("No audio chunks recorded");
+          setAudioBlob(null);
+          return;
+        }
+        
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        console.log("Audio recording completed, size:", audioBlob.size, "bytes");
         setAudioBlob(audioBlob);
         audioChunksRef.current = [];
       };
@@ -151,6 +174,8 @@ const useAudioAnalyzer = () => {
     analyserRef.current = null;
     dataArrayRef.current = null;
     significantAudioDetectedRef.current = false;
+    consecutiveAudioDetectionsRef.current = 0;
+    silenceCountRef.current = 0;
     setAudioData(null);
     setIsRecording(false);
     // Don't reset recordingTime here to display total time at the end
