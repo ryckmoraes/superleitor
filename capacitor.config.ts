@@ -28,8 +28,10 @@ const config: CapacitorConfig = {
       showSpinner: true,
       splashFullScreen: true,
       splashImmersive: true,
-      backgroundColor: "#7BCB32",
-      spinnerColor: "#FFA729"
+      backgroundColor: "#00000000", // Transparent background
+      spinnerColor: "#FFA729",
+      androidScaleType: "CENTER_CROP",
+      spinnerStyle: "large"
     }
   }
 };

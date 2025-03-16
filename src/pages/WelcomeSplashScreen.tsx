@@ -49,12 +49,14 @@ const WelcomeSplashScreen = () => {
           <div className="absolute inset-0 rounded-full bg-primary/15 animate-pulse" 
                style={{ animationDelay: "1s", width: "190px", height: "190px", transform: "translate(-20%, -20%)" }} />
           
-          {/* Elefantinho com cadeado */}
-          <div className="relative z-10 w-40 h-40 flex items-center justify-center overflow-visible">
+          {/* Elefantinho com cadeado - animação mais evidente */}
+          <div className="relative z-10 w-40 h-40 flex items-center justify-center overflow-visible animate-float" 
+               style={{ animation: "float 3s ease-in-out infinite" }}>
             <img 
               src="/lovable-uploads/24e48b60-7b2a-419e-af48-5f31469207a1.png" 
               alt="Elefantinho com cadeado"
               className="w-48 h-48 object-contain drop-shadow-xl"
+              style={{ filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.2))" }}
             />
           </div>
         </div>
@@ -74,7 +76,8 @@ const WelcomeSplashScreen = () => {
           <Button 
             onClick={handleNavigate}
             size="lg"
-            className="group relative overflow-hidden rounded-full px-8 py-6 shadow-lg transition-all duration-300 ease-out hover:shadow-xl bg-primary hover:bg-primary/90 text-primary-foreground"
+            className="group relative overflow-hidden rounded-full px-8 py-6 shadow-lg transition-all duration-300 ease-out hover:shadow-xl bg-primary hover:bg-primary/90 text-primary-foreground animate-pulse"
+            style={{ animationDuration: "4s" }}
           >
             <span className="relative z-10 flex items-center gap-2 font-medium text-lg">
               {onboardingData.setupCompleted ? "Iniciar" : "Configurar"}
@@ -92,8 +95,8 @@ const WelcomeSplashScreen = () => {
       </div>
       
       <div className="absolute bottom-4 right-4 flex items-center space-x-2 text-accent">
-        <Lock className="w-5 h-5" />
-        <BookOpen className="w-5 h-5 text-secondary" />
+        <Lock className="w-5 h-5 animate-pulse" style={{ animationDuration: "3s" }} />
+        <BookOpen className="w-5 h-5 text-secondary animate-pulse" style={{ animationDuration: "3.5s" }} />
       </div>
     </div>
   );

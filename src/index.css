@@ -76,21 +76,27 @@
 }
 
 @layer utilities {
-  /* Animation for the splash screen logo */
+  /* Animation for the splash screen logo - enhanced float animation */
   @keyframes float {
     0% {
-      transform: translateY(0px);
+      transform: translateY(0px) rotate(0deg);
+    }
+    25% {
+      transform: translateY(-8px) rotate(1deg);
     }
     50% {
-      transform: translateY(-10px);
+      transform: translateY(-15px) rotate(0deg);
+    }
+    75% {
+      transform: translateY(-8px) rotate(-1deg);
     }
     100% {
-      transform: translateY(0px);
+      transform: translateY(0px) rotate(0deg);
     }
   }
 
   .animate-float {
-    animation: float 3s ease-in-out infinite;
+    animation: float 4s ease-in-out infinite;
   }
 
   /* Menu hover area */

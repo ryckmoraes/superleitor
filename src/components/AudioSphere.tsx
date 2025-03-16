@@ -33,16 +33,17 @@ const AudioSphere = ({ audioData, isRecording }: AudioSphereProps) => {
     camera.position.z = 5;
     cameraRef.current = camera;
 
-    // Create renderer
+    // Create renderer with transparent background
     const renderer = new THREE.WebGLRenderer({ 
       antialias: true, 
-      alpha: true 
+      alpha: true,
+      preserveDrawingBuffer: false
     });
     renderer.setSize(
       containerRef.current.clientWidth,
       containerRef.current.clientHeight
     );
-    renderer.setClearColor(0x000000, 0);
+    renderer.setClearColor(0x000000, 0); // Completely transparent background
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
@@ -94,13 +95,14 @@ const AudioSphere = ({ audioData, isRecording }: AudioSphereProps) => {
     
     particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     
-    // Material para as partículas
+    // Material para as partículas - mais transparente e brilhante
     const particlesMaterial = new THREE.PointsMaterial({
       color: 0x88ccff,
       size: 0.05,
       transparent: true,
-      opacity: 0.6,
-      sizeAttenuation: true
+      opacity: 0.7,
+      sizeAttenuation: true,
+      blending: THREE.AdditiveBlending
     });
     
     // Cria e adiciona o sistema de partículas
@@ -108,23 +110,32 @@ const AudioSphere = ({ audioData, isRecording }: AudioSphereProps) => {
     scene.add(particles);
     particlesRef.current = particles;
 
-    // Animate function
+    // Enhanced animation function
     const animate = () => {
       if (!sphereRef.current || !particlesRef.current) return;
       
-      // Subtle rotation when not recording
+      // More dynamic rotation when not recording
       if (!isRecording) {
-        sphereRef.current.rotation.x += 0.003;
-        sphereRef.current.rotation.y += 0.003;
-        
-        // Subtle breathing effect when not recording
         const time = Date.now() * 0.001;
-        const scale = 1 + Math.sin(time) * 0.05;
+        
+        // More dynamic rotation
+        sphereRef.current.rotation.x += 0.004;
+        sphereRef.current.rotation.y += 0.003;
+        sphereRef.current.rotation.z += 0.001;
+        
+        // Enhanced breathing effect when not recording
+        const scale = 1 + Math.sin(time) * 0.08;
         sphereRef.current.scale.set(scale, scale, scale);
         
-        // Rotate particles in opposite direction
-        particlesRef.current.rotation.x -= 0.001;
+        // Rotate particles in opposite direction with slight variation
+        particlesRef.current.rotation.x -= 0.002;
         particlesRef.current.rotation.y -= 0.001;
+        particlesRef.current.rotation.z -= 0.0005;
+        
+        // Pulse the particles size
+        if (particlesRef.current.material instanceof THREE.PointsMaterial) {
+          particlesRef.current.material.size = 0.05 + Math.sin(time * 1.5) * 0.02;
+        }
       }
       
       if (rendererRef.current && sceneRef.current && cameraRef.current) {
@@ -165,7 +176,7 @@ const AudioSphere = ({ audioData, isRecording }: AudioSphereProps) => {
     };
   }, [isRecording]);
 
-  // Update sphere based on audio data
+  // Update sphere based on audio data with enhanced effects
   useEffect(() => {
     if (!audioData || !sphereRef.current || !particlesRef.current || !isRecording) return;
 
@@ -199,7 +210,7 @@ const AudioSphere = ({ audioData, isRecording }: AudioSphereProps) => {
       positions.setXYZ(i, vertex.x, vertex.y, vertex.z);
     }
     
-    // Update particles based on audio
+    // Update particles based on audio with enhanced effects
     for (let i = 0; i < particlePositions.count; i++) {
       // Get current particle position
       vertex.fromBufferAttribute(particlePositions, i);
@@ -211,26 +222,26 @@ const AudioSphere = ({ audioData, isRecording }: AudioSphereProps) => {
       const freqIndex = Math.min(Math.floor(i / particlePositions.count * audioData.length), audioData.length - 1);
       const freqValue = audioData[freqIndex] / 255;
       
-      // Calculate new distance from center
+      // Calculate new distance from center with more variation
       const baseDistance = vertex.length();
-      const newDistance = baseDistance + freqValue * 0.5;
+      const newDistance = baseDistance + freqValue * 0.7 + Math.sin(i * 0.1) * 0.1;
       
       // Set new position
       vertex.copy(direction.multiplyScalar(newDistance));
       particlePositions.setXYZ(i, vertex.x, vertex.y, vertex.z);
     }
     
-    // Update material color based on volume
+    // Update material color based on volume with more vibrant colors
     if (sphereRef.current.material instanceof THREE.MeshPhongMaterial) {
       // Shift color from blue to purple based on volume
-      const hue = 0.6 - avgVolume * 0.1;
-      sphereRef.current.material.color.setHSL(hue, 0.8, 0.5);
+      const hue = 0.6 - avgVolume * 0.15;
+      sphereRef.current.material.color.setHSL(hue, 0.9, 0.55);
       sphereRef.current.material.opacity = 0.7 + avgVolume * 0.3;
       
-      // Atualizamos também as partículas
+      // Update particles with complementary colors
       if (particlesRef.current.material instanceof THREE.PointsMaterial) {
-        particlesRef.current.material.color.setHSL(hue + 0.1, 0.7, 0.6);
-        particlesRef.current.material.size = 0.05 + avgVolume * 0.1;
+        particlesRef.current.material.color.setHSL((hue + 0.1) % 1, 0.8, 0.7);
+        particlesRef.current.material.size = 0.05 + avgVolume * 0.15;
       }
     }
     
