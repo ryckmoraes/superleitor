@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { ArrowRight, Lock } from "lucide-react";
+import { ArrowRight, Lock, BookOpen } from "lucide-react";
 
 const WelcomeSplashScreen = () => {
   const navigate = useNavigate();
@@ -45,16 +45,16 @@ const WelcomeSplashScreen = () => {
       }`}>
         <div className="mb-8 relative">
           <div className="absolute inset-0 rounded-full bg-primary/20 animate-pulse" 
-               style={{ animationDelay: "0.5s", width: "140px", height: "140px", transform: "translate(-10%, -10%)" }} />
+               style={{ animationDelay: "0.5s", width: "170px", height: "170px", transform: "translate(-10%, -10%)" }} />
           <div className="absolute inset-0 rounded-full bg-primary/15 animate-pulse" 
-               style={{ animationDelay: "1s", width: "160px", height: "160px", transform: "translate(-20%, -20%)" }} />
+               style={{ animationDelay: "1s", width: "190px", height: "190px", transform: "translate(-20%, -20%)" }} />
           
-          {/* Elefantinho e cadeado */}
-          <div className="relative z-10 w-32 h-32 bg-gradient-to-br from-primary to-primary/70 rounded-full flex items-center justify-center shadow-xl overflow-hidden">
+          {/* Elefantinho com cadeado */}
+          <div className="relative z-10 w-40 h-40 flex items-center justify-center overflow-visible">
             <img 
-              src="/lovable-uploads/10b34317-e949-48a0-9866-905f6dfb17cd.png" 
+              src="/lovable-uploads/24e48b60-7b2a-419e-af48-5f31469207a1.png" 
               alt="Elefantinho com cadeado"
-              className="w-28 h-28 object-contain"
+              className="w-48 h-48 object-contain drop-shadow-xl"
             />
           </div>
         </div>
@@ -85,14 +85,15 @@ const WelcomeSplashScreen = () => {
           
           {onboardingData.setupCompleted && (
             <p className="text-sm text-muted-foreground/80">
-              Olá {onboardingData.adminName}! Bem-vindo de volta.
+              Olá {onboardingData.adminName || "Usuário"}! Bem-vindo de volta.
             </p>
           )}
         </div>
       </div>
       
-      <div className="absolute bottom-4 right-4 text-accent opacity-70">
+      <div className="absolute bottom-4 right-4 flex items-center space-x-2 text-accent">
         <Lock className="w-5 h-5" />
+        <BookOpen className="w-5 h-5 text-secondary" />
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -11,21 +12,26 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
     
-    /* Tema verde inspirado no elefantinho */
-    --primary: 97 85% 60%;
+    /* Tema verde baseado no elefantinho */
+    --primary: 97 60% 50%;  /* Verde do elefantinho */
     --primary-foreground: 210 40% 98%;
     
     --secondary: 97 83% 92%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 97 50% 96%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 350 85% 85%;
+    
+    /* Rosa das bochechas do elefante */
+    --accent: 340 95% 75%;
     --accent-foreground: 222.2 47.4% 11.2%;
+    
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 97 30% 91.4%;
     --input: 97 30% 91.4%;
-    --ring: 97 85% 60%;
+    
+    /* Dourado do cadeado */
+    --ring: 38 90% 60%;
     --radius: 1rem;
   }
 
@@ -38,20 +44,24 @@
     --popover-foreground: 210 40% 98%;
     
     /* Tema verde e dourado para o modo escuro */
-    --primary: 97 75% 45%;
+    --primary: 97 65% 40%;  /* Verde do elefantinho - mais escuro */
     --primary-foreground: 222.2 47.4% 11.2%;
     
-    --secondary: 217.2 32.6% 17.5%;
+    /* Cores do livro roxo */
+    --secondary: 325 30% 40%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
+    --muted: 325 25% 25%;
     --muted-foreground: 215 20.2% 65.1%;
+    
+    /* Dourado do cadeado */
     --accent: 40 90% 50%;
     --accent-foreground: 210 40% 98%;
+    
     --destructive: 0 62.8% 50.6%;
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 97 75% 45%;
+    --ring: 40 90% 50%;
   }
 }
 
