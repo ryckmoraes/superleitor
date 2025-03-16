@@ -25,7 +25,9 @@ const config: CapacitorConfig = {
   plugins: {
     SplashScreen: {
       launchAutoHide: false,
-      showSpinner: true
+      showSpinner: true,
+      splashFullScreen: true,
+      splashImmersive: true
     }
   }
 };
