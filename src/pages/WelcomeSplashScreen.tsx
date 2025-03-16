@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Lock } from "lucide-react";
 
 const WelcomeSplashScreen = () => {
   const navigate = useNavigate();
@@ -39,7 +39,7 @@ const WelcomeSplashScreen = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-primary/10 to-background p-6 overflow-hidden">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-primary/20 to-background p-6 overflow-hidden">
       <div className={`flex flex-col items-center text-center transition-all duration-1000 ease-out transform ${
         loaded ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
       }`}>
@@ -48,34 +48,21 @@ const WelcomeSplashScreen = () => {
                style={{ animationDelay: "0.5s", width: "140px", height: "140px", transform: "translate(-10%, -10%)" }} />
           <div className="absolute inset-0 rounded-full bg-primary/15 animate-pulse" 
                style={{ animationDelay: "1s", width: "160px", height: "160px", transform: "translate(-20%, -20%)" }} />
-          <div className="relative z-10 w-32 h-32 bg-gradient-to-br from-primary to-primary/70 rounded-full flex items-center justify-center animate-float shadow-xl">
-            <svg 
-              width="80" 
-              height="80" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              xmlns="http://www.w3.org/2000/svg"
-              className="text-primary-foreground"
-            >
-              <path 
-                d="M12 14a2 2 0 100-4 2 2 0 000 4z" 
-                fill="currentColor" 
-              />
-              <path 
-                d="M16.24 7.76a6 6 0 010 8.49m-8.48-.01a6 6 0 010-8.49m11.31-2.82a10 10 0 010 14.14m-14.14 0a10 10 0 010-14.14" 
-                stroke="currentColor" 
-                strokeWidth="1.5" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
-              />
-            </svg>
+          
+          {/* Elefantinho e cadeado */}
+          <div className="relative z-10 w-32 h-32 bg-gradient-to-br from-primary to-primary/70 rounded-full flex items-center justify-center shadow-xl overflow-hidden">
+            <img 
+              src="/lovable-uploads/10b34317-e949-48a0-9866-905f6dfb17cd.png" 
+              alt="Elefantinho com cadeado"
+              className="w-28 h-28 object-contain"
+            />
           </div>
         </div>
         
         <h1 className="text-4xl font-bold tracking-tight mb-3 text-primary">
           Bem-vindo à
         </h1>
-        <h2 className="text-5xl font-extrabold tracking-tight mb-6 bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
+        <h2 className="text-5xl font-extrabold tracking-tight mb-6 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
           Esfera Sonora
         </h2>
         
@@ -102,6 +89,10 @@ const WelcomeSplashScreen = () => {
             </p>
           )}
         </div>
+      </div>
+      
+      <div className="absolute bottom-4 right-4 text-accent opacity-70">
+        <Lock className="w-5 h-5" />
       </div>
     </div>
   );
