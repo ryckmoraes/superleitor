@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for Android-specific behaviors
  */

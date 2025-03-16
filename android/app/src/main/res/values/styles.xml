@@ -1,3 +1,4 @@
+
 <resources>
     <!-- Base application theme -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
@@ -5,7 +6,11 @@
         <item name="colorPrimary">#3F51B5</item>
         <item name="colorPrimaryDark">#303F9F</item>
         <item name="colorAccent">#FF4081</item>
-        <!-- Use the correct attribute name for allowing cleartext traffic -->
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+        <item name="android:windowLightStatusBar">true</item>
         <item name="android:usesCleartextTraffic">true</item>
     </style>
 
@@ -14,7 +19,11 @@
         <item name="android:windowBackground">@android:color/white</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
-        <!-- Use the correct attribute name for allowing cleartext traffic -->
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+        <item name="android:windowLightStatusBar">true</item>
         <item name="android:usesCleartextTraffic">true</item>
     </style>
 </resources>
