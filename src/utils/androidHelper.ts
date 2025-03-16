@@ -11,6 +11,16 @@ interface CapacitorWindow extends Window {
         query: (options: { name: string }) => Promise<{ state: string }>;
         request: (options: { name: string }) => Promise<{ state: string }>;
       };
+      SplashScreen?: {
+        hide: () => Promise<void>;
+      };
+      App?: {
+        exitApp: () => Promise<void>;
+      };
+      StatusBar?: {
+        setStyle: (options: { style: string }) => Promise<void>;
+        hide: () => Promise<void>;
+      };
     };
   };
 }
@@ -58,18 +68,27 @@ export const requestAndroidPermissions = async (): Promise<boolean> => {
       const Permissions = capacitorWindow.Capacitor.Plugins?.Permissions;
       
       if (Permissions) {
-        // Request microphone permission
-        const micStatus = await Permissions.query({ name: 'microphone' });
-        
-        if (micStatus.state !== 'granted') {
-          await Permissions.request({ name: 'microphone' });
+        try {
+          // Request microphone permission
+          const micStatus = await Permissions.query({ name: 'microphone' });
+          
+          if (micStatus.state !== 'granted') {
+            await Permissions.request({ name: 'microphone' });
+          }
+          
+          return true;
+        } catch (permError) {
+          console.error("Permission error:", permError);
+          // Fallback to browser permissions for testing
+          if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            await navigator.mediaDevices.getUserMedia({ audio: true });
+            return true;
+          }
         }
-        
-        return true;
       }
     }
     
-    // Fallback to browser permissions for testing
+    // Fallback for browser
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       await navigator.mediaDevices.getUserMedia({ audio: true });
       return true;
@@ -79,6 +98,27 @@ export const requestAndroidPermissions = async (): Promise<boolean> => {
   } catch (err) {
     console.error('Error requesting Android permissions:', err);
     return false;
+  }
+};
+
+// Hide system UI (immersive mode)
+export const hideSystemUI = async (): Promise<void> => {
+  try {
+    const capacitorWindow = window as CapacitorWindow;
+    
+    if (capacitorWindow.Capacitor?.isNativePlatform()) {
+      // Hide status bar if available
+      if (capacitorWindow.Capacitor.Plugins?.StatusBar) {
+        await capacitorWindow.Capacitor.Plugins.StatusBar.hide();
+      }
+    }
+    
+    // Add fullscreen class to body if not already present
+    if (!document.body.classList.contains('fullscreen')) {
+      document.body.classList.add('fullscreen');
+    }
+  } catch (error) {
+    console.error('Error hiding system UI:', error);
   }
 };
 
