@@ -30,6 +30,9 @@ const SplashScreen = () => {
       }`}>
         <IntroductionStepper />
       </div>
+      <div className="absolute bottom-4 text-center text-xs text-muted-foreground">
+        Superleitor - Transformando a maneira como você lê
+      </div>
     </div>
   );
 };

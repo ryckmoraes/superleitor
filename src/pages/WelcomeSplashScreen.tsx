@@ -54,7 +54,7 @@ const WelcomeSplashScreen = () => {
                style={{ animation: "float 3s ease-in-out infinite" }}>
             <img 
               src="/lovable-uploads/24e48b60-7b2a-419e-af48-5f31469207a1.png" 
-              alt="Elefantinho com cadeado"
+              alt="Elefantinho com livro"
               className="w-48 h-48 object-contain drop-shadow-xl"
               style={{ filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.2))" }}
             />
@@ -62,14 +62,14 @@ const WelcomeSplashScreen = () => {
         </div>
         
         <h1 className="text-4xl font-bold tracking-tight mb-3 text-primary">
-          Bem-vindo à
+          Bem-vindo ao
         </h1>
         <h2 className="text-5xl font-extrabold tracking-tight mb-6 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-          Esfera Sonora
+          Superleitor
         </h2>
         
         <p className="text-muted-foreground max-w-md mb-8 text-lg">
-          Visualize suas frequências sonoras com uma esfera reativa interativa
+          O assistente de leitura que transforma sua aprendizagem com recursos interativos e imersivos
         </p>
         
         <div className="space-y-4">
@@ -80,7 +80,7 @@ const WelcomeSplashScreen = () => {
             style={{ animationDuration: "4s" }}
           >
             <span className="relative z-10 flex items-center gap-2 font-medium text-lg">
-              {onboardingData.setupCompleted ? "Iniciar" : "Configurar"}
+              {onboardingData.setupCompleted ? "Iniciar Leitura" : "Configurar"}
               <ArrowRight className="w-5 h-5 transition-transform duration-300 ease-out group-hover:translate-x-1" />
             </span>
             <div className="absolute inset-0 bg-gradient-to-r from-primary-foreground/5 to-transparent opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
@@ -88,7 +88,7 @@ const WelcomeSplashScreen = () => {
           
           {onboardingData.setupCompleted && (
             <p className="text-sm text-muted-foreground/80">
-              Olá {onboardingData.adminName || "Usuário"}! Bem-vindo de volta.
+              Olá {onboardingData.adminName || "Usuário"}! Pronto para melhorar sua leitura hoje?
             </p>
           )}
         </div>
