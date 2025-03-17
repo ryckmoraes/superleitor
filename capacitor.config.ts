@@ -14,6 +14,7 @@ const config: CapacitorConfig = {
     allowMixedContent: true,
     captureInput: true,
     webContentsDebuggingEnabled: true,
+    backgroundColor: "#00000000", // Transparent background
     buildOptions: {
       keystorePath: null,
       keystorePassword: null,
@@ -28,7 +29,7 @@ const config: CapacitorConfig = {
       showSpinner: true,
       splashFullScreen: true,
       splashImmersive: true,
-      backgroundColor: "#00000000", // Transparent background
+      backgroundColor: "#00000000", // Completely transparent
       spinnerColor: "#FFA729",
       androidScaleType: "CENTER_CROP",
       spinnerStyle: "large"
