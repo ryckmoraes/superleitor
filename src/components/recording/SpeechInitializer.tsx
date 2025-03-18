@@ -9,6 +9,11 @@ const SpeechInitializer = () => {
   // Inicializa a síntese de fala (sem teste de áudio)
   useEffect(() => {
     if (!speechInitializedRef.current) {
+      // Cancela qualquer fala anterior do navegador
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      
       // Inicializa a síntese de fala do navegador
       initVoices().then((initialized) => {
         speechInitializedRef.current = initialized;
@@ -21,11 +26,6 @@ const SpeechInitializer = () => {
       } else {
         console.log("Chave API ElevenLabs configurada:", elevenLabsService.getApiKey()?.substring(0, 3) + "...");
         console.log("Usando agent ID:", elevenLabsService.getAgentId());
-      }
-      
-      // Limpeza de qualquer fala pendente
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
       }
     }
   }, []);

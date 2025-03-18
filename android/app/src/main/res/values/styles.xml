@@ -1,10 +1,11 @@
+
 <resources>
     <!-- Base application theme -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Cores inspiradas no elefantinho verde com cadeado dourado -->
+        <!-- Cores baseadas no novo tema de áudio -->
         <item name="colorPrimary">#7BCB32</item>
         <item name="colorPrimaryDark">#5A9424</item>
-        <item name="colorAccent">#FFA729</item>
+        <item name="colorAccent">#E25C8C</item>
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowContentOverlay">@null</item>
         <item name="android:windowTranslucentStatus">true</item>

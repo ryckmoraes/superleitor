@@ -57,7 +57,7 @@ export const keepScreenOn = async (): Promise<boolean> => {
   }
 };
 
-// Request permissions needed for Android
+// Request permissions needed for Android audio app
 export const requestAndroidPermissions = async (): Promise<boolean> => {
   try {
     // Cast window to include Capacitor
@@ -73,7 +73,11 @@ export const requestAndroidPermissions = async (): Promise<boolean> => {
           const micStatus = await Permissions.query({ name: 'microphone' });
           
           if (micStatus.state !== 'granted') {
-            await Permissions.request({ name: 'microphone' });
+            const result = await Permissions.request({ name: 'microphone' });
+            if (result.state !== 'granted') {
+              console.warn('Microphone permission not granted');
+              return false;
+            }
           }
           
           return true;
@@ -122,11 +126,20 @@ export const hideSystemUI = async (): Promise<void> => {
   }
 };
 
-// Set appropriate Android gradle properties
-export const setupAndroidGradleProperties = (): void => {
-  // This function would be used during build time
-  // For debugging purposes, we log the configuration that should be applied
-  console.log("Android gradle properties needed:");
-  console.log("android.useAndroidX=true");
-  console.log("android.enableJetifier=true");
+// Exit the Android app properly
+export const exitApp = async (): Promise<void> => {
+  try {
+    const capacitorWindow = window as CapacitorWindow;
+    
+    if (capacitorWindow.Capacitor?.isNativePlatform() && 
+        capacitorWindow.Capacitor.Plugins?.App?.exitApp) {
+      // Save any state before exiting
+      localStorage.setItem('app_exited', 'true');
+      
+      // Exit the app
+      await capacitorWindow.Capacitor.Plugins.App.exitApp();
+    }
+  } catch (error) {
+    console.error('Error exiting app:', error);
+  }
 };

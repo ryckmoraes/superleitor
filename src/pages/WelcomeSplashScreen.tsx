@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { ArrowRight, Lock, BookOpen } from "lucide-react";
-import { loadImage, removeBackground } from "@/utils/imageUtils";
+import { ArrowRight, Headphones, Volume2, BookOpen } from "lucide-react";
 import { speakNaturally } from "@/services/audioProcessor";
 import { useElevenLabsSetup } from "@/hooks/useElevenLabsSetup";
 
@@ -12,8 +11,6 @@ const WelcomeSplashScreen = () => {
   const navigate = useNavigate();
   const { onboardingData } = useOnboarding();
   const [loaded, setLoaded] = useState(false);
-  const [transparentImageUrl, setTransparentImageUrl] = useState<string | null>(null);
-  const [processingImage, setProcessingImage] = useState(false);
   const { hasApiKey } = useElevenLabsSetup();
   
   useEffect(() => {
@@ -23,27 +20,6 @@ const WelcomeSplashScreen = () => {
     }, 100);
     
     return () => clearTimeout(timer);
-  }, []);
-
-  // Process the elephant image to make its background transparent
-  useEffect(() => {
-    const processImage = async () => {
-      try {
-        setProcessingImage(true);
-        // Load the original elephant image
-        const img = await loadImage("/lovable-uploads/24e48b60-7b2a-419e-af48-5f31469207a1.png");
-        // Remove the background
-        const transparentImage = await removeBackground(img);
-        setTransparentImageUrl(transparentImage);
-      } catch (error) {
-        console.error("Failed to process image:", error);
-        // Fall back to the original image if processing fails
-      } finally {
-        setProcessingImage(false);
-      }
-    };
-
-    processImage();
   }, []);
 
   // Check if this is the user's first time or if they've already completed setup
@@ -86,21 +62,18 @@ const WelcomeSplashScreen = () => {
           <div className="absolute inset-0 rounded-full bg-primary/15 animate-pulse" 
                style={{ animationDelay: "1s", width: "190px", height: "190px", transform: "translate(-20%, -20%)" }} />
           
-          {/* Elefantinho com cadeado - com fundo transparente */}
+          {/* New audio logo with animation */}
           <div className="relative z-10 w-40 h-40 flex items-center justify-center overflow-visible animate-float" 
                style={{ animation: "float 3s ease-in-out infinite" }}>
-            {processingImage ? (
-              <div className="w-48 h-48 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-              </div>
-            ) : (
-              <img 
-                src={transparentImageUrl || "/lovable-uploads/24e48b60-7b2a-419e-af48-5f31469207a1.png"} 
-                alt="Elefantinho com livro"
-                className="w-48 h-48 object-contain drop-shadow-xl"
-                style={{ filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.2))" }}
-              />
-            )}
+            <div className="w-32 h-32 bg-primary rounded-full flex items-center justify-center shadow-lg">
+              <div className="absolute w-40 h-40 rounded-full border-4 border-primary/30 animate-ping" 
+                   style={{ animationDuration: "3s" }}></div>
+              <div className="absolute w-44 h-44 rounded-full border-2 border-primary/20 animate-ping" 
+                   style={{ animationDuration: "3.5s" }}></div>
+              <Headphones className="w-16 h-16 text-white" />
+              <Volume2 className="absolute -right-1 -top-1 w-10 h-10 text-accent animate-pulse" 
+                      style={{ animationDuration: "2s" }} />
+            </div>
           </div>
         </div>
         
@@ -138,7 +111,7 @@ const WelcomeSplashScreen = () => {
       </div>
       
       <div className="absolute bottom-4 right-4 flex items-center space-x-2 text-accent">
-        <Lock className="w-5 h-5 animate-pulse" style={{ animationDuration: "3s" }} />
+        <Volume2 className="w-5 h-5 animate-pulse" style={{ animationDuration: "3s" }} />
         <BookOpen className="w-5 h-5 text-secondary animate-pulse" style={{ animationDuration: "3.5s" }} />
       </div>
     </div>

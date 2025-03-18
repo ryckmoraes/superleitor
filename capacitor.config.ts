@@ -3,10 +3,9 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.lovable.esferasonora',
-  appName: 'Esfera Sonora',
+  appName: 'Superleitor',
   webDir: 'dist',
   server: {
-    // Mantemos apenas uma URL para evitar conflitos
     url: "https://61c9c85a-521b-4753-a60e-0cdb64c7b0cc.lovableproject.com?forceHideBadge=true",
     cleartext: true,
     androidScheme: "https"
@@ -31,7 +30,7 @@ const config: CapacitorConfig = {
       splashFullScreen: true,
       splashImmersive: true,
       backgroundColor: "#00000000", // Completamente transparente
-      spinnerColor: "#FFA729",
+      spinnerColor: "#7BCB32", // Verde primário
       androidScaleType: "CENTER_CROP",
       spinnerStyle: "large"
     }
