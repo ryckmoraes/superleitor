@@ -1,10 +1,8 @@
-
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { ArrowRight, Headphones, Volume2, BookOpen } from "lucide-react";
-import { speakNaturally } from "@/services/audioProcessor";
 import { useElevenLabsSetup } from "@/hooks/useElevenLabsSetup";
 
 const WelcomeSplashScreen = () => {
@@ -33,15 +31,7 @@ const WelcomeSplashScreen = () => {
     localStorage.removeItem("app_exited");
   }, [onboardingData.setupCompleted, navigate]);
 
-  // After loading, speak welcome message if API key is set
-  useEffect(() => {
-    if (loaded && hasApiKey && onboardingData.superReaderName) {
-      const welcomeMessage = `Olá ${onboardingData.superReaderName}! Bem-vindo ao Superleitor! Como posso ajudar hoje?`;
-      setTimeout(() => {
-        speakNaturally(welcomeMessage, true);
-      }, 1500);
-    }
-  }, [loaded, hasApiKey, onboardingData.superReaderName]);
+  // Removed the welcome message speech effect that was causing duplication
 
   const handleNavigate = () => {
     if (onboardingData.setupCompleted) {

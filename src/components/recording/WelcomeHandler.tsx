@@ -22,9 +22,10 @@ const WelcomeHandler = ({ loaded }: WelcomeHandlerProps) => {
       // Show toast message
       showToastOnly("Bem-vindo!", welcomeMessage);
       
-      // Ensure audio is played with priority
+      // Ensure audio is played with priority and only once
       setTimeout(() => {
         console.log("Attempting to speak welcome message with delay");
+        // Set priority to true to cancel any existing speech
         speakNaturally(welcomeMessage, true);
       }, 1000);
     } else {
@@ -44,7 +45,8 @@ const WelcomeHandler = ({ loaded }: WelcomeHandlerProps) => {
 
   // Speak welcome message once loaded
   useEffect(() => {
-    if (loaded && !welcomeSpokenRef.current && onboardingData.superReaderName) {
+    // Only speak the welcome message if it hasn't been spoken yet
+    if (loaded && !welcomeSpokenRef.current) {
       welcomeSpokenRef.current = true;
       
       // Longer delay to ensure everything is ready
