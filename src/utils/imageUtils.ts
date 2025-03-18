@@ -1,3 +1,4 @@
+
 import { pipeline, env } from '@huggingface/transformers';
 
 // Configure transformers.js to always download models
@@ -31,12 +32,19 @@ function resizeImageIfNeeded(canvas: HTMLCanvasElement, ctx: CanvasRenderingCont
   return false;
 }
 
+// Use a variable to store the pipeline instance to prevent multiple initialization
+let segmenterInstance: any = null;
+
 export const removeBackground = async (imageElement: HTMLImageElement): Promise<string> => {
   try {
     console.log('Starting background removal process...');
-    const segmenter = await pipeline('image-segmentation', 'Xenova/segformer-b0-finetuned-ade-512-512', {
-      device: 'webgpu',
-    });
+    
+    // Only initialize the segmenter once
+    if (!segmenterInstance) {
+      segmenterInstance = await pipeline('image-segmentation', 'Xenova/segformer-b0-finetuned-ade-512-512', {
+        device: 'cpu', // Use CPU instead of webgpu to avoid session issues
+      });
+    }
     
     // Convert HTMLImageElement to canvas
     const canvas = document.createElement('canvas');
@@ -54,7 +62,7 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
     
     // Process the image with the segmentation model
     console.log('Processing with segmentation model...');
-    const result = await segmenter(imageData);
+    const result = await segmenterInstance(imageData);
     
     console.log('Segmentation result:', result);
     
@@ -95,7 +103,8 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
     return outputCanvas.toDataURL('image/png', 1.0);
   } catch (error) {
     console.error('Error removing background:', error);
-    throw error;
+    // Return the original image if background removal fails
+    return imageElement.src;
   }
 };
 

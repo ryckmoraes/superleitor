@@ -118,7 +118,7 @@ const WelcomeSplashScreen = () => {
           
           {onboardingData.setupCompleted && (
             <p className="text-sm text-muted-foreground/80">
-              Olá {onboardingData.adminName || "Usuário"}! Pronto para melhorar sua leitura hoje?
+              Olá {onboardingData.superReaderName || "Leitor"}! Pronto para melhorar sua leitura hoje?
             </p>
           )}
         </div>
