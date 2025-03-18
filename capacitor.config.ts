@@ -2,7 +2,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.lovable.esferasonora',
+  appId: 'com.superleitor.app',
   appName: 'Superleitor',
   webDir: 'dist',
   server: {
@@ -20,7 +20,11 @@ const config: CapacitorConfig = {
       keystorePassword: null,
       keystoreAlias: null,
       keystoreAliasPassword: null,
-      releaseType: 'APK'
+      releaseType: 'APK',
+      applicationId: 'com.superleitor.app',
+      versionName: '1.0.0',
+      versionCode: 1,
+      outputFileName: 'superleitor_01.apk'
     }
   },
   plugins: {

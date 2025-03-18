@@ -1,7 +1,8 @@
+
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Superleitor</string>
     <string name="title_activity_main">Superleitor</string>
-    <string name="package_name">com.lovable.esferasonora</string>
-    <string name="custom_url_scheme">com.lovable.esferasonora</string>
+    <string name="package_name">com.superleitor.app</string>
+    <string name="custom_url_scheme">com.superleitor.app</string>
 </resources>

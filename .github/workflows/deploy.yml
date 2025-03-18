@@ -42,8 +42,8 @@ jobs:
           if [ ! -f "capacitor.config.ts" ]; then
             echo 'import { CapacitorConfig } from "@capacitor/cli";
             const config: CapacitorConfig = {
-              appId: "com.lovable.esferasonora",
-              appName: "Esfera Sonora",
+              appId: "com.superleitor.app",
+              appName: "Superleitor",
               webDir: "dist",
               server: {
                 url: "https://61c9c85a-521b-4753-a60e-0cdb64c7b0cc.lovableproject.com?forceHideBadge=true",
@@ -82,7 +82,7 @@ jobs:
           
           # Create settings.gradle if missing
           if [ ! -f "settings.gradle" ]; then
-            echo "rootProject.name = 'esferasonora'" > settings.gradle
+            echo "rootProject.name = 'superleitor'" > settings.gradle
             echo "include ':app'" >> settings.gradle
           fi
           
@@ -116,12 +116,13 @@ jobs:
             android {
                 compileSdkVersion 33
                 defaultConfig {
-                    applicationId \"com.lovable.esferasonora\"
+                    applicationId \"com.superleitor.app\"
                     minSdkVersion 22
                     targetSdkVersion 33
                     versionCode 1
                     versionName \"1.0\"
                     testInstrumentationRunner \"androidx.test.runner.AndroidJUnitRunner\"
+                    archivesBaseName = \"superleitor_01\"
                 }
                 buildTypes {
                     release {
@@ -150,8 +151,8 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: esfera-sonora-app
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: superleitor_01
+          path: android/app/build/outputs/apk/debug/superleitor_01-debug.apk
 
       # Deployment to server (disabled for now)
       - name: Deploy to server

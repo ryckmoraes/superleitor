@@ -2,23 +2,26 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace 'com.lovable.esferasonora'
+    namespace 'com.superleitor.app'
     compileSdkVersion 33
     defaultConfig {
-        applicationId "com.lovable.esferasonora"
+        applicationId "com.superleitor.app"
         minSdkVersion 22
         targetSdkVersion 33
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        archivesBaseName = "superleitor_01"
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.debug
         }
         debug {
             debuggable true
+            applicationIdSuffix ".debug"
         }
     }
     aaptOptions {
