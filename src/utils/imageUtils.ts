@@ -1,4 +1,3 @@
-
 import { pipeline, env } from '@huggingface/transformers';
 
 // Configure transformers.js to always download models
@@ -32,20 +31,31 @@ function resizeImageIfNeeded(canvas: HTMLCanvasElement, ctx: CanvasRenderingCont
   return false;
 }
 
-// Use a variable to store the pipeline instance to prevent multiple initialization
-let segmenterInstance: any = null;
+// Global state for model initialization state
+let isInitializing = false;
+let segmenterPromise: Promise<any> | null = null;
+
+// Get or create the segmenter instance
+const getSegmenter = async () => {
+  if (!segmenterPromise && !isInitializing) {
+    isInitializing = true;
+    console.log('Initializing new segmentation pipeline');
+    
+    segmenterPromise = pipeline('image-segmentation', 'Xenova/segformer-b0-finetuned-ade-512-512', {
+      device: 'wasm', // Start with wasm as it's more compatible
+    }).finally(() => {
+      isInitializing = false;
+    });
+  }
+  return segmenterPromise;
+};
 
 export const removeBackground = async (imageElement: HTMLImageElement): Promise<string> => {
   try {
     console.log('Starting background removal process...');
     
-    // Only initialize the segmenter once
-    if (!segmenterInstance) {
-      console.log('Creating segmentation pipeline with WebGPU device');
-      segmenterInstance = await pipeline('image-segmentation', 'Xenova/segformer-b0-finetuned-ade-512-512', {
-        device: 'webgpu', // Use webgpu instead of cpu as it's supported
-      });
-    }
+    // Get segmenter (will be initialized only once)
+    const segmenter = await getSegmenter();
     
     // Convert HTMLImageElement to canvas
     const canvas = document.createElement('canvas');
@@ -63,7 +73,7 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
     
     // Process the image with the segmentation model
     console.log('Processing with segmentation model...');
-    const result = await segmenterInstance(imageData);
+    const result = await segmenter(imageData);
     
     console.log('Segmentation result:', result);
     
@@ -105,20 +115,8 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
   } catch (error) {
     console.error('Error removing background:', error);
     
-    // If webgpu failed, try with wasm as fallback
-    if (!segmenterInstance || segmenterInstance.device === 'webgpu') {
-      try {
-        console.log('WebGPU failed, trying with WASM fallback');
-        segmenterInstance = await pipeline('image-segmentation', 'Xenova/segformer-b0-finetuned-ade-512-512', {
-          device: 'wasm',
-        });
-        
-        // Try again with the new pipeline
-        return removeBackground(imageElement);
-      } catch (fallbackError) {
-        console.error('Fallback also failed:', fallbackError);
-      }
-    }
+    // Reset segmenter to try again next time
+    segmenterPromise = null;
     
     // Return the original image if background removal fails
     return imageElement.src;
