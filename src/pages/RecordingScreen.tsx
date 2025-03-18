@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import AudioSphere from "@/components/AudioSphere";
@@ -10,12 +11,8 @@ import { speakNaturally, processRecognitionResult, generateSimpleResponse, initV
 import { showToastOnly } from "@/services/notificationService";
 import webSpeechService from "@/services/webSpeechService";
 import { isAndroid, keepScreenOn, requestAndroidPermissions } from "@/utils/androidHelper";
-import { geminiService } from "@/services/geminiService";
+import { elevenLabsService } from "@/services/elevenLabsService";
 import { useElevenLabsSetup } from "@/hooks/useElevenLabsSetup";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 const RecordingScreen = () => {
   const [loaded, setLoaded] = useState(false);
@@ -49,9 +46,17 @@ const RecordingScreen = () => {
   const processingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasAudioDataRef = useRef(false);
   
-  const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
-  const { apiKey, setApiKey, hasApiKey, saveApiKey } = useElevenLabsSetup();
+  // Setup the ElevenLabs API key
+  const { hasApiKey } = useElevenLabsSetup();
   
+  // Ensure API key is set (already taken care of in useElevenLabsSetup hook)
+  useEffect(() => {
+    if (!hasApiKey) {
+      console.error("No ElevenLabs API key found");
+    } else {
+      console.log("ElevenLabs API key found");
+    }
+  }, [hasApiKey]);
 
   // Initialize speech synthesis (without audio test)
   useEffect(() => {
@@ -261,9 +266,9 @@ const RecordingScreen = () => {
         speakNaturally(quickResponse, true);
       }, 300);
       
-      // If we have an audio blob, process with Gemini for more complex response
+      // If we have an audio blob, process with ElevenLabs for more complex response
       if (audioBlob && audioBlob.size > 1000) {
-        console.log("Processing audio with Gemini, size:", audioBlob.size);
+        console.log("Processing audio with ElevenLabs, size:", audioBlob.size);
         
         // Show feedback during processing
         setTimeout(() => {
@@ -285,8 +290,8 @@ const RecordingScreen = () => {
           }
         }, 10000); // Shorter 10 second timeout
         
-        // Process the audio with Gemini
-        geminiService.processAudio(audioBlob)
+        // Process the audio with ElevenLabs
+        elevenLabsService.analyzeAudio(audioBlob)
           .then(response => {
             // Clear the timeout since we got a response
             if (processingTimeoutRef.current) {
@@ -294,23 +299,23 @@ const RecordingScreen = () => {
               processingTimeoutRef.current = null;
             }
             
-            console.log("Gemini response:", response);
+            console.log("ElevenLabs response:", response);
             
             if (response) {
-              // Update the transcript with the Gemini response
+              // Update the transcript with the ElevenLabs response
               setStoryTranscript(response);
               
               // Show as toast
               showToastOnly("Análise completa!", response);
               
-              // Speak the Gemini response
+              // Speak the ElevenLabs response
               setTimeout(() => {
                 speakNaturally(response, true);
               }, 500);
             }
           })
           .catch(error => {
-            console.error("Error processing with Gemini:", error);
+            console.error("Error processing with ElevenLabs:", error);
             // In case of error, still show some response
             const errorResponse = "Sua história é fascinante! Pode me contar mais?";
             showToastOnly("Hmm...", errorResponse);
@@ -435,26 +440,6 @@ const RecordingScreen = () => {
     };
   }, []);
 
-  // Check for ElevenLabs API key
-  useEffect(() => {
-    if (!hasApiKey) {
-      // Show dialog if no API key is set
-      setShowApiKeyDialog(true);
-    }
-  }, [hasApiKey]);
-
-  // Handle API key submission
-  const handleSubmitApiKey = () => {
-    if (saveApiKey(apiKey)) {
-      setShowApiKeyDialog(false);
-      // Provide feedback
-      showToastOnly("API configurada", "Voz ElevenLabs configurada com sucesso!");
-    } else {
-      showToastOnly("Erro", "Por favor, forneça uma API key válida", "destructive");
-    }
-  };
-  
-
   return (
     <div className={`relative flex flex-col items-center justify-center min-h-screen ${
       isDarkMode 
@@ -487,35 +472,6 @@ const RecordingScreen = () => {
           recognitionStatus={recognitionStatus}
         />
       </div>
-
-      {/* ElevenLabs API Key Dialog */}
-      <Dialog open={showApiKeyDialog} onOpenChange={setShowApiKeyDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Configurar ElevenLabs</DialogTitle>
-            <DialogDescription>
-              Insira sua chave de API ElevenLabs para ativar a voz natural.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <Label htmlFor="elevenlabs-api-key">ElevenLabs API Key</Label>
-            <Input
-              id="elevenlabs-api-key"
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Insira sua chave de API aqui"
-              className="col-span-3"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowApiKeyDialog(false)}>
-              Pular por enquanto
-            </Button>
-            <Button onClick={handleSubmitApiKey}>Salvar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

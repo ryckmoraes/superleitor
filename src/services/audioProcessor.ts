@@ -1,3 +1,4 @@
+
 /**
  * Initializes available voices for speech synthesis.
  * @returns {Promise<boolean>} - Resolves with true if voices are initialized, false otherwise.
@@ -72,46 +73,42 @@ export const generateSimpleResponse = (transcript: string): string => {
 import { elevenLabsService } from './elevenLabsService';
 
 /**
- * Speaks text using natural voice synthesis
- * If ElevenLabs API key is set, it will use ElevenLabs
- * Otherwise, it will fall back to Web Speech API
+ * Speaks text using ElevenLabs voice service
+ * Falls back to Web Speech API if ElevenLabs is not available
  */
 export const speakNaturally = async (text: string, priority: boolean = false): Promise<void> => {
   try {
-    // Check if ElevenLabs API key is set
-    if (elevenLabsService.hasApiKey()) {
-      // Use ElevenLabs for speech synthesis
-      return await elevenLabsService.speak(text, priority);
-    } else {
-      // Fall back to native TTS
-      if ('speechSynthesis' in window) {
-        // Cancel any current speech if this is a priority message
-        if (priority && speechSynthesis.speaking) {
-          speechSynthesis.cancel();
-        }
-        
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'pt-BR';
-        
-        // Adjust pitch and rate for natural sounding speech
-        utterance.pitch = 1.0;
-        utterance.rate = 1.0;
-        
-        // Find a good voice if available
-        const voices = speechSynthesis.getVoices();
-        const brazilianVoice = voices.find(voice => voice.lang.includes('pt-BR'));
-        const portugueseVoice = voices.find(voice => voice.lang.includes('pt'));
-        
-        if (brazilianVoice) {
-          utterance.voice = brazilianVoice;
-        } else if (portugueseVoice) {
-          utterance.voice = portugueseVoice;
-        }
-        
-        speechSynthesis.speak(utterance);
-      }
-    }
+    // Always try to use ElevenLabs for speech synthesis
+    return await elevenLabsService.speak(text, priority);
   } catch (error) {
-    console.error("Error in speakNaturally:", error);
+    console.error("Error in speakNaturally with ElevenLabs:", error);
+    
+    // Fall back to native TTS
+    if ('speechSynthesis' in window) {
+      // Cancel any current speech if this is a priority message
+      if (priority && speechSynthesis.speaking) {
+        speechSynthesis.cancel();
+      }
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'pt-BR';
+      
+      // Adjust pitch and rate for natural sounding speech
+      utterance.pitch = 1.0;
+      utterance.rate = 1.0;
+      
+      // Find a good voice if available
+      const voices = speechSynthesis.getVoices();
+      const brazilianVoice = voices.find(voice => voice.lang.includes('pt-BR'));
+      const portugueseVoice = voices.find(voice => voice.lang.includes('pt'));
+      
+      if (brazilianVoice) {
+        utterance.voice = brazilianVoice;
+      } else if (portugueseVoice) {
+        utterance.voice = portugueseVoice;
+      }
+      
+      speechSynthesis.speak(utterance);
+    }
   }
 };

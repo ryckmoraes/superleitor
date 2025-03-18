@@ -13,6 +13,13 @@ export const useElevenLabsSetup = () => {
     
     if (exists) {
       setApiKey(elevenLabsService.getApiKey() || '');
+    } else {
+      // If no API key is set, use the one provided (eNwyboGu8S4QiAWXpwUM is the voice ID, not the API key)
+      // In a real scenario, we'd need an actual API key here
+      const defaultApiKey = "your-default-api-key"; // Replace with actual key if available
+      if (defaultApiKey && defaultApiKey !== "your-default-api-key") {
+        saveApiKey(defaultApiKey);
+      }
     }
   }, []);
   

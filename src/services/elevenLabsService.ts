@@ -1,6 +1,6 @@
 
 // ElevenLabs voice API service
-// This service manages voice synthesis using the ElevenLabs API
+// This service manages voice synthesis and conversation analysis using the ElevenLabs API
 
 // Configuration constants
 const ELEVENLABS_API_URL = "https://api.elevenlabs.io/v1";
@@ -18,6 +18,11 @@ interface TextToSpeechRequest {
     style?: number;
     use_speaker_boost?: boolean;
   };
+}
+
+interface AnalyzeAudioRequest {
+  audio: Blob;
+  language?: string;
 }
 
 // Main ElevenLabs service for text-to-speech functionality
@@ -84,6 +89,93 @@ export const elevenLabsService = {
     }
 
     return await response.blob();
+  },
+  
+  // Analyze audio using ElevenLabs
+  async analyzeAudio(audioBlob: Blob): Promise<string> {
+    const apiKey = elevenLabsService.getApiKey();
+    
+    if (!apiKey) {
+      throw new Error("ElevenLabs API key not set");
+    }
+    
+    // Create form data with the audio blob
+    const formData = new FormData();
+    formData.append('audio', audioBlob, 'audio.wav');
+    formData.append('language', 'pt');
+    
+    try {
+      const response = await fetch(
+        // Using the speech-to-text endpoint
+        `${ELEVENLABS_API_URL}/speech-to-text`,
+        {
+          method: "POST",
+          headers: {
+            "xi-api-key": apiKey
+          },
+          body: formData
+        }
+      );
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("ElevenLabs speech-to-text API error:", errorText);
+        throw new Error(`ElevenLabs API error: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      
+      // Generate a response based on the transcription
+      return await elevenLabsService.generateResponse(result.text || "");
+    } catch (error) {
+      console.error("Error analyzing audio with ElevenLabs:", error);
+      return "Desculpe, não consegui analisar seu áudio. Pode tentar novamente?";
+    }
+  },
+  
+  // Generate a response based on the transcription
+  async generateResponse(transcription: string): Promise<string> {
+    const apiKey = elevenLabsService.getApiKey();
+    
+    if (!apiKey) {
+      throw new Error("ElevenLabs API key not set");
+    }
+    
+    // If transcription is empty or too short, return a generic response
+    if (!transcription || transcription.length < 3) {
+      return "Não consegui entender bem. Pode repetir de forma mais clara?";
+    }
+    
+    try {
+      // For now, generate a simple response based on the transcription
+      // In a future update, this could use ElevenLabs' more advanced AI capabilities
+      
+      if (transcription.toLowerCase().includes("olá") || 
+          transcription.toLowerCase().includes("oi") || 
+          transcription.toLowerCase().includes("bom dia") || 
+          transcription.toLowerCase().includes("boa tarde") || 
+          transcription.toLowerCase().includes("boa noite")) {
+        return "Olá! Que bom ouvir você. Como posso ajudar com sua leitura hoje?";
+      }
+      
+      if (transcription.toLowerCase().includes("música") || 
+          transcription.toLowerCase().includes("cantar") || 
+          transcription.toLowerCase().includes("canção")) {
+        return "Percebi que você mencionou música! As histórias com ritmo são muito envolventes!";
+      }
+      
+      if (transcription.toLowerCase().includes("livro") || 
+          transcription.toLowerCase().includes("história") || 
+          transcription.toLowerCase().includes("leitura")) {
+        return "Adoro histórias! Continue contando, estou ouvindo atentamente.";
+      }
+      
+      // Default response that encourages continuation
+      return "Que interessante! Continue contando sua história, estou adorando ouvir.";
+    } catch (error) {
+      console.error("Error generating response:", error);
+      return "Sua história é fascinante! Conte-me mais sobre isso.";
+    }
   },
   
   // Play audio from a blob
