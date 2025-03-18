@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,7 +10,9 @@ import SplashScreen from "./pages/SplashScreen";
 import RecordingScreen from "./pages/RecordingScreen";
 import NotFound from "./pages/NotFound";
 import { OnboardingProvider } from "./contexts/OnboardingContext";
+import { ElevenLabsProvider } from "./contexts/ElevenLabsContext";
 import WelcomeSplashScreen from "./pages/WelcomeSplashScreen";
+import Index from "./pages/Index";
 
 const queryClient = new QueryClient();
 
@@ -24,7 +27,8 @@ const AnimatedRoutes = () => {
         timeout={300}
       >
         <Routes location={location}>
-          <Route path="/" element={<WelcomeSplashScreen />} />
+          <Route path="/" element={<Index />} />
+          <Route path="/welcome" element={<WelcomeSplashScreen />} />
           <Route path="/setup" element={<SplashScreen />} />
           <Route path="/record" element={<RecordingScreen />} />
           <Route path="*" element={<NotFound />} />
@@ -128,13 +132,15 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <OnboardingProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AnimatedRoutes />
-          </BrowserRouter>
-        </OnboardingProvider>
+        <ElevenLabsProvider>
+          <OnboardingProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AnimatedRoutes />
+            </BrowserRouter>
+          </OnboardingProvider>
+        </ElevenLabsProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
