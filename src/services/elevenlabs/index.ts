@@ -40,8 +40,8 @@ export const elevenLabsService = {
         window.speechSynthesis.cancel();
       }
       
-      // Always use ElevenLabs for voice with our specific agent/voice ID
-      console.log("Speaking with ElevenLabs agent ID:", AGENT_ID);
+      // Always use ElevenLabs for voice with our specific voice ID
+      console.log("Speaking with ElevenLabs voice ID:", DEFAULT_VOICE_ID);
       const audioBlob = await this.textToSpeech(text, DEFAULT_VOICE_ID);
       return await this.playAudio(audioBlob);
     } catch (error) {

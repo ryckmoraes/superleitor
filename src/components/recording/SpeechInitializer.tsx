@@ -15,12 +15,11 @@ const SpeechInitializer = () => {
         console.log("Speech synthesis initialized:", initialized);
       });
       
-      // Ensure ElevenLabs API key is set to the agent ID
+      // Check if ElevenLabs API key is set
       if (!elevenLabsService.hasApiKey()) {
-        // Use the agent ID as the API key for ElevenLabs
-        const agentId = "eNwyboGu8S4QiAWXpwUM";
-        elevenLabsService.setApiKey(agentId);
-        console.log("ElevenLabs agent ID set:", agentId);
+        console.log("No ElevenLabs API key set - voice features will use fallback");
+      } else {
+        console.log("ElevenLabs API key is configured");
       }
     }
   }, []);

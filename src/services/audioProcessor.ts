@@ -1,3 +1,4 @@
+
 /**
  * Initializes available voices for speech synthesis.
  * @returns {Promise<boolean>} - Resolves with true if voices are initialized, false otherwise.
@@ -77,10 +78,16 @@ import { elevenLabsService } from './elevenlabs';
  */
 export const speakNaturally = async (text: string, priority: boolean = false): Promise<void> => {
   try {
-    // Always try to use ElevenLabs for speech synthesis
-    return await elevenLabsService.speak(text, priority);
+    // Check if ElevenLabs is configured
+    if (elevenLabsService.hasApiKey()) {
+      console.log("Using ElevenLabs for text-to-speech");
+      return await elevenLabsService.speak(text, priority);
+    } else {
+      console.log("ElevenLabs API key not found, using browser TTS");
+      throw new Error("Using fallback TTS");
+    }
   } catch (error) {
-    console.error("Error in speakNaturally with ElevenLabs:", error);
+    console.log("Falling back to browser TTS:", error);
     
     // Fall back to native TTS
     if ('speechSynthesis' in window) {

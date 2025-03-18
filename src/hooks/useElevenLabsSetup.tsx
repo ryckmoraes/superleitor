@@ -2,6 +2,9 @@
 import { useState, useEffect } from 'react';
 import { elevenLabsService } from '@/services/elevenlabs';
 
+// Default API key for development/testing (replace with your own key)
+const DEFAULT_TEST_API_KEY = ""; // You should prompt users to enter their own key
+
 export const useElevenLabsSetup = () => {
   const [apiKey, setApiKey] = useState<string>('');
   const [hasApiKey, setHasApiKey] = useState<boolean>(false);
@@ -13,11 +16,12 @@ export const useElevenLabsSetup = () => {
     
     if (exists) {
       setApiKey(elevenLabsService.getApiKey() || '');
+    } else if (DEFAULT_TEST_API_KEY) {
+      // If we have a default key, use it
+      saveApiKey(DEFAULT_TEST_API_KEY);
+      console.log("Using default ElevenLabs API key");
     } else {
-      // Set the ElevenLabs API key to the agent ID
-      const agentId = "eNwyboGu8S4QiAWXpwUM";
-      saveApiKey(agentId);
-      console.log("Set ElevenLabs agent ID:", agentId);
+      console.warn("No ElevenLabs API key found. Voice features will use fallback.");
     }
   }, []);
   

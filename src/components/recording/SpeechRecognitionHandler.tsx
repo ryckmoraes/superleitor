@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from "react";
 import { processRecognitionResult, generateSimpleResponse, speakNaturally } from "@/services/audioProcessor";
 import { showToastOnly } from "@/services/notificationService";
@@ -69,7 +70,7 @@ const SpeechRecognitionHandler = ({
       }, 300);
       
       // If we have an audio blob, process with ElevenLabs for more complex response
-      if (audioBlob && audioBlob.size > 1000) {
+      if (audioBlob && audioBlob.size > 1000 && elevenLabsService.hasApiKey()) {
         console.log("Processing audio with ElevenLabs, size:", audioBlob.size);
         
         // Show feedback during processing
@@ -133,7 +134,8 @@ const SpeechRecognitionHandler = ({
             }
           });
       } else {
-        // Finish processing after a time if there's no audio blob
+        // Finish processing after a time if there's no audio blob or no API key
+        console.log("Using local response generation (no ElevenLabs API key or no audio blob)");
         setTimeout(() => {
           setIsProcessing(false);
           speakNaturally("Que história legal! Conte-me mais!", true);
