@@ -18,7 +18,6 @@ const deobfuscate = (str: string): string => {
 
 // Initialize with default keys (obfuscated)
 // This is just basic obfuscation, not true security
-apiKeys.gemini = obfuscate("AIzaSyCNatY5dRnA8Dq7xvqVadPQ4lGOFPFcMWM");
 
 export const getApiKey = (service: string): string => {
   if (!apiKeys[service]) {
