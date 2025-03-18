@@ -19,6 +19,3 @@ export const DEFAULT_VOICE_SETTINGS = {
   similarity_boost: 0.75, // High similarity for consistent voice
   use_speaker_boost: true
 };
-
-// Default API key (should be replaced with user's API key)
-export const DEFAULT_API_KEY = ""; // Empty by default

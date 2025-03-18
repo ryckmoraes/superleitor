@@ -19,7 +19,8 @@ const SpeechInitializer = () => {
       if (!elevenLabsService.hasApiKey()) {
         console.log("No ElevenLabs API key set - voice features will use fallback");
       } else {
-        console.log("ElevenLabs API key is configured");
+        console.log("ElevenLabs API key is configured:", elevenLabsService.getApiKey()?.substring(0, 3) + "...");
+        console.log("Using agent ID:", elevenLabsService.getAgentId());
       }
     }
   }, []);
