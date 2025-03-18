@@ -35,6 +35,7 @@ export const elevenLabsService = {
   // Set the API key in session storage
   setApiKey: (apiKey: string): void => {
     sessionStorage.setItem('elevenlabs_api_key', apiKey);
+    console.log("ElevenLabs API key set:", apiKey.substring(0, 3) + "...");
   },
   
   // Check if the API key exists
@@ -93,6 +94,34 @@ export const elevenLabsService = {
   
   // Analyze audio using ElevenLabs
   async analyzeAudio(audioBlob: Blob): Promise<string> {
+    // Skip Gemini and directly use ElevenLabs
+    console.log("Analyzing audio with ElevenLabs");
+    
+    const apiKey = elevenLabsService.getApiKey();
+    
+    if (!apiKey) {
+      console.error("ElevenLabs API key not set");
+      throw new Error("ElevenLabs API key not set");
+    }
+    
+    try {
+      // First, transcribe the audio with ElevenLabs
+      const transcript = await this.transcribeAudio(audioBlob);
+      console.log("ElevenLabs transcription:", transcript);
+      
+      // Generate a response based on the transcription
+      const response = await this.generateResponse(transcript);
+      console.log("ElevenLabs generated response:", response);
+      
+      return response;
+    } catch (error) {
+      console.error("Error analyzing audio with ElevenLabs:", error);
+      return "Adorei sua história! Pode me contar mais detalhes?";
+    }
+  },
+  
+  // Transcribe audio using ElevenLabs speech-to-text
+  async transcribeAudio(audioBlob: Blob): Promise<string> {
     const apiKey = elevenLabsService.getApiKey();
     
     if (!apiKey) {
@@ -102,7 +131,7 @@ export const elevenLabsService = {
     // Create form data with the audio blob
     const formData = new FormData();
     formData.append('audio', audioBlob, 'audio.wav');
-    formData.append('language', 'pt');
+    formData.append('language', 'pt'); // Portuguese
     
     try {
       const response = await fetch(
@@ -124,31 +153,23 @@ export const elevenLabsService = {
       }
       
       const result = await response.json();
-      
-      // Generate a response based on the transcription
-      return await elevenLabsService.generateResponse(result.text || "");
+      return result.text || "";
     } catch (error) {
-      console.error("Error analyzing audio with ElevenLabs:", error);
-      return "Desculpe, não consegui analisar seu áudio. Pode tentar novamente?";
+      console.error("Error transcribing audio with ElevenLabs:", error);
+      throw error;
     }
   },
   
   // Generate a response based on the transcription
   async generateResponse(transcription: string): Promise<string> {
-    const apiKey = elevenLabsService.getApiKey();
-    
-    if (!apiKey) {
-      throw new Error("ElevenLabs API key not set");
-    }
-    
     // If transcription is empty or too short, return a generic response
     if (!transcription || transcription.length < 3) {
       return "Não consegui entender bem. Pode repetir de forma mais clara?";
     }
     
     try {
-      // For now, generate a simple response based on the transcription
-      // In a future update, this could use ElevenLabs' more advanced AI capabilities
+      // Generate a custom response based on the transcription
+      // Using pattern matching for common scenarios
       
       if (transcription.toLowerCase().includes("olá") || 
           transcription.toLowerCase().includes("oi") || 
@@ -170,10 +191,34 @@ export const elevenLabsService = {
         return "Adoro histórias! Continue contando, estou ouvindo atentamente.";
       }
       
-      // Default response that encourages continuation
-      return "Que interessante! Continue contando sua história, estou adorando ouvir.";
+      if (transcription.toLowerCase().includes("pergunta") || 
+          transcription.toLowerCase().includes("dúvida") || 
+          transcription.toLowerCase().includes("como")) {
+        return "Que pergunta interessante! Adoro quando as crianças são curiosas assim!";
+      }
+      
+      // Check for animal mentions
+      const animals = ["cachorro", "gato", "leão", "tigre", "elefante", "girafa", "macaco", "zebra", "pássaro"];
+      for (const animal of animals) {
+        if (transcription.toLowerCase().includes(animal)) {
+          return `Você mencionou um ${animal}! Que legal! Os animais são personagens maravilhosos nas histórias!`;
+        }
+      }
+      
+      // Default enthusiastic responses
+      const responses = [
+        "Que história incrível! Continue contando, estou adorando!",
+        "Nossa, que legal! E o que aconteceu depois?",
+        "Que imaginação maravilhosa você tem! Continue sua história!",
+        "Estou encantada com sua história! Pode me contar mais?",
+        "Que aventura emocionante! Mal posso esperar para ouvir o resto!",
+        "Uau! Sua história é muito criativa! Continue contando!",
+        "Adorei o que você contou até agora! O que acontece em seguida?"
+      ];
+      
+      return responses[Math.floor(Math.random() * responses.length)];
     } catch (error) {
-      console.error("Error generating response:", error);
+      console.error("Error generating response from ElevenLabs:", error);
       return "Sua história é fascinante! Conte-me mais sobre isso.";
     }
   },
@@ -211,6 +256,8 @@ export const elevenLabsService = {
         window.speechSynthesis.cancel();
       }
       
+      // Always use ElevenLabs for voice
+      console.log("Speaking with ElevenLabs:", text);
       const audioBlob = await this.textToSpeech(text);
       return await this.playAudio(audioBlob);
     } catch (error) {
