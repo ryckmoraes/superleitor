@@ -41,8 +41,9 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
     
     // Only initialize the segmenter once
     if (!segmenterInstance) {
+      console.log('Creating segmentation pipeline with WebGPU device');
       segmenterInstance = await pipeline('image-segmentation', 'Xenova/segformer-b0-finetuned-ade-512-512', {
-        device: 'cpu', // Use CPU instead of webgpu to avoid session issues
+        device: 'webgpu', // Use webgpu instead of cpu as it's supported
       });
     }
     
@@ -103,6 +104,22 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
     return outputCanvas.toDataURL('image/png', 1.0);
   } catch (error) {
     console.error('Error removing background:', error);
+    
+    // If webgpu failed, try with wasm as fallback
+    if (!segmenterInstance || segmenterInstance.device === 'webgpu') {
+      try {
+        console.log('WebGPU failed, trying with WASM fallback');
+        segmenterInstance = await pipeline('image-segmentation', 'Xenova/segformer-b0-finetuned-ade-512-512', {
+          device: 'wasm',
+        });
+        
+        // Try again with the new pipeline
+        return removeBackground(imageElement);
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError);
+      }
+    }
+    
     // Return the original image if background removal fails
     return imageElement.src;
   }
