@@ -1,4 +1,3 @@
-
 /**
  * Initializes available voices for speech synthesis.
  * @returns {Promise<boolean>} - Resolves with true if voices are initialized, false otherwise.
@@ -70,7 +69,7 @@ export const generateSimpleResponse = (transcript: string): string => {
   }
 };
 
-import { elevenLabsService } from './elevenLabsService';
+import { elevenLabsService } from './elevenlabs';
 
 /**
  * Speaks text using ElevenLabs voice service

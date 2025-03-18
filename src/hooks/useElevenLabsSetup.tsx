@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { elevenLabsService } from '@/services/elevenLabsService';
+import { elevenLabsService } from '@/services/elevenlabs';
 
 export const useElevenLabsSetup = () => {
   const [apiKey, setApiKey] = useState<string>('');

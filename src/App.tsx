@@ -10,7 +10,7 @@ import RecordingScreen from "./pages/RecordingScreen";
 import NotFound from "./pages/NotFound";
 import { OnboardingProvider } from "./contexts/OnboardingContext";
 import WelcomeSplashScreen from "./pages/WelcomeSplashScreen";
-import { elevenLabsService } from "./services/elevenLabsService";
+import { elevenLabsService } from "./services/elevenlabs";
 
 const queryClient = new QueryClient();
 

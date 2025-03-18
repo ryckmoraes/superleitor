@@ -1,7 +1,7 @@
 
 import { useEffect, useRef } from "react";
 import { initVoices } from "@/services/audioProcessor";
-import { elevenLabsService } from "@/services/elevenLabsService";
+import { elevenLabsService } from "@/services/elevenlabs";
 
 const SpeechInitializer = () => {
   const speechInitializedRef = useRef(false);

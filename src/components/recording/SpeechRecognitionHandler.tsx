@@ -1,9 +1,8 @@
-
 import { useEffect, useRef } from "react";
 import { processRecognitionResult, generateSimpleResponse, speakNaturally } from "@/services/audioProcessor";
 import { showToastOnly } from "@/services/notificationService";
 import webSpeechService from "@/services/webSpeechService";
-import { elevenLabsService } from "@/services/elevenLabsService";
+import { elevenLabsService } from "@/services/elevenlabs";
 
 interface SpeechRecognitionHandlerProps {
   isRecording: boolean;
