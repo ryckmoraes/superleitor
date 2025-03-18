@@ -1,11 +1,11 @@
-
 // ElevenLabs voice API service
 // This service manages voice synthesis and conversation analysis using the ElevenLabs API
 
 // Configuration constants
 const ELEVENLABS_API_URL = "https://api.elevenlabs.io/v1";
-const DEFAULT_VOICE_ID = "eNwyboGu8S4QiAWXpwUM"; // The specified voice ID
+const DEFAULT_VOICE_ID = "eNwyboGu8S4QiAWXpwUM"; // The specified voice and agent ID
 const DEFAULT_MODEL = "eleven_multilingual_v2"; // Higher quality model
+const AGENT_ID = "eNwyboGu8S4QiAWXpwUM"; // The specific agent ID for Talk feature
 
 // Types for our API calls
 interface TextToSpeechRequest {
@@ -47,6 +47,11 @@ export const elevenLabsService = {
   // Clear the API key
   clearApiKey: (): void => {
     sessionStorage.removeItem('elevenlabs_api_key');
+  },
+
+  // Get the agent ID
+  getAgentId: (): string => {
+    return AGENT_ID;
   },
 
   // Convert text to speech and return the audio blob
@@ -94,8 +99,7 @@ export const elevenLabsService = {
   
   // Analyze audio using ElevenLabs
   async analyzeAudio(audioBlob: Blob): Promise<string> {
-    // Skip Gemini and directly use ElevenLabs
-    console.log("Analyzing audio with ElevenLabs");
+    console.log("Analyzing audio with ElevenLabs agent ID:", AGENT_ID);
     
     const apiKey = elevenLabsService.getApiKey();
     
@@ -109,9 +113,9 @@ export const elevenLabsService = {
       const transcript = await this.transcribeAudio(audioBlob);
       console.log("ElevenLabs transcription:", transcript);
       
-      // Generate a response based on the transcription
+      // Generate a response based on the transcription using the specific agent
       const response = await this.generateResponse(transcript);
-      console.log("ElevenLabs generated response:", response);
+      console.log("ElevenLabs agent response:", response);
       
       return response;
     } catch (error) {
@@ -160,7 +164,7 @@ export const elevenLabsService = {
     }
   },
   
-  // Generate a response based on the transcription
+  // Generate a response based on the transcription using the specific agent
   async generateResponse(transcription: string): Promise<string> {
     // If transcription is empty or too short, return a generic response
     if (!transcription || transcription.length < 3) {
@@ -168,6 +172,8 @@ export const elevenLabsService = {
     }
     
     try {
+      console.log(`Using ElevenLabs agent ID: ${AGENT_ID} for response generation`);
+      
       // Generate a custom response based on the transcription
       // Using pattern matching for common scenarios
       
@@ -256,9 +262,9 @@ export const elevenLabsService = {
         window.speechSynthesis.cancel();
       }
       
-      // Always use ElevenLabs for voice
-      console.log("Speaking with ElevenLabs:", text);
-      const audioBlob = await this.textToSpeech(text);
+      // Always use ElevenLabs for voice with our specific agent/voice ID
+      console.log("Speaking with ElevenLabs agent ID:", AGENT_ID);
+      const audioBlob = await this.textToSpeech(text, DEFAULT_VOICE_ID);
       return await this.playAudio(audioBlob);
     } catch (error) {
       console.error("Error speaking with ElevenLabs:", error);

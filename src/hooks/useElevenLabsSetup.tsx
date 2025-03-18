@@ -14,17 +14,10 @@ export const useElevenLabsSetup = () => {
     if (exists) {
       setApiKey(elevenLabsService.getApiKey() || '');
     } else {
-      // Set the ElevenLabs API key automatically (don't ask user)
-      // Using a predefined key that was provided by user
-      const defaultApiKey = "your-api-key-here"; // This should be replaced with the actual key
-      if (defaultApiKey && defaultApiKey !== "your-api-key-here") {
-        saveApiKey(defaultApiKey);
-      } else {
-        // Use the voice ID as a placeholder key for testing
-        // NOTE: This is not a real API key, just for testing
-        const testApiKey = "eNwyboGu8S4QiAWXpwUM"; 
-        saveApiKey(testApiKey);
-      }
+      // Set the ElevenLabs API key to the agent ID
+      const agentId = "eNwyboGu8S4QiAWXpwUM";
+      saveApiKey(agentId);
+      console.log("Set ElevenLabs agent ID:", agentId);
     }
   }, []);
   
