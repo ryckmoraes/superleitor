@@ -10,6 +10,7 @@ import RecordingScreen from "./pages/RecordingScreen";
 import NotFound from "./pages/NotFound";
 import { OnboardingProvider } from "./contexts/OnboardingContext";
 import WelcomeSplashScreen from "./pages/WelcomeSplashScreen";
+import { elevenLabsService } from "./services/elevenLabsService";
 
 const queryClient = new QueryClient();
 
@@ -123,6 +124,11 @@ const App = () => {
       document.removeEventListener("click", handleUserInteraction);
       document.removeEventListener("touchstart", handleUserInteraction);
     };
+
+    // Initialize ElevenLabs if API key is stored in session
+    if (elevenLabsService.hasApiKey()) {
+      console.log("ElevenLabs API key found in session");
+    }
   }, []);
 
   return (

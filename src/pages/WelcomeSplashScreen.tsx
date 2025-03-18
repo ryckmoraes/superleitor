@@ -1,10 +1,15 @@
-
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { ArrowRight, Lock, BookOpen } from "lucide-react";
 import { loadImage, removeBackground } from "@/utils/imageUtils";
+import { speakNaturally } from "@/services/audioProcessor";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useElevenLabsSetup } from "@/hooks/useElevenLabsSetup";
+import { showToastOnly } from "@/services/notificationService";
 
 const WelcomeSplashScreen = () => {
   const navigate = useNavigate();
@@ -12,7 +17,9 @@ const WelcomeSplashScreen = () => {
   const [loaded, setLoaded] = useState(false);
   const [transparentImageUrl, setTransparentImageUrl] = useState<string | null>(null);
   const [processingImage, setProcessingImage] = useState(false);
-
+  const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
+  const { apiKey, setApiKey, hasApiKey, saveApiKey } = useElevenLabsSetup();
+  
   useEffect(() => {
     // Add animation after component is mounted
     const timer = setTimeout(() => {
@@ -53,6 +60,30 @@ const WelcomeSplashScreen = () => {
     // Clear the exited flag if it exists
     localStorage.removeItem("app_exited");
   }, [onboardingData.setupCompleted, navigate]);
+
+  // Check for ElevenLabs API key on first load
+  useEffect(() => {
+    if (!hasApiKey) {
+      setShowApiKeyDialog(true);
+    }
+  }, [hasApiKey]);
+
+  // Handle API key submission
+  const handleSubmitApiKey = () => {
+    if (saveApiKey(apiKey)) {
+      setShowApiKeyDialog(false);
+      // Provide feedback
+      showToastOnly("API configurada", "Voz ElevenLabs configurada com sucesso!");
+      
+      // After setting API key, speak welcome message
+      if (loaded && onboardingData.superReaderName) {
+        const welcomeMessage = `Olá ${onboardingData.superReaderName}! Bem-vindo ao Superleitor! Como posso ajudar hoje?`;
+        speakNaturally(welcomeMessage, true);
+      }
+    } else {
+      showToastOnly("Erro", "Por favor, forneça uma API key válida", "destructive");
+    }
+  };
 
   const handleNavigate = () => {
     if (onboardingData.setupCompleted) {
@@ -123,6 +154,35 @@ const WelcomeSplashScreen = () => {
           )}
         </div>
       </div>
+      
+      {/* ElevenLabs API Key Dialog */}
+      <Dialog open={showApiKeyDialog} onOpenChange={setShowApiKeyDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Configurar ElevenLabs</DialogTitle>
+            <DialogDescription>
+              Insira sua chave de API ElevenLabs para ativar a voz natural com a ID eNwyboGu8S4QiAWXpwUM.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <Label htmlFor="elevenlabs-api-key">ElevenLabs API Key</Label>
+            <Input
+              id="elevenlabs-api-key"
+              type="password"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="Insira sua chave de API aqui"
+              className="col-span-3"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowApiKeyDialog(false)}>
+              Pular por enquanto
+            </Button>
+            <Button onClick={handleSubmitApiKey}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       <div className="absolute bottom-4 right-4 flex items-center space-x-2 text-accent">
         <Lock className="w-5 h-5 animate-pulse" style={{ animationDuration: "3s" }} />

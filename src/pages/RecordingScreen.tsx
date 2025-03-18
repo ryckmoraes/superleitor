@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import AudioSphere from "@/components/AudioSphere";
@@ -12,6 +11,11 @@ import { showToastOnly } from "@/services/notificationService";
 import webSpeechService from "@/services/webSpeechService";
 import { isAndroid, keepScreenOn, requestAndroidPermissions } from "@/utils/androidHelper";
 import { geminiService } from "@/services/geminiService";
+import { useElevenLabsSetup } from "@/hooks/useElevenLabsSetup";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const RecordingScreen = () => {
   const [loaded, setLoaded] = useState(false);
@@ -44,6 +48,10 @@ const RecordingScreen = () => {
   const speechInitializedRef = useRef(false);
   const processingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasAudioDataRef = useRef(false);
+  
+  const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
+  const { apiKey, setApiKey, hasApiKey, saveApiKey } = useElevenLabsSetup();
+  
 
   // Initialize speech synthesis (without audio test)
   useEffect(() => {
@@ -427,6 +435,26 @@ const RecordingScreen = () => {
     };
   }, []);
 
+  // Check for ElevenLabs API key
+  useEffect(() => {
+    if (!hasApiKey) {
+      // Show dialog if no API key is set
+      setShowApiKeyDialog(true);
+    }
+  }, [hasApiKey]);
+
+  // Handle API key submission
+  const handleSubmitApiKey = () => {
+    if (saveApiKey(apiKey)) {
+      setShowApiKeyDialog(false);
+      // Provide feedback
+      showToastOnly("API configurada", "Voz ElevenLabs configurada com sucesso!");
+    } else {
+      showToastOnly("Erro", "Por favor, forneça uma API key válida", "destructive");
+    }
+  };
+  
+
   return (
     <div className={`relative flex flex-col items-center justify-center min-h-screen ${
       isDarkMode 
@@ -459,6 +487,35 @@ const RecordingScreen = () => {
           recognitionStatus={recognitionStatus}
         />
       </div>
+
+      {/* ElevenLabs API Key Dialog */}
+      <Dialog open={showApiKeyDialog} onOpenChange={setShowApiKeyDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Configurar ElevenLabs</DialogTitle>
+            <DialogDescription>
+              Insira sua chave de API ElevenLabs para ativar a voz natural.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <Label htmlFor="elevenlabs-api-key">ElevenLabs API Key</Label>
+            <Input
+              id="elevenlabs-api-key"
+              type="password"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="Insira sua chave de API aqui"
+              className="col-span-3"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowApiKeyDialog(false)}>
+              Pular por enquanto
+            </Button>
+            <Button onClick={handleSubmitApiKey}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
