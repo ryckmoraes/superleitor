@@ -4,19 +4,43 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { ArrowRight, Lock, BookOpen } from "lucide-react";
+import { loadImage, removeBackground } from "@/utils/imageUtils";
 
 const WelcomeSplashScreen = () => {
   const navigate = useNavigate();
   const { onboardingData } = useOnboarding();
   const [loaded, setLoaded] = useState(false);
+  const [transparentImageUrl, setTransparentImageUrl] = useState<string | null>(null);
+  const [processingImage, setProcessingImage] = useState(false);
 
   useEffect(() => {
-    // Adiciona animação após o componente ser montado
+    // Add animation after component is mounted
     const timer = setTimeout(() => {
       setLoaded(true);
     }, 100);
     
     return () => clearTimeout(timer);
+  }, []);
+
+  // Process the elephant image to make its background transparent
+  useEffect(() => {
+    const processImage = async () => {
+      try {
+        setProcessingImage(true);
+        // Load the original elephant image
+        const img = await loadImage("/lovable-uploads/24e48b60-7b2a-419e-af48-5f31469207a1.png");
+        // Remove the background
+        const transparentImage = await removeBackground(img);
+        setTransparentImageUrl(transparentImage);
+      } catch (error) {
+        console.error("Failed to process image:", error);
+        // Fall back to the original image if processing fails
+      } finally {
+        setProcessingImage(false);
+      }
+    };
+
+    processImage();
   }, []);
 
   // Check if this is the user's first time or if they've already completed setup
@@ -49,15 +73,21 @@ const WelcomeSplashScreen = () => {
           <div className="absolute inset-0 rounded-full bg-primary/15 animate-pulse" 
                style={{ animationDelay: "1s", width: "190px", height: "190px", transform: "translate(-20%, -20%)" }} />
           
-          {/* Elefantinho com cadeado - animação mais evidente */}
+          {/* Elefantinho com cadeado - com fundo transparente */}
           <div className="relative z-10 w-40 h-40 flex items-center justify-center overflow-visible animate-float" 
                style={{ animation: "float 3s ease-in-out infinite" }}>
-            <img 
-              src="/lovable-uploads/24e48b60-7b2a-419e-af48-5f31469207a1.png" 
-              alt="Elefantinho com livro"
-              className="w-48 h-48 object-contain drop-shadow-xl"
-              style={{ filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.2))" }}
-            />
+            {processingImage ? (
+              <div className="w-48 h-48 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <img 
+                src={transparentImageUrl || "/lovable-uploads/24e48b60-7b2a-419e-af48-5f31469207a1.png"} 
+                alt="Elefantinho com livro"
+                className="w-48 h-48 object-contain drop-shadow-xl"
+                style={{ filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.2))" }}
+              />
+            )}
           </div>
         </div>
         
