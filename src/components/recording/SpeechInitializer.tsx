@@ -6,26 +6,31 @@ import { elevenLabsService } from "@/services/elevenlabs";
 const SpeechInitializer = () => {
   const speechInitializedRef = useRef(false);
   
-  // Initialize speech synthesis (without audio test)
+  // Inicializa a síntese de fala (sem teste de áudio)
   useEffect(() => {
     if (!speechInitializedRef.current) {
-      // Initialize browser speech synthesis
+      // Inicializa a síntese de fala do navegador
       initVoices().then((initialized) => {
         speechInitializedRef.current = initialized;
-        console.log("Speech synthesis initialized:", initialized);
+        console.log("Síntese de fala inicializada:", initialized);
       });
       
-      // Check if ElevenLabs API key is set
+      // Verifica se a chave API do ElevenLabs está configurada
       if (!elevenLabsService.hasApiKey()) {
-        console.log("No ElevenLabs API key set - voice features will use fallback");
+        console.log("Nenhuma chave API ElevenLabs definida - recursos de voz usarão fallback");
       } else {
-        console.log("ElevenLabs API key is configured:", elevenLabsService.getApiKey()?.substring(0, 3) + "...");
-        console.log("Using agent ID:", elevenLabsService.getAgentId());
+        console.log("Chave API ElevenLabs configurada:", elevenLabsService.getApiKey()?.substring(0, 3) + "...");
+        console.log("Usando agent ID:", elevenLabsService.getAgentId());
+      }
+      
+      // Limpeza de qualquer fala pendente
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
       }
     }
   }, []);
 
-  return null; // This is a setup component, not a visual one
+  return null; // Este é um componente de configuração, não visual
 };
 
 export default SpeechInitializer;

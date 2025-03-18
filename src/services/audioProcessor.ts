@@ -25,49 +25,8 @@ export const initVoices = async (): Promise<boolean> => {
  * @returns {string} - The cleaned transcript.
  */
 export const processRecognitionResult = (transcript: string): string => {
-  // Remove filler words and hesitations
-  let cleanTranscript = transcript.replace(/\b(?:hm+|uhm+|ah+|er+|um+)\b/gi, '');
-
-  // Remove redundant words and phrases
-  cleanTranscript = cleanTranscript.replace(/\b(?:I mean|you know|like)\b/gi, '');
-
-  // Remove starting conjunctions
-  cleanTranscript = cleanTranscript.replace(/^(and|but|so|or)\s+/i, '');
-
-  // Remove stuttering
-  cleanTranscript = cleanTranscript.replace(/\b(\w+)\s+\1\b/gi, '$1');
-
   // Trim whitespace
-  cleanTranscript = cleanTranscript.trim();
-
-  return cleanTranscript;
-};
-
-/**
- * Generates a simple response based on the transcript.
- * @param {string} transcript - The transcript to generate a response for.
- * @returns {string} - The generated response.
- */
-export const generateSimpleResponse = (transcript: string): string => {
-  // Basic sentiment analysis
-  const positiveKeywords = ['good', 'great', 'amazing', 'fantastic', 'wonderful', 'happy', 'excited'];
-  const negativeKeywords = ['bad', 'terrible', 'awful', 'sad', 'upset', 'angry', 'frustrated'];
-
-  let sentimentScore = 0;
-  positiveKeywords.forEach(keyword => {
-    if (transcript.toLowerCase().includes(keyword)) sentimentScore++;
-  });
-  negativeKeywords.forEach(keyword => {
-    if (transcript.toLowerCase().includes(keyword)) sentimentScore--;
-  });
-
-  if (sentimentScore > 0) {
-    return "Que bom que você está se sentindo bem! Continue contando!";
-  } else if (sentimentScore < 0) {
-    return "Sinto muito que você não esteja se sentindo bem. Conte-me mais para que eu possa ajudar.";
-  } else {
-    return "Continue contando! Estou adorando ouvir sua história.";
-  }
+  return transcript.trim();
 };
 
 import { elevenLabsService } from './elevenlabs';
@@ -78,33 +37,38 @@ import { elevenLabsService } from './elevenlabs';
  */
 export const speakNaturally = async (text: string, priority: boolean = false): Promise<void> => {
   try {
-    // Check if ElevenLabs is configured
+    // Cancela qualquer fala atual se esta for prioritária
+    if (priority && window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+    }
+
+    // Verifica se ElevenLabs está configurado
     if (elevenLabsService.hasApiKey()) {
-      console.log("Using ElevenLabs for text-to-speech");
+      console.log("Usando ElevenLabs para text-to-speech");
       return await elevenLabsService.speak(text, priority);
     } else {
-      console.log("ElevenLabs API key not found, using browser TTS");
-      throw new Error("Using fallback TTS");
+      console.log("Chave API ElevenLabs não encontrada, usando TTS do navegador");
+      throw new Error("Usando TTS alternativo");
     }
   } catch (error) {
-    console.log("Falling back to browser TTS:", error);
+    console.log("Usando TTS do navegador:", error);
     
-    // Fall back to native TTS
+    // Usa o TTS nativo
     if ('speechSynthesis' in window) {
-      // Cancel any current speech if this is a priority message
-      if (priority && speechSynthesis.speaking) {
-        speechSynthesis.cancel();
+      // Cancela qualquer fala atual se esta for prioritária
+      if (priority && window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
       }
       
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'pt-BR';
       
-      // Adjust pitch and rate for natural sounding speech
+      // Ajusta pitch e rate para uma fala mais natural
       utterance.pitch = 1.0;
       utterance.rate = 1.0;
       
-      // Find a good voice if available
-      const voices = speechSynthesis.getVoices();
+      // Procura uma boa voz se disponível
+      const voices = window.speechSynthesis.getVoices();
       const brazilianVoice = voices.find(voice => voice.lang.includes('pt-BR'));
       const portugueseVoice = voices.find(voice => voice.lang.includes('pt'));
       
@@ -114,7 +78,7 @@ export const speakNaturally = async (text: string, priority: boolean = false): P
         utterance.voice = portugueseVoice;
       }
       
-      speechSynthesis.speak(utterance);
+      window.speechSynthesis.speak(utterance);
     }
   }
 };

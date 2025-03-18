@@ -40,17 +40,34 @@ export const elevenLabsService = {
         window.speechSynthesis.cancel();
       }
       
-      // Always use ElevenLabs for voice with our specific voice ID
-      console.log("Speaking with ElevenLabs voice ID:", DEFAULT_VOICE_ID);
+      // Verifica se temos uma chave API válida
+      if (!this.hasApiKey()) {
+        console.error("ElevenLabs API key não definida, usando fallback");
+        throw new Error("No API key");
+      }
+      
+      console.log("Falando com ElevenLabs usando voice ID:", DEFAULT_VOICE_ID);
       const audioBlob = await this.textToSpeech(text, DEFAULT_VOICE_ID);
       return await this.playAudio(audioBlob);
     } catch (error) {
-      console.error("Error speaking with ElevenLabs:", error);
-      // Fallback to native speech synthesis
+      console.error("Erro ao falar com ElevenLabs:", error);
+      // Fallback para síntese de fala nativa
       if ('speechSynthesis' in window) {
+        if (priority && window.speechSynthesis.speaking) {
+          window.speechSynthesis.cancel();
+        }
+        
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'pt-BR';
         utterance.rate = 1.0;
+        
+        // Procura por vozes em português
+        const voices = window.speechSynthesis.getVoices();
+        const brazilianVoice = voices.find(voice => voice.lang.includes('pt-BR'));
+        if (brazilianVoice) {
+          utterance.voice = brazilianVoice;
+        }
+        
         window.speechSynthesis.speak(utterance);
       }
     }
