@@ -1,6 +1,6 @@
 
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Clock, RefreshCw, Home } from "lucide-react";
+import { Loader2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 
@@ -42,14 +42,14 @@ const StoryTranscript = ({
   // Show recording summary with time and controls
   if (showSummary && recordingTime) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/70 backdrop-blur-sm pointer-events-auto">
+      <div className="fixed inset-0 flex items-center justify-center z-20 bg-black/50 backdrop-blur-sm">
         <div className="max-w-md w-full mx-auto bg-card rounded-lg border shadow-lg p-6">
           <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
             <Clock className="w-5 h-5 text-primary" />
             Resumo da História
           </h3>
           
-          <ScrollArea className="h-56 mb-4 rounded border p-3">
+          <ScrollArea className="h-48 mb-4 rounded border p-3">
             <p className="text-sm">{storyTranscript}</p>
           </ScrollArea>
           
@@ -61,9 +61,8 @@ const StoryTranscript = ({
             {onContinue && (
               <Button 
                 onClick={onContinue} 
-                className="flex-1 bg-primary hover:bg-primary/90 flex items-center gap-2"
+                className="flex-1 bg-primary hover:bg-primary/90"
               >
-                <RefreshCw className="w-4 h-4" />
                 Continuar História
               </Button>
             )}
@@ -72,9 +71,8 @@ const StoryTranscript = ({
               <Button 
                 onClick={onExit} 
                 variant="outline" 
-                className="flex-1 flex items-center gap-2"
+                className="flex-1"
               >
-                <Home className="w-4 h-4" />
                 Finalizar
               </Button>
             )}

@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import { useElevenLabsSetup } from "@/hooks/useElevenLabsSetup";
 import { showToastOnly } from "@/services/notificationService";
@@ -61,19 +61,9 @@ const RecordingScreen = () => {
     }
   }, [hasApiKey]);
   
-  // Get pattern detector reference
-  const resetDetectionRef = useCallback((detector: any) => {
-    if (detector && detector.resetPatternDetection) {
-      resetDetection = detector.resetPatternDetection;
-    }
-  }, []);
-  
-  // Default empty reset function
-  let resetDetection = () => {
-    console.log("[RecordingScreen] Reset detection function called");
-  };
-  
   // Get recording methods and data
+  const { resetDetection } = PatternDetector({ audioData: null, isRecording: false }) || { resetDetection: () => {} };
+  
   const recordingManager = RecordingManager({
     isRecording,
     setIsRecording,
@@ -88,34 +78,6 @@ const RecordingScreen = () => {
   
   const { toggleRecording, recordingTime, audioData, audioBlob } = recordingManager;
 
-  // Block navigation when recording
-  useEffect(() => {
-    if (isRecording || isProcessing) {
-      const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-        e.preventDefault();
-        e.returnValue = '';
-        return '';
-      };
-      
-      const handlePopState = (e: PopStateEvent) => {
-        e.preventDefault();
-        window.history.pushState(null, "", window.location.pathname);
-      };
-      
-      // Set up event listeners for preventing navigation
-      window.addEventListener('beforeunload', handleBeforeUnload);
-      window.addEventListener('popstate', handlePopState);
-      
-      // Push a new history entry to prevent going back
-      window.history.pushState(null, '', window.location.pathname);
-      
-      return () => {
-        window.removeEventListener('beforeunload', handleBeforeUnload);
-        window.removeEventListener('popstate', handlePopState);
-      };
-    }
-  }, [isRecording, isProcessing]);
-
   return (
     <>
       {/* Speech initialization */}
@@ -124,11 +86,10 @@ const RecordingScreen = () => {
       {/* Welcome message */}
       <WelcomeHandler loaded={loaded} />
       
-      {/* Pattern detection - only pass audioData if recording */}
+      {/* Pattern detection - só passa audioData se estiver gravando */}
       <PatternDetector 
         audioData={isRecording ? audioData : null} 
         isRecording={isRecording} 
-        ref={resetDetectionRef}
       />
       
       {/* Speech recognition */}
