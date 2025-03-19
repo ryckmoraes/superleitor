@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import { useElevenLabsSetup } from "@/hooks/useElevenLabsSetup";
 import { showToastOnly } from "@/services/notificationService";
@@ -12,7 +12,7 @@ import SpeechInitializer from "@/components/recording/SpeechInitializer";
 import WelcomeHandler from "@/components/recording/WelcomeHandler";
 import RecordingManager from "@/components/recording/RecordingManager";
 import SpeechRecognitionHandler from "@/components/recording/SpeechRecognitionHandler";
-import PatternDetector from "@/components/recording/PatternDetector";
+import PatternDetector, { PatternDetectorRef } from "@/components/recording/PatternDetector";
 
 const RecordingScreen = () => {
   const [loaded, setLoaded] = useState(false);
@@ -23,6 +23,9 @@ const RecordingScreen = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  
+  // Create a ref for the PatternDetector
+  const patternDetectorRef = useRef<PatternDetectorRef>(null);
   
   // Setup the ElevenLabs API key
   const { hasApiKey } = useElevenLabsSetup();
@@ -61,9 +64,14 @@ const RecordingScreen = () => {
     }
   }, [hasApiKey]);
   
-  // Get recording methods and data
-  const { resetDetection } = PatternDetector({ audioData: null, isRecording: false }) || { resetDetection: () => {} };
+  // Helper function to reset pattern detection
+  const resetPatternDetection = () => {
+    if (patternDetectorRef.current) {
+      patternDetectorRef.current.resetPatternDetection();
+    }
+  };
   
+  // Get recording methods and data
   const recordingManager = RecordingManager({
     isRecording,
     setIsRecording,
@@ -73,7 +81,7 @@ const RecordingScreen = () => {
     setInterimTranscript,
     hasMicrophonePermission,
     requestMicrophonePermission,
-    resetDetection
+    resetDetection: resetPatternDetection
   });
   
   const { toggleRecording, recordingTime, audioData, audioBlob } = recordingManager;
@@ -88,6 +96,7 @@ const RecordingScreen = () => {
       
       {/* Pattern detection - só passa audioData se estiver gravando */}
       <PatternDetector 
+        ref={patternDetectorRef}
         audioData={isRecording ? audioData : null} 
         isRecording={isRecording} 
       />
