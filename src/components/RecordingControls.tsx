@@ -20,7 +20,7 @@ const RecordingControls = ({
   return (
     <div className="absolute top-6 left-0 right-0 text-center">
       <h1 className="text-2xl font-semibold tracking-tight text-primary">
-        {isRecording ? "Modo História" : "Esfera Sonora"}
+        {isRecording ? "Modo História" : "SuperLeitor"}
       </h1>
       {isRecording && (
         <p className="text-sm text-muted-foreground mt-1">

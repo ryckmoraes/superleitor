@@ -1,7 +1,8 @@
 
-import { useEffect } from 'react';
-import RecordingControls from "@/components/RecordingControls";
+import { Button } from "@/components/ui/button";
+import { Mic, Square, Loader2 } from "lucide-react";
 import AudioSphere from "@/components/AudioSphere";
+import RecordingControls from "@/components/RecordingControls";
 import StoryTranscript from "@/components/StoryTranscript";
 
 interface RecordingMainViewProps {
@@ -14,7 +15,7 @@ interface RecordingMainViewProps {
   audioData: Uint8Array | null;
   storyTranscript: string;
   interimTranscript: string;
-  recognitionStatus: string;
+  recognitionStatus?: string;
 }
 
 const RecordingMainView = ({
@@ -29,44 +30,41 @@ const RecordingMainView = ({
   interimTranscript,
   recognitionStatus
 }: RecordingMainViewProps) => {
-  // Clean up on unmount
-  useEffect(() => {
-    return () => {
-      if ('speechSynthesis' in window && speechSynthesis.speaking) {
-        speechSynthesis.cancel();
-      }
-    };
-  }, []);
-
   return (
-    <div className={`relative flex flex-col items-center justify-center min-h-screen ${
-      isDarkMode 
-        ? "bg-gradient-to-b from-background to-background/90" 
-        : "bg-gradient-to-b from-background to-background/90"
-    } overflow-hidden`}>
-      <div 
-        className={`flex flex-col items-center justify-center w-full h-full transition-all duration-1000 ease-out transform ${
-          loaded ? "opacity-100 scale-100" : "opacity-0 scale-95"
-        }`}
-      >
-        <RecordingControls 
-          isRecording={isRecording}
-          isProcessing={isProcessing}
-          recordingTime={recordingTime}
-          toggleRecording={toggleRecording}
-          recognitionStatus={recognitionStatus}
-        />
-        
-        <div className="w-full max-w-[500px] h-[500px] flex items-center justify-center">
-          <AudioSphere audioData={audioData} isRecording={isRecording} />
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-primary/5 to-background overflow-hidden">
+      <div className={`transition-all duration-1000 ease-out transform ${
+        loaded ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
+      }`}>
+        <div className="relative h-[500px] w-[350px] flex items-center justify-center">
+          {/* Audio Visualization Sphere */}
+          <AudioSphere audioData={audioData} isRecording={isRecording} isDarkMode={isDarkMode} />
+          
+          {/* Recording Controls */}
+          <RecordingControls 
+            isRecording={isRecording} 
+            isProcessing={isProcessing} 
+            recordingTime={recordingTime} 
+            toggleRecording={toggleRecording}
+            recognitionStatus={recognitionStatus}
+          />
+          
+          {/* Story Transcript */}
+          <StoryTranscript 
+            storyTranscript={storyTranscript} 
+            isProcessing={isProcessing}
+            isInterim={false}
+            recognitionStatus={recognitionStatus}
+          />
+          
+          {/* Interim Transcript (shown while speaking) */}
+          {interimTranscript && (
+            <StoryTranscript 
+              storyTranscript={interimTranscript} 
+              isProcessing={false}
+              isInterim={true}
+            />
+          )}
         </div>
-        
-        <StoryTranscript 
-          storyTranscript={interimTranscript || storyTranscript}
-          isProcessing={isProcessing}
-          isInterim={!!interimTranscript}
-          recognitionStatus={recognitionStatus}
-        />
       </div>
     </div>
   );

@@ -1,9 +1,12 @@
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { speakNaturally } from "@/services/audioProcessor";
 import { showToastOnly } from "@/services/notificationService";
 import webSpeechService from "@/services/webSpeechService";
 import { elevenLabsService } from "@/services/elevenlabs";
+import { Button } from "@/components/ui/button";
+import StoryTranscript from "@/components/StoryTranscript";
+import { useNavigate } from "react-router-dom";
 
 interface SpeechRecognitionHandlerProps {
   isRecording: boolean;
@@ -13,6 +16,7 @@ interface SpeechRecognitionHandlerProps {
   setInterimTranscript: (transcript: string) => void;
   setRecognitionStatus: (status: string) => void;
   audioBlob: Blob | null;
+  recordingTime: number;
 }
 
 const SpeechRecognitionHandler = ({
@@ -22,15 +26,18 @@ const SpeechRecognitionHandler = ({
   setStoryTranscript,
   setInterimTranscript,
   setRecognitionStatus,
-  audioBlob
+  audioBlob,
+  recordingTime
 }: SpeechRecognitionHandlerProps) => {
   const lastTranscriptRef = useRef("");
   const processingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isProcessingRef = useRef(false);
+  const [showSummary, setShowSummary] = useState(false);
+  const navigate = useNavigate();
 
   // Process transcript from speech recognition
   const handleRecognitionResult = (result: { transcript: string, isFinal: boolean }) => {
-    if (isProcessingRef.current) return; // Evita processar durante análise
+    if (isProcessingRef.current) return; // Avoid processing during analysis
     
     const cleanTranscript = result.transcript.trim();
     
@@ -64,55 +71,55 @@ const SpeechRecognitionHandler = ({
       setIsProcessing(true);
       isProcessingRef.current = true;
       
-      // Apenas um feedback simples de que recebemos a história
+      // Simple feedback that we received the story
       const quickResponse = "Analisando sua história...";
       showToastOnly("Recebido!", quickResponse);
       
-      // Se tivermos um audio blob, processamos com ElevenLabs
+      // If we have an audio blob, process with ElevenLabs
       if (audioBlob && audioBlob.size > 1000 && elevenLabsService.hasApiKey()) {
         console.log("Processando áudio com ElevenLabs, tamanho:", audioBlob.size);
         
-        // Define um timeout de segurança para garantir que o processamento termine
+        // Set a safety timeout to ensure processing completes
         if (processingTimeoutRef.current) {
           clearTimeout(processingTimeoutRef.current);
         }
         
         processingTimeoutRef.current = setTimeout(() => {
           if (isProcessingRef.current) {
-            console.log("Tempo de processamento excedido, mostrando resposta alternativa");
+            console.log("Processing timeout exceeded, showing alternative response");
             setIsProcessing(false);
             isProcessingRef.current = false;
             const fallbackResponse = "Adorei sua história! Continue contando mais!";
             showToastOnly("Análise completa!", fallbackResponse);
             speakNaturally(fallbackResponse, true);
           }
-        }, 15000); // 15 segundos de timeout
+        }, 15000); // 15 second timeout
         
-        // Processamento com ElevenLabs
+        // Process with ElevenLabs
         elevenLabsService.analyzeAudio(audioBlob)
           .then(response => {
-            // Limpa o timeout pois recebemos uma resposta
+            // Clear the timeout since we received a response
             if (processingTimeoutRef.current) {
               clearTimeout(processingTimeoutRef.current);
               processingTimeoutRef.current = null;
             }
             
-            console.log("Resposta do ElevenLabs:", response);
+            console.log("Response from ElevenLabs:", response);
             
             if (response) {
-              // Atualiza o transcript com a resposta do ElevenLabs
+              // Update the transcript with the ElevenLabs response
               setStoryTranscript(response);
               
-              // Exibe como toast
+              // Display as toast
               showToastOnly("Análise completa!", response);
               
-              // Fala a resposta do ElevenLabs
+              // Speak the ElevenLabs response
               speakNaturally(response, true);
             }
           })
           .catch(error => {
-            console.error("Erro ao processar com ElevenLabs:", error);
-            // Em caso de erro, ainda mostramos alguma resposta
+            console.error("Error processing with ElevenLabs:", error);
+            // In case of error, still show some response
             const errorResponse = "Sua história é fascinante! Pode me contar mais?";
             showToastOnly("Hmm...", errorResponse);
             speakNaturally(errorResponse, true);
@@ -121,21 +128,35 @@ const SpeechRecognitionHandler = ({
             setIsProcessing(false);
             isProcessingRef.current = false;
             
-            // Limpa o timeout se ainda estiver ativo
+            // Clear the timeout if still active
             if (processingTimeoutRef.current) {
               clearTimeout(processingTimeoutRef.current);
               processingTimeoutRef.current = null;
             }
+            
+            // Show summary after processing completes
+            if (recordingTime > 5) {
+              setTimeout(() => {
+                setShowSummary(true);
+              }, 7000);
+            }
           });
       } else {
-        // Finaliza o processamento após um tempo se não houver audio blob ou chave API
-        console.log("Usando resposta local (sem chave API ElevenLabs ou sem blob de áudio)");
+        // Finalize processing after a time if no audio blob or API key
+        console.log("Using local response (no ElevenLabs API key or no audio blob)");
         setTimeout(() => {
           setIsProcessing(false);
           isProcessingRef.current = false;
           const simpleResponse = "Que história legal! Conte-me mais!";
           showToastOnly("Análise simples", simpleResponse);
           speakNaturally(simpleResponse, true);
+          
+          // Show summary after processing completes
+          if (recordingTime > 5) {
+            setTimeout(() => {
+              setShowSummary(true);
+            }, 7000);
+          }
         }, 2000);
       }
     } else {
@@ -185,7 +206,39 @@ const SpeechRecognitionHandler = ({
     };
   }, []);
 
-  return null; // This is a behavior component, not a visual one
+  // Handle continue button
+  const handleContinue = () => {
+    setShowSummary(false);
+    setStoryTranscript("");
+    setInterimTranscript("");
+    
+    // Restart recording
+    setTimeout(() => {
+      const startMessage = "Vamos continuar a história! Estou ouvindo...";
+      speakNaturally(startMessage, true);
+    }, 500);
+  };
+  
+  // Handle exit button
+  const handleExit = () => {
+    setShowSummary(false);
+    navigate("/");
+  };
+
+  // Render the summary component if needed
+  if (showSummary && !isRecording && !isProcessing) {
+    return (
+      <StoryTranscript
+        storyTranscript={lastTranscriptRef.current}
+        isProcessing={false}
+        recordingTime={recordingTime}
+        onContinue={handleContinue}
+        onExit={handleExit}
+      />
+    );
+  }
+
+  return null; // This is normally a behavior component, not a visual one
 };
 
 export default SpeechRecognitionHandler;

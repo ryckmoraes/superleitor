@@ -26,11 +26,32 @@ const PatternDetector = ({ audioData, isRecording }: PatternDetectorProps) => {
     if (patternDetected && !patternNotifiedRef.current && isRecording) {
       patternNotifiedRef.current = true;
       
-      // Create natural message
-      const message = `Ei, percebi um padrão de ${patternType === 'music' ? 'música' : 'ritmo'} na sua história! Que legal!`;
+      let message = '';
+      let title = '';
       
-      // Show toast notification only
-      showToastOnly("Padrão Detectado", message);
+      switch (patternType) {
+        case 'music':
+          title = "Música Detectada";
+          message = "Ei, parece que você está reproduzindo música em vez de contar uma história. Que tal usar sua própria voz para criar uma história original?";
+          break;
+        
+        case 'rhythm':
+          title = "Ritmo Detectado";
+          message = "Percebi um padrão rítmico na sua história! Isso é muito criativo!";
+          break;
+          
+        case 'voice-change':
+          title = "Mudança de Voz Detectada";
+          message = "Hmm, sua voz parece ter mudado bastante. Lembre-se que o SuperLeitor é para você contar histórias com sua própria voz!";
+          break;
+          
+        default:
+          title = "Padrão Detectado";
+          message = "Detectei um padrão interessante na sua história!";
+      }
+      
+      // Show toast notification
+      showToastOnly(title, message, patternType === 'music' || patternType === 'voice-change' ? 'destructive' : 'default');
       
       // Ensure notification is spoken
       setTimeout(() => {

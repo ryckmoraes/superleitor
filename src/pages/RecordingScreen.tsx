@@ -96,6 +96,7 @@ const RecordingScreen = () => {
         setInterimTranscript={setInterimTranscript}
         setRecognitionStatus={setRecognitionStatus}
         audioBlob={audioBlob}
+        recordingTime={recordingTime}
       />
       
       {/* Main UI */}

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -195,6 +194,27 @@ const IntroductionStepper = () => {
                     onSelect={setAdminBirthdate}
                     disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
                     initialFocus
+                    className="bg-white shadow-lg rounded-md border"
+                    styles={{
+                      month: { backgroundColor: '#fff' },
+                      caption_label: { color: '#000', fontWeight: 'bold' },
+                      nav_button: { color: '#000' },
+                      day: { 
+                        color: '#000',
+                        backgroundColor: '#fff',
+                        borderRadius: '0.25rem',
+                        margin: '0.1rem'
+                      },
+                      day_today: { 
+                        backgroundColor: '#f0f9ff', 
+                        color: '#0284c7',
+                        fontWeight: 'bold'
+                      },
+                      day_selected: { 
+                        backgroundColor: '#0284c7', 
+                        color: '#fff' 
+                      }
+                    }}
                   />
                 </PopoverContent>
               </Popover>
@@ -294,8 +314,8 @@ const IntroductionStepper = () => {
             <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-3xl font-bold text-primary">5</span>
             </div>
-            <h2 className="text-2xl font-bold tracking-tight text-center">Data de Nascimento do Super Leitor</h2>
-            <p className="text-muted-foreground text-center">Insira a data de nascimento do Super Leitor.</p>
+            <h2 className="text-2xl font-bold tracking-tight text-center">Data de Nascimento do {superReaderName}</h2>
+            <p className="text-muted-foreground text-center">Insira a data de nascimento do {superReaderName}.</p>
             
             <div className="space-y-2 mt-6">
               <Label htmlFor="superReaderBirthdate">Data de Nascimento</Label>
@@ -321,6 +341,27 @@ const IntroductionStepper = () => {
                     onSelect={setSuperReaderBirthdate}
                     disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
                     initialFocus
+                    className="bg-white shadow-lg rounded-md border pointer-events-auto"
+                    styles={{
+                      month: { backgroundColor: '#fff' },
+                      caption_label: { color: '#000', fontWeight: 'bold' },
+                      nav_button: { color: '#000' },
+                      day: { 
+                        color: '#000',
+                        backgroundColor: '#fff',
+                        borderRadius: '0.25rem',
+                        margin: '0.1rem'
+                      },
+                      day_today: { 
+                        backgroundColor: '#f0f9ff', 
+                        color: '#0284c7',
+                        fontWeight: 'bold'
+                      },
+                      day_selected: { 
+                        backgroundColor: '#0284c7', 
+                        color: '#fff' 
+                      }
+                    }}
                   />
                 </PopoverContent>
               </Popover>
