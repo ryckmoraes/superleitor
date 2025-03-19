@@ -10,7 +10,7 @@ interface PatternDetectorProps {
 }
 
 const PatternDetector = ({ audioData, isRecording }: PatternDetectorProps) => {
-  const { patternDetected, patternType, resetDetection } = usePatternDetection(audioData);
+  const { patternDetected, patternType, resetDetection } = usePatternDetection(audioData, isRecording); // Passando isRecording para o hook
   const patternNotifiedRef = useRef(false);
   
   // Reset detection when needed
@@ -21,8 +21,9 @@ const PatternDetector = ({ audioData, isRecording }: PatternDetectorProps) => {
     }
   }, [isRecording, resetDetection]);
 
-  // Handle pattern detection
+  // Handle pattern detection only when recording
   useEffect(() => {
+    // Só processa detecções se estiver gravando e se tiver um padrão detectado que ainda não foi notificado
     if (patternDetected && !patternNotifiedRef.current && isRecording) {
       patternNotifiedRef.current = true;
       
@@ -49,6 +50,9 @@ const PatternDetector = ({ audioData, isRecording }: PatternDetectorProps) => {
           title = "Padrão Detectado";
           message = "Detectei um padrão interessante na sua história!";
       }
+      
+      // Logs para debug
+      console.log(`[PatternDetector] Padrão detectado: ${patternType}`);
       
       // Show toast notification
       showToastOnly(title, message, patternType === 'music' || patternType === 'voice-change' ? 'destructive' : 'default');

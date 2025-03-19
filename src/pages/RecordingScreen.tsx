@@ -62,6 +62,8 @@ const RecordingScreen = () => {
   }, [hasApiKey]);
   
   // Get recording methods and data
+  const { resetDetection } = PatternDetector({ audioData: null, isRecording: false }) || { resetDetection: () => {} };
+  
   const recordingManager = RecordingManager({
     isRecording,
     setIsRecording,
@@ -71,7 +73,7 @@ const RecordingScreen = () => {
     setInterimTranscript,
     hasMicrophonePermission,
     requestMicrophonePermission,
-    resetDetection: () => {} // Will be properly connected through PatternDetector
+    resetDetection
   });
   
   const { toggleRecording, recordingTime, audioData, audioBlob } = recordingManager;
@@ -84,8 +86,11 @@ const RecordingScreen = () => {
       {/* Welcome message */}
       <WelcomeHandler loaded={loaded} />
       
-      {/* Pattern detection */}
-      <PatternDetector audioData={audioData} isRecording={isRecording} />
+      {/* Pattern detection - só passa audioData se estiver gravando */}
+      <PatternDetector 
+        audioData={isRecording ? audioData : null} 
+        isRecording={isRecording} 
+      />
       
       {/* Speech recognition */}
       <SpeechRecognitionHandler
