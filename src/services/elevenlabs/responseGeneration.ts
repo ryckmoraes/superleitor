@@ -52,6 +52,11 @@ const analyzeStoryContent = (text: string) => {
   // Creativity assessment
   const creativity = assessCreativity(lowerText);
   
+  // Narrative structure detection
+  const hasIntroduction = detectIntroduction(lowerText);
+  const hasConclusion = detectConclusion(lowerText);
+  const hasMiddle = detectMiddle(lowerText);
+  
   return {
     hasCharacters,
     hasSetting,
@@ -59,11 +64,53 @@ const analyzeStoryContent = (text: string) => {
     hasConflict,
     hasEmotions,
     hasDialogue,
+    hasIntroduction,
+    hasMiddle, 
+    hasConclusion,
     themes,
     complexity,
     creativity,
     wordCount: text.split(/\s+/).length
   };
+};
+
+/**
+ * Detects if the story has an introduction
+ */
+const detectIntroduction = (text: string) => {
+  const introIndicators = [
+    'era uma vez', 'há muito tempo', 'no começo', 'certo dia',
+    'havia um', 'havia uma', 'em um reino', 'em uma terra',
+    'tudo começou', 'antigamente', 'no início', 'num lugar distante'
+  ];
+  
+  return introIndicators.some(indicator => text.includes(indicator));
+};
+
+/**
+ * Detects if the story has a middle part
+ */
+const detectMiddle = (text: string) => {
+  const middleIndicators = [
+    'então', 'depois', 'mais tarde', 'em seguida', 'logo após',
+    'de repente', 'subitamente', 'nesse momento', 'durante',
+    'enquanto', 'ao mesmo tempo', 'nesse instante'
+  ];
+  
+  return middleIndicators.some(indicator => text.includes(indicator));
+};
+
+/**
+ * Detects if the story has a conclusion
+ */
+const detectConclusion = (text: string) => {
+  const conclusionIndicators = [
+    'finalmente', 'por fim', 'no final', 'terminando', 'concluindo',
+    'e assim', 'dessa forma', 'no fim', 'e viveram felizes',
+    'e todos', 'acabou', 'terminou', 'fim'
+  ];
+  
+  return conclusionIndicators.some(indicator => text.includes(indicator));
 };
 
 /**
@@ -225,6 +272,13 @@ const generateDetailedResponse = (analysis: any, originalText: string) => {
     praises.push("Os diálogos ficaram muito naturais!");
   }
   
+  // Additional praise for narrative structure
+  if (analysis.hasIntroduction && analysis.hasMiddle && analysis.hasConclusion) {
+    praises.push("Sua história tem uma estrutura narrativa completa, com começo, meio e fim!");
+  } else if (analysis.hasIntroduction) {
+    praises.push("Você começou sua história muito bem!");
+  }
+  
   // Comment on themes
   let themeComment = "";
   if (analysis.themes.length > 0) {
@@ -246,6 +300,8 @@ const generateDetailedResponse = (analysis: any, originalText: string) => {
     followUpQuestion = "Onde essa história acontece?";
   } else if (!analysis.hasConflict) {
     followUpQuestion = "Qual é o maior desafio que os personagens enfrentam?";
+  } else if (!analysis.hasConclusion && analysis.hasIntroduction) {
+    followUpQuestion = "Como essa aventura termina?";
   } else if (analysis.themes.includes('aventura')) {
     followUpQuestion = "Que outras aventuras esses personagens podem viver?";
   }
@@ -272,6 +328,11 @@ const generateDetailedResponse = (analysis: any, originalText: string) => {
   
   // Add follow-up question
   response += followUpQuestion;
+  
+  // Analyze word count for additional feedback
+  if (analysis.wordCount > 100) {
+    response += " Você contou uma história bem longa e cheia de detalhes!";
+  }
   
   return response.trim();
 };

@@ -4,7 +4,6 @@ import { speakNaturally } from "@/services/audioProcessor";
 import { showToastOnly } from "@/services/notificationService";
 import webSpeechService from "@/services/webSpeechService";
 import { elevenLabsService } from "@/services/elevenlabs";
-import { Button } from "@/components/ui/button";
 import StoryTranscript from "@/components/StoryTranscript";
 import { useNavigate } from "react-router-dom";
 
@@ -34,6 +33,36 @@ const SpeechRecognitionHandler = ({
   const isProcessingRef = useRef(false);
   const [showSummary, setShowSummary] = useState(false);
   const navigate = useNavigate();
+  
+  // Block back navigation when summary is shown
+  useEffect(() => {
+    if (showSummary) {
+      // Create a function to handle the beforeunload event
+      const blockNavigation = (e: BeforeUnloadEvent) => {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      };
+      
+      // Add a history listener
+      const handlePopState = (e: PopStateEvent) => {
+        e.preventDefault();
+        window.history.pushState(null, "", window.location.pathname);
+      };
+      
+      // Set up the navigation blockers
+      window.addEventListener('beforeunload', blockNavigation);
+      window.addEventListener('popstate', handlePopState);
+      
+      // Push a new state to prevent going back
+      window.history.pushState(null, "", window.location.pathname);
+      
+      return () => {
+        window.removeEventListener('beforeunload', blockNavigation);
+        window.removeEventListener('popstate', handlePopState);
+      };
+    }
+  }, [showSummary]);
 
   // Process transcript from speech recognition
   const handleRecognitionResult = (result: { transcript: string, isFinal: boolean }) => {
@@ -92,6 +121,11 @@ const SpeechRecognitionHandler = ({
             const fallbackResponse = "Adorei sua história! Continue contando mais!";
             showToastOnly("Análise completa!", fallbackResponse);
             speakNaturally(fallbackResponse, true);
+            
+            // Show summary after timeout
+            if (recordingTime > 3) {
+              setTimeout(() => setShowSummary(true), 3000);
+            }
           }
         }, 15000); // 15 second timeout
         
@@ -108,7 +142,7 @@ const SpeechRecognitionHandler = ({
             
             if (response) {
               // Update the transcript with the ElevenLabs response
-              setStoryTranscript(response);
+              lastTranscriptRef.current = lastTranscriptRef.current || "História sem texto";
               
               // Display as toast
               showToastOnly("Análise completa!", response);
@@ -121,7 +155,7 @@ const SpeechRecognitionHandler = ({
             console.error("Error processing with ElevenLabs:", error);
             // In case of error, still show some response
             const errorResponse = "Sua história é fascinante! Pode me contar mais?";
-            showToastOnly("Hmm...", errorResponse);
+            showToastOnly("Análise de História", errorResponse);
             speakNaturally(errorResponse, true);
           })
           .finally(() => {
@@ -135,10 +169,10 @@ const SpeechRecognitionHandler = ({
             }
             
             // Show summary after processing completes
-            if (recordingTime > 5) {
+            if (recordingTime > 3) {
               setTimeout(() => {
                 setShowSummary(true);
-              }, 7000);
+              }, 3000);
             }
           });
       } else {
@@ -152,10 +186,10 @@ const SpeechRecognitionHandler = ({
           speakNaturally(simpleResponse, true);
           
           // Show summary after processing completes
-          if (recordingTime > 5) {
+          if (recordingTime > 3) {
             setTimeout(() => {
               setShowSummary(true);
-            }, 7000);
+            }, 3000);
           }
         }, 2000);
       }

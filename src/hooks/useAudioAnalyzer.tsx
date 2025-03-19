@@ -7,6 +7,7 @@ const useAudioAnalyzer = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [hasSignificantAudio, setHasSignificantAudio] = useState(false);
   
   const streamRef = useRef<MediaStream | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -26,6 +27,7 @@ const useAudioAnalyzer = () => {
       // Reset states
       setErrorMessage(null);
       setRecordingTime(0);
+      setHasSignificantAudio(false);
       significantAudioDetectedRef.current = false;
       consecutiveAudioDetectionsRef.current = 0;
       silenceCountRef.current = 0;
@@ -81,7 +83,10 @@ const useAudioAnalyzer = () => {
         // Start timer after 3 consecutive detections to avoid false triggers
         if (consecutiveAudioDetectionsRef.current >= 3 && !significantAudioDetectedRef.current) {
           significantAudioDetectedRef.current = true;
-          console.log("Significant audio detected, starting timer now");
+          console.log("[useAudioAnalyzer] Significant audio detected, starting timer now");
+          
+          // Set the significant audio flag
+          setHasSignificantAudio(true);
           
           // Start timer now
           recordingStartTimeRef.current = Date.now();
@@ -213,7 +218,8 @@ const useAudioAnalyzer = () => {
     startRecording, 
     stopRecording,
     recordingTime,
-    audioBlob
+    audioBlob,
+    hasSignificantAudio
   };
 };
 

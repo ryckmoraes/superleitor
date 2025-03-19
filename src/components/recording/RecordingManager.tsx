@@ -33,23 +33,21 @@ const RecordingManager = ({
     stopRecording,
     recordingTime,
     audioData,
-    audioBlob
+    audioBlob,
+    hasSignificantAudio
   } = useAudioAnalyzer();
   
   const hasAudioDataRef = useRef(false);
 
   // Track audio data presence to only start timer when audio is detected
   useEffect(() => {
-    if (audioData && audioData.length > 0) {
-      // Check if there's actual audio data (not just silence)
-      const hasSignificantAudio = Array.from(audioData).some(val => val > 20);
-      
-      if (hasSignificantAudio && !hasAudioDataRef.current && isRecording) {
+    if (audioData && audioData.length > 0 && hasSignificantAudio && isRecording) {
+      if (!hasAudioDataRef.current) {
         hasAudioDataRef.current = true;
-        console.log("Significant audio detected, starting timer");
+        console.log("[RecordingManager] Significant audio detected, starting timer");
       }
     }
-  }, [audioData, isRecording]);
+  }, [audioData, isRecording, hasSignificantAudio]);
 
   // Toggle recording with improved audio feedback
   const toggleRecording = () => {

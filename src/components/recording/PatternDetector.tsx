@@ -10,21 +10,29 @@ interface PatternDetectorProps {
 }
 
 const PatternDetector = ({ audioData, isRecording }: PatternDetectorProps) => {
-  const { patternDetected, patternType, resetDetection } = usePatternDetection(audioData, isRecording); // Passando isRecording para o hook
+  const { patternDetected, patternType, resetDetection } = usePatternDetection(audioData, isRecording);
   const patternNotifiedRef = useRef(false);
+  const hasInitializedRef = useRef(false);
   
-  // Reset detection when needed
+  // Ensure initialization only happens once and reset detection when not recording
   useEffect(() => {
     if (!isRecording) {
       resetDetection();
       patternNotifiedRef.current = false;
+      hasInitializedRef.current = false;
+      console.log("[PatternDetector] Reset detection state");
+    } else if (!hasInitializedRef.current) {
+      // Set as initialized only after recording has started
+      hasInitializedRef.current = true;
+      console.log("[PatternDetector] Pattern detector initialized");
     }
   }, [isRecording, resetDetection]);
 
-  // Handle pattern detection only when recording
+  // Handle pattern detection only when recording and properly initialized
   useEffect(() => {
-    // Só processa detecções se estiver gravando e se tiver um padrão detectado que ainda não foi notificado
-    if (patternDetected && !patternNotifiedRef.current && isRecording) {
+    // Only process detections when recording and properly initialized
+    if (patternDetected && !patternNotifiedRef.current && isRecording && hasInitializedRef.current) {
+      console.log(`[PatternDetector] Processing detected pattern: ${patternType}`);
       patternNotifiedRef.current = true;
       
       let message = '';
@@ -69,7 +77,14 @@ const PatternDetector = ({ audioData, isRecording }: PatternDetectorProps) => {
     }
   }, [patternDetected, patternType, isRecording]);
 
-  return null; // This is a behavior component, not a visual one
+  // This hook provides the reset function for external components
+  const resetPatternDetection = () => {
+    resetDetection();
+    patternNotifiedRef.current = false;
+    hasInitializedRef.current = false;
+  };
+
+  return { resetPatternDetection };
 };
 
 export default PatternDetector;
