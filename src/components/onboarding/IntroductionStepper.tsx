@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -205,12 +206,12 @@ const IntroductionStepper = () => {
                         borderRadius: '0.25rem',
                         margin: '0.1rem'
                       },
-                      today: { 
+                      day_today: { 
                         backgroundColor: '#f0f9ff', 
                         color: '#0284c7',
                         fontWeight: 'bold'
                       },
-                      selected: { 
+                      day_selected: { 
                         backgroundColor: '#0284c7', 
                         color: '#fff' 
                       }
@@ -352,12 +353,12 @@ const IntroductionStepper = () => {
                         borderRadius: '0.25rem',
                         margin: '0.1rem'
                       },
-                      today: { 
+                      day_today: { 
                         backgroundColor: '#f0f9ff', 
                         color: '#0284c7',
                         fontWeight: 'bold'
                       },
-                      selected: { 
+                      day_selected: { 
                         backgroundColor: '#0284c7', 
                         color: '#fff' 
                       }
