@@ -1,13 +1,13 @@
-
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
 interface AudioSphereProps {
   audioData: Uint8Array | null;
   isRecording: boolean;
+  isDarkMode?: boolean; // Added isDarkMode prop as optional
 }
 
-const AudioSphere = ({ audioData, isRecording }: AudioSphereProps) => {
+const AudioSphere = ({ audioData, isRecording, isDarkMode = false }: AudioSphereProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -55,17 +55,19 @@ const AudioSphere = ({ audioData, isRecording }: AudioSphereProps) => {
     directionalLight.position.set(1, 1, 1);
     scene.add(directionalLight);
 
-    // Add point light in center
-    const pointLight = new THREE.PointLight(0x0088ff, 1, 10);
+    // Add point light in center - adjust color based on dark mode
+    const pointLightColor = isDarkMode ? 0x0066ff : 0x0088ff;
+    const pointLight = new THREE.PointLight(pointLightColor, 1, 10);
     pointLight.position.set(0, 0, 0);
     scene.add(pointLight);
 
     // Create sphere geometry with high detail
     const geometry = new THREE.IcosahedronGeometry(1, 5);
     
-    // Create material with nice shader effect
+    // Create material with nice shader effect - adjust color based on dark mode
+    const materialColor = isDarkMode ? 0x0055dd : 0x0066ff;
     const material = new THREE.MeshPhongMaterial({
-      color: 0x0066ff,
+      color: materialColor,
       shininess: 100,
       wireframe: true,
       transparent: true,
@@ -96,8 +98,10 @@ const AudioSphere = ({ audioData, isRecording }: AudioSphereProps) => {
     particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     
     // Material para as partículas - mais transparente e brilhante
+    // Adjust particle color based on dark mode
+    const particleColor = isDarkMode ? 0x77bbff : 0x88ccff;
     const particlesMaterial = new THREE.PointsMaterial({
-      color: 0x88ccff,
+      color: particleColor,
       size: 0.05,
       transparent: true,
       opacity: 0.7,
@@ -174,7 +178,7 @@ const AudioSphere = ({ audioData, isRecording }: AudioSphereProps) => {
         containerRef.current.removeChild(rendererRef.current.domElement);
       }
     };
-  }, [isRecording]);
+  }, [isRecording, isDarkMode]); // Added isDarkMode to dependency array
 
   // Update sphere based on audio data with enhanced effects
   useEffect(() => {
