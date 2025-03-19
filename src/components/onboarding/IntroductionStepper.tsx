@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -195,27 +194,7 @@ const IntroductionStepper = () => {
                     onSelect={setAdminBirthdate}
                     disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
                     initialFocus
-                    className="bg-white shadow-lg rounded-md border"
-                    styles={{
-                      month: { backgroundColor: '#fff' },
-                      caption_label: { color: '#000', fontWeight: 'bold' },
-                      nav_button: { color: '#000' },
-                      day: { 
-                        color: '#000',
-                        backgroundColor: '#fff',
-                        borderRadius: '0.25rem',
-                        margin: '0.1rem'
-                      },
-                      day_today: { 
-                        backgroundColor: '#f0f9ff', 
-                        color: '#0284c7',
-                        fontWeight: 'bold'
-                      },
-                      day_selected: { 
-                        backgroundColor: '#0284c7', 
-                        color: '#fff' 
-                      }
-                    }}
+                    className="bg-white shadow-lg rounded-md border pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
@@ -343,26 +322,6 @@ const IntroductionStepper = () => {
                     disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
                     initialFocus
                     className="bg-white shadow-lg rounded-md border pointer-events-auto"
-                    styles={{
-                      month: { backgroundColor: '#fff' },
-                      caption_label: { color: '#000', fontWeight: 'bold' },
-                      nav_button: { color: '#000' },
-                      day: { 
-                        color: '#000',
-                        backgroundColor: '#fff',
-                        borderRadius: '0.25rem',
-                        margin: '0.1rem'
-                      },
-                      day_today: { 
-                        backgroundColor: '#f0f9ff', 
-                        color: '#0284c7',
-                        fontWeight: 'bold'
-                      },
-                      day_selected: { 
-                        backgroundColor: '#0284c7', 
-                        color: '#fff' 
-                      }
-                    }}
                   />
                 </PopoverContent>
               </Popover>
