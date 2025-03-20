@@ -1,4 +1,3 @@
-
 // Serviço VOSK para reconhecimento de fala offline
 
 interface VoskResult {
@@ -36,83 +35,65 @@ class VoskService {
       const modelPath = '/models/vosk-model-pt-br-small';
       
       try {
-        // Obter o vosk direto do módulo ou do default
+        // Extract the vosk object from the module
         const vosk = voskModule.default || voskModule;
         
-        // Criar o modelo
+        // Log the available properties for debugging
+        console.log("Propriedades disponíveis em vosk:", Object.keys(vosk));
+        
+        // Create the model using the documented API method
         this.model = await vosk.createModel(modelPath);
         console.log("Modelo VOSK carregado com sucesso");
         
-        // Em vez de tentar acessar propriedades específicas, tentamos obter
-        // o construtor do reconhecedor de diferentes maneiras
-        
-        // Verificar se o vosk tem alguma propriedade que pode ser um construtor
-        console.log("Propriedades disponíveis em vosk:", Object.keys(vosk));
-        
-        // Tentar criar o reconhecedor diretamente com vosk como construtor
+        // Now create the recognizer using the most likely API pattern
+        // Most speech recognition libraries accept a configuration object with model and sampleRate
         try {
-          console.log("Tentando criar reconhecedor usando vosk como construtor");
-          this.recognizer = new vosk({
-            model: this.model,
-            sampleRate: 16000
-          });
-          console.log("Reconhecedor criado com sucesso usando vosk como construtor");
-        } catch (error) {
-          console.log("Não foi possível usar vosk como construtor:", error);
-          
-          // Tentar criar com qualquer função construtora disponível no vosk
-          const possibleConstructors = ['Recognizer', 'KaldiRecognizer', 'VoskRecognizer'];
-          let created = false;
-          
-          for (const constructorName of possibleConstructors) {
-            try {
-              if (typeof vosk[constructorName] === 'function') {
-                console.log(`Tentando criar com vosk.${constructorName}`);
-                this.recognizer = new vosk[constructorName]({
-                  model: this.model,
-                  sampleRate: 16000
-                });
-                console.log(`Reconhecedor criado com sucesso usando vosk.${constructorName}`);
-                created = true;
-                break;
-              }
-            } catch (e) {
-              console.log(`Erro ao usar vosk.${constructorName}:`, e);
-            }
+          // First, check if there's a documented way to create a recognizer with the model
+          if (typeof this.model.createRecognizer === 'function') {
+            this.recognizer = this.model.createRecognizer(16000); // Pass sample rate
+            console.log("Recognizer created with model.createRecognizer");
+          } 
+          // If there's a global createRecognizer function
+          else if (typeof vosk.createRecognizer === 'function') {
+            this.recognizer = vosk.createRecognizer(this.model, 16000);
+            console.log("Recognizer created with vosk.createRecognizer");
+          }
+          // Try the newer API pattern that uses a factory pattern
+          else if (typeof vosk.Recognizer === 'function') {
+            this.recognizer = new vosk.Recognizer({model: this.model, sampleRate: 16000});
+            console.log("Recognizer created with vosk.Recognizer constructor");
+          }
+          // Last resort - the model itself might be the recognizer or have methods to process audio
+          else {
+            console.log("Using model directly as recognizer");
+            this.recognizer = this.model;
           }
           
-          // Se ainda não conseguimos criar, vamos tentar usar a função createRecognizer se existir
-          if (!created && typeof vosk.createRecognizer === 'function') {
-            try {
-              console.log("Tentando criar com vosk.createRecognizer");
-              this.recognizer = vosk.createRecognizer({
-                model: this.model,
-                sampleRate: 16000
-              });
-              console.log("Reconhecedor criado com sucesso usando vosk.createRecognizer");
-              created = true;
-            } catch (e) {
-              console.log("Erro ao usar vosk.createRecognizer:", e);
-            }
-          }
+          // Log the recognizer's available methods for debugging
+          console.log("Métodos disponíveis no reconhecedor:", 
+            this.recognizer ? Object.keys(this.recognizer) : "Reconhecedor não criado");
           
-          // Se ainda não conseguimos, mostrar erro detalhado e falhar
-          if (!created) {
-            console.error("Não foi possível criar o reconhecedor");
-            console.log("vosk:", vosk);
-            
-            // Um último recurso é tentar acessar qualquer método interno
-            const keys = Object.keys(vosk);
-            for (const key of keys) {
-              console.log(`vosk.${key}:`, typeof vosk[key], vosk[key]);
-            }
-            
+          if (!this.recognizer) {
             throw new Error("Não foi possível criar um reconhecedor VOSK");
           }
+          
+          this.isInitialized = true;
+          return true;
+        } catch (e) {
+          console.error("Erro ao criar reconhecedor:", e);
+          
+          // Fallback: if the model itself has the necessary methods, use it directly
+          if (this.model && 
+              typeof this.model.acceptWaveform === 'function' && 
+              typeof this.model.result === 'function') {
+            console.log("Usando modelo diretamente como reconhecedor");
+            this.recognizer = this.model;
+            this.isInitialized = true;
+            return true;
+          }
+          
+          throw e;
         }
-        
-        this.isInitialized = true;
-        return true;
       } catch (error) {
         console.error("Erro ao carregar modelo VOSK:", error);
         throw new Error(`Falha ao carregar modelo VOSK: ${error}`);
