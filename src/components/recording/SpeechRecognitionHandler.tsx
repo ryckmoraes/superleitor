@@ -4,6 +4,7 @@ import { speakNaturally } from "@/services/audioProcessor";
 import { showToastOnly } from "@/services/notificationService";
 import webSpeechService from "@/services/webSpeechService";
 import { elevenLabsService } from "@/services/elevenlabs";
+import { voskService } from "@/services/voskService";
 import { Button } from "@/components/ui/button";
 import StoryTranscript from "@/components/StoryTranscript";
 import { useNavigate } from "react-router-dom";
@@ -33,7 +34,23 @@ const SpeechRecognitionHandler = ({
   const processingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isProcessingRef = useRef(false);
   const [showSummary, setShowSummary] = useState(false);
+  const [usingVosk, setUsingVosk] = useState(false);
   const navigate = useNavigate();
+
+  // Verifica se o VOSK está disponível
+  useEffect(() => {
+    const checkVosk = () => {
+      const isVoskWorking = voskService.isVoskWorking();
+      setUsingVosk(isVoskWorking);
+      console.log("VOSK está funcionando:", isVoskWorking);
+      
+      if (!isVoskWorking) {
+        console.log("Usando Web Speech API como alternativa");
+      }
+    };
+    
+    checkVosk();
+  }, []);
 
   // Process transcript from speech recognition
   const handleRecognitionResult = (result: { transcript: string, isFinal: boolean }) => {
@@ -74,6 +91,11 @@ const SpeechRecognitionHandler = ({
       // Simple feedback that we received the story
       const quickResponse = "Analisando sua história...";
       showToastOnly("Recebido!", quickResponse);
+      
+      // Log para debug qual serviço está sendo usado
+      console.log("Processando história usando: " + 
+                 (usingVosk ? "VOSK (offline)" : 
+                  (elevenLabsService.hasApiKey() ? "ElevenLabs API" : "Processamento local")));
       
       // If we have an audio blob, process with ElevenLabs
       if (audioBlob && audioBlob.size > 1000 && elevenLabsService.hasApiKey()) {
