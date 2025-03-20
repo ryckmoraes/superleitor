@@ -66,7 +66,7 @@ export const speakNaturally = async (text: string, priority: boolean = false): P
     // First try to use ElevenLabs for more natural speech if available
     if (elevenLabsService.hasApiKey()) {
       try {
-        const audioBlob = await elevenLabsService.textToSpeech(text, elevenLabsService.getAgentId());
+        const audioBlob = await elevenLabsService.textToSpeech(text);
         
         // Create an audio element to play the response
         const audioElement = new Audio();
