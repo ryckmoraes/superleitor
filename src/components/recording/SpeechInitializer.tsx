@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { initVoices } from "@/services/audioProcessor";
 import { voskService } from "@/services/voskService";
+import { voskModelsService } from "@/services/voskModelsService";
 import { showToastOnly } from "@/services/notificationService";
 
 const SpeechInitializer = () => {
@@ -22,13 +23,18 @@ const SpeechInitializer = () => {
         console.log("Síntese de fala inicializada:", initialized);
       });
       
+      // Certifica-se que a lista de modelos está carregada
+      voskModelsService.getAvailableModels();
+      
       // Inicializa o VOSK para reconhecimento de fala
       voskService.initialize().then((initialized) => {
         console.log("VOSK inicializado:", initialized);
         setVoskInitialized(initialized);
         
+        const currentModel = voskModelsService.getCurrentModel();
+        
         if (initialized) {
-          console.log("VOSK está disponível para reconhecimento offline");
+          console.log(`VOSK está disponível para reconhecimento offline - Idioma: ${currentModel?.name || 'Padrão'}`);
         } else {
           console.warn("VOSK não está totalmente funcional, usando alternativas");
           showToastOnly(

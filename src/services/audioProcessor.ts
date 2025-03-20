@@ -1,3 +1,4 @@
+
 import { voskService } from './voskService';
 import { elevenLabsService } from './elevenlabs';
 
@@ -66,7 +67,7 @@ export const speakNaturally = async (text: string, priority: boolean = false): P
     // First try to use ElevenLabs for more natural speech if available
     if (elevenLabsService.hasApiKey()) {
       try {
-        const audioBlob = await elevenLabsService.textToSpeech(text);
+        const audioBlob = await elevenLabsService.textToSpeech(text, elevenLabsService.getAgentId());
         
         // Create an audio element to play the response
         const audioElement = new Audio();
@@ -117,7 +118,13 @@ export const speakNaturally = async (text: string, priority: boolean = false): P
     if ('speechSynthesis' in window) {
       // Create utterance with enhanced settings
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'pt-BR';
+      
+      // Get the current language from VOSK service or default to Portuguese
+      const currentLanguage = voskService.isVoskWorking() 
+        ? voskService.getCurrentLanguage() 
+        : 'pt-BR';
+      
+      utterance.lang = currentLanguage;
       
       // Adjust pitch and rate for more natural speech
       utterance.pitch = 1.0;
@@ -127,18 +134,20 @@ export const speakNaturally = async (text: string, priority: boolean = false): P
       // Try to find a good voice
       const voices = window.speechSynthesis.getVoices();
       
-      // Find the best Portuguese voice available
-      const brazilianVoice = voices.find(voice => 
-        voice.lang.includes('pt-BR') && (voice.name.includes('female') || voice.localService === true)
-      );
-      const portugueseVoice = voices.find(voice => 
-        voice.lang.includes('pt') && (voice.name.includes('female') || voice.localService === true)
+      // Find the best voice for the current language
+      const primaryVoice = voices.find(voice => 
+        voice.lang.includes(currentLanguage) && (voice.name.includes('female') || voice.localService === true)
       );
       
-      if (brazilianVoice) {
-        utterance.voice = brazilianVoice;
-      } else if (portugueseVoice) {
-        utterance.voice = portugueseVoice;
+      // Fallback to any voice for the language
+      const fallbackVoice = voices.find(voice => 
+        voice.lang.includes(currentLanguage.substring(0, 2))
+      );
+      
+      if (primaryVoice) {
+        utterance.voice = primaryVoice;
+      } else if (fallbackVoice) {
+        utterance.voice = fallbackVoice;
       }
       
       // Set up tracking for the current utterance

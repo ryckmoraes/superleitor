@@ -1,10 +1,11 @@
 
 import { useState, useEffect, useRef } from "react";
-import { Menu, X, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { Menu, X, Settings as SettingsIcon, LogOut, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import Settings from "./Settings";
+import LanguageSelector from "./LanguageSelector";
 import PasswordDialog from "./PasswordDialog";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 
@@ -17,8 +18,9 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showTrigger, setShowTrigger] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [languageSelectorOpen, setLanguageSelectorOpen] = useState(false);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
-  const [passwordAction, setPasswordAction] = useState<"settings" | "exit" | "logout">("settings");
+  const [passwordAction, setPasswordAction] = useState<"settings" | "exit" | "logout" | "language">("settings");
   const menuRef = useRef<HTMLDivElement>(null);
   const triggerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
@@ -74,6 +76,19 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
     setIsOpen(false);
   };
 
+  const handleLanguageClick = () => {
+    const hasPassword = !!localStorage.getItem("app_password");
+    
+    if (hasPassword) {
+      setPasswordAction("language");
+      setPasswordDialogOpen(true);
+    } else {
+      setLanguageSelectorOpen(true);
+    }
+    
+    setIsOpen(false);
+  };
+
   const handleExitClick = () => {
     const hasPassword = !!localStorage.getItem("app_password");
     
@@ -103,6 +118,8 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
     
     if (passwordAction === "settings") {
       setSettingsOpen(true);
+    } else if (passwordAction === "language") {
+      setLanguageSelectorOpen(true);
     } else if (passwordAction === "exit") {
       exitApp();
     } else if (passwordAction === "logout") {
@@ -213,6 +230,15 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
             <Button
               variant="ghost"
               className="w-full justify-start mb-2"
+              onClick={handleLanguageClick}
+            >
+              <Globe className="mr-2 h-4 w-4" />
+              Idiomas
+            </Button>
+
+            <Button
+              variant="ghost"
+              className="w-full justify-start mb-2"
               onClick={handleLogoutClick}
             >
               <LogOut className="mr-2 h-4 w-4" />
@@ -240,6 +266,11 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
         isDarkMode={isDarkMode}
       />
 
+      <LanguageSelector
+        isOpen={languageSelectorOpen}
+        onClose={() => setLanguageSelectorOpen(false)}
+      />
+
       <PasswordDialog
         isOpen={passwordDialogOpen}
         onClose={() => setPasswordDialogOpen(false)}
@@ -248,6 +279,8 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
         title={
           passwordAction === "settings" 
             ? "Acessar Configurações" 
+            : passwordAction === "language"
+            ? "Acessar Idiomas"
             : passwordAction === "logout"
             ? "Reiniciar Configuração"
             : "Sair do Aplicativo"

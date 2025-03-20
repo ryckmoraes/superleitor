@@ -1,5 +1,6 @@
 
 // Serviço VOSK para reconhecimento de fala offline
+import { voskModelsService } from './voskModelsService';
 
 interface VoskResult {
   text: string;
@@ -37,9 +38,11 @@ class VoskService {
       const vosk = voskModule.default || voskModule;
       console.log("Métodos disponíveis em vosk:", Object.keys(vosk));
       
-      // Carrega o modelo de idioma português
-      console.log("Carregando modelo VOSK em português...");
-      const modelPath = '/models/vosk-model-pt-br-small';
+      // Obter o modelo atual selecionado pelo usuário
+      const currentModel = voskModelsService.getCurrentModel();
+      const modelPath = currentModel ? currentModel.url : '/models/vosk-model-pt-br-small';
+      
+      console.log(`Carregando modelo VOSK: ${modelPath}`);
       
       try {
         // Verificar se a API do createModel existe
@@ -174,6 +177,14 @@ class VoskService {
    */
   public isVoskWorking(): boolean {
     return this.isInitialized && this.recognizer !== null;
+  }
+  
+  /**
+   * Obtém o idioma do modelo atual
+   */
+  public getCurrentLanguage(): string {
+    const currentModel = voskModelsService.getCurrentModel();
+    return currentModel ? currentModel.language : 'pt-BR';
   }
 }
 
