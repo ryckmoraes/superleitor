@@ -5,7 +5,6 @@ import { showToastOnly } from "@/services/notificationService";
 import webSpeechService from "@/services/webSpeechService";
 import { elevenLabsService } from "@/services/elevenlabs";
 import { voskService } from "@/services/voskService";
-import { Button } from "@/components/ui/button";
 import StoryTranscript from "@/components/StoryTranscript";
 import { useNavigate } from "react-router-dom";
 
@@ -18,6 +17,7 @@ interface SpeechRecognitionHandlerProps {
   setRecognitionStatus: (status: string) => void;
   audioBlob: Blob | null;
   recordingTime: number;
+  hasStartedRecording: boolean;
 }
 
 const SpeechRecognitionHandler = ({
@@ -28,13 +28,15 @@ const SpeechRecognitionHandler = ({
   setInterimTranscript,
   setRecognitionStatus,
   audioBlob,
-  recordingTime
+  recordingTime,
+  hasStartedRecording
 }: SpeechRecognitionHandlerProps) => {
   const lastTranscriptRef = useRef("");
   const processingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isProcessingRef = useRef(false);
   const [showSummary, setShowSummary] = useState(false);
   const [usingVosk, setUsingVosk] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<string>("");
   const navigate = useNavigate();
 
   // Verifica se o VOSK está disponível
@@ -84,7 +86,7 @@ const SpeechRecognitionHandler = ({
     setRecognitionStatus("Finalizando reconhecimento...");
     
     // Only respond if there's meaningful transcript and we have an audio blob
-    if (lastTranscriptRef.current && lastTranscriptRef.current.length > 5) {
+    if (lastTranscriptRef.current && lastTranscriptRef.current.length > 5 && hasStartedRecording) {
       setIsProcessing(true);
       isProcessingRef.current = true;
       
@@ -111,9 +113,13 @@ const SpeechRecognitionHandler = ({
             console.log("Processing timeout exceeded, showing alternative response");
             setIsProcessing(false);
             isProcessingRef.current = false;
-            const fallbackResponse = "Adorei sua história! Continue contando mais!";
-            showToastOnly("Análise completa!", fallbackResponse);
-            speakNaturally(fallbackResponse, true);
+            
+            // Generate analysis response
+            const analysisResponse = generateStoryAnalysis(lastTranscriptRef.current);
+            setAnalysisResult(analysisResponse);
+            
+            showToastOnly("Análise completa!", "Sua história foi analisada com sucesso.");
+            speakNaturally(analysisResponse, true);
           }
         }, 15000); // 15 second timeout
         
@@ -129,11 +135,11 @@ const SpeechRecognitionHandler = ({
             console.log("Response from ElevenLabs:", response);
             
             if (response) {
-              // Update the transcript with the ElevenLabs response
-              setStoryTranscript(response);
+              // Set the analysis result for display in summary
+              setAnalysisResult(response);
               
               // Display as toast
-              showToastOnly("Análise completa!", response);
+              showToastOnly("Análise completa!", "Sua história foi analisada com sucesso.");
               
               // Speak the ElevenLabs response
               speakNaturally(response, true);
@@ -141,10 +147,14 @@ const SpeechRecognitionHandler = ({
           })
           .catch(error => {
             console.error("Error processing with ElevenLabs:", error);
+            
+            // Generate a fallback analysis
+            const analysisResponse = generateStoryAnalysis(lastTranscriptRef.current);
+            setAnalysisResult(analysisResponse);
+            
             // In case of error, still show some response
-            const errorResponse = "Sua história é fascinante! Pode me contar mais?";
-            showToastOnly("Hmm...", errorResponse);
-            speakNaturally(errorResponse, true);
+            showToastOnly("Análise da história", "Sua história foi analisada localmente.");
+            speakNaturally(analysisResponse, true);
           })
           .finally(() => {
             setIsProcessing(false);
@@ -157,27 +167,31 @@ const SpeechRecognitionHandler = ({
             }
             
             // Show summary after processing completes
-            if (recordingTime > 5) {
+            if (recordingTime > 3) {
               setTimeout(() => {
                 setShowSummary(true);
-              }, 7000);
+              }, 4000);
             }
           });
       } else {
         // Finalize processing after a time if no audio blob or API key
         console.log("Using local response (no ElevenLabs API key or no audio blob)");
         setTimeout(() => {
+          // Generate a detailed analysis
+          const analysisResponse = generateStoryAnalysis(lastTranscriptRef.current);
+          setAnalysisResult(analysisResponse);
+          
           setIsProcessing(false);
           isProcessingRef.current = false;
-          const simpleResponse = "Que história legal! Conte-me mais!";
-          showToastOnly("Análise simples", simpleResponse);
-          speakNaturally(simpleResponse, true);
+          
+          showToastOnly("Análise da história", "Sua história foi analisada com sucesso.");
+          speakNaturally(analysisResponse, true);
           
           // Show summary after processing completes
-          if (recordingTime > 5) {
+          if (recordingTime > 3) {
             setTimeout(() => {
               setShowSummary(true);
-            }, 7000);
+            }, 5000);
           }
         }, 2000);
       }
@@ -210,7 +224,7 @@ const SpeechRecognitionHandler = ({
           "destructive"
         );
       }
-    } else {
+    } else if (!isRecording && lastTranscriptRef.current) {
       webSpeechService.stopRecognition();
     }
     
@@ -234,11 +248,85 @@ const SpeechRecognitionHandler = ({
     return Math.ceil(seconds / 30) * 5;
   };
 
+  // Generate story analysis based on transcript
+  const generateStoryAnalysis = (transcript: string): string => {
+    if (!transcript || transcript.length < 5) {
+      return "Não consegui entender bem sua história. Tente falar mais claramente da próxima vez.";
+    }
+    
+    // Analyze content by looking for keywords
+    const words = transcript.toLowerCase().split(/\s+/);
+    const wordCount = words.length;
+    
+    // Check for characters in the story
+    const characterWords = ['menino', 'menina', 'homem', 'mulher', 'ele', 'ela', 'amigo', 'amiga', 
+                          'mãe', 'pai', 'avó', 'avô', 'princesa', 'príncipe', 'herói', 'animal'];
+    const hasCharacters = characterWords.some(word => transcript.toLowerCase().includes(word));
+    
+    // Check for setting in the story
+    const settingWords = ['casa', 'escola', 'floresta', 'cidade', 'reino', 'castelo', 'praia', 
+                         'montanha', 'sala', 'quarto', 'jardim', 'parque'];
+    const hasSetting = settingWords.some(word => transcript.toLowerCase().includes(word));
+    
+    // Check for plot elements
+    const plotWords = ['então', 'depois', 'quando', 'porque', 'mas', 'finalmente', 'começou', 
+                     'terminou', 'aconteceu'];
+    const hasPlot = plotWords.some(word => words.includes(word));
+    
+    // Check for creativity elements
+    const creativeWords = ['mágico', 'voar', 'dragão', 'fada', 'gigante', 'monstro', 'poder', 
+                         'especial', 'transformar', 'magia', 'encantado'];
+    const isCreative = creativeWords.some(word => transcript.toLowerCase().includes(word));
+    
+    // Build the analysis
+    let analysis = "";
+    
+    // Comment on length
+    if (wordCount < 20) {
+      analysis += "Sua história é curta, mas interessante! ";
+    } else if (wordCount < 50) {
+      analysis += "Você criou uma história de bom tamanho! ";
+    } else {
+      analysis += "Você contou uma história bem detalhada! ";
+    }
+    
+    // Comment on characters and setting
+    if (hasCharacters && hasSetting) {
+      analysis += "Gostei de como você descreveu os personagens e o cenário. ";
+    } else if (hasCharacters) {
+      analysis += "Os personagens da sua história são muito interessantes! ";
+    } else if (hasSetting) {
+      analysis += "Você criou um cenário muito imaginativo! ";
+    } else {
+      analysis += "Da próxima vez, tente incluir mais detalhes sobre personagens e onde a história acontece. ";
+    }
+    
+    // Comment on plot
+    if (hasPlot) {
+      analysis += "Sua narrativa tem um bom desenvolvimento de começo, meio e fim. ";
+    } else {
+      analysis += "Tente criar mais conexões entre os eventos da história. ";
+    }
+    
+    // Comment on creativity
+    if (isCreative) {
+      analysis += "Adorei os elementos criativos e mágicos que você incluiu! ";
+    } else {
+      analysis += "Sua história é bastante realista e bem contada. ";
+    }
+    
+    // Add encouraging feedback
+    analysis += "Continue desenvolvendo sua imaginação contando mais histórias!";
+    
+    return analysis;
+  };
+
   // Handle continue button
   const handleContinue = () => {
     setShowSummary(false);
     setStoryTranscript("");
     setInterimTranscript("");
+    setAnalysisResult("");
     
     // Restart recording
     setTimeout(() => {
@@ -261,6 +349,7 @@ const SpeechRecognitionHandler = ({
     // Store the unlock expiry time in localStorage
     const expiryTime = Date.now() + (earnedMinutes * 60 * 1000);
     localStorage.setItem('appUnlockExpiryTime', expiryTime.toString());
+    localStorage.setItem('wasUnlocked', 'true');
     
     // Show success message
     showToastOnly(
@@ -288,6 +377,7 @@ const SpeechRecognitionHandler = ({
         onContinue={handleContinue}
         onExit={handleExit}
         onUnlock={handleUnlock}
+        analysisResult={analysisResult}
       />
     );
   }

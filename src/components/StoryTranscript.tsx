@@ -13,6 +13,7 @@ interface StoryTranscriptProps {
   onContinue?: () => void;
   onExit?: () => void;
   onUnlock?: () => void;
+  analysisResult?: string;
 }
 
 const StoryTranscript = ({ 
@@ -23,17 +24,18 @@ const StoryTranscript = ({
   recordingTime,
   onContinue,
   onExit,
-  onUnlock
+  onUnlock,
+  analysisResult
 }: StoryTranscriptProps) => {
   const [showSummary, setShowSummary] = useState(false);
   
   // Show summary when recording stops and there's a transcript
   useEffect(() => {
-    if (!isProcessing && !isInterim && storyTranscript && recordingTime && recordingTime > 5) {
+    if (!isProcessing && !isInterim && storyTranscript && recordingTime && recordingTime > 3) {
       // Show summary after a short delay to allow for final speech to complete
       const timer = setTimeout(() => {
         setShowSummary(true);
-      }, 5000);
+      }, 2000);
       
       return () => clearTimeout(timer);
     }
@@ -62,6 +64,13 @@ const StoryTranscript = ({
           <ScrollArea className="h-48 mb-6 rounded border p-4 bg-muted/20">
             <p className="text-sm">{storyTranscript}</p>
           </ScrollArea>
+          
+          {analysisResult && (
+            <div className="mb-4 p-3 bg-muted/30 rounded-lg">
+              <h4 className="text-sm font-medium mb-1">Análise da História:</h4>
+              <p className="text-sm text-muted-foreground">{analysisResult}</p>
+            </div>
+          )}
           
           <div className="text-center mb-6 p-3 bg-primary/10 rounded-lg">
             <p className="text-sm text-muted-foreground mb-1">

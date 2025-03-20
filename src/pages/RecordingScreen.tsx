@@ -111,7 +111,13 @@ const RecordingScreen = () => {
     resetDetection: resetPatternDetection
   });
   
-  const { toggleRecording, recordingTime, audioData, audioBlob } = recordingManager;
+  const { 
+    toggleRecording, 
+    recordingTime, 
+    audioData, 
+    audioBlob,
+    hasStartedRecording
+  } = recordingManager;
 
   return (
     <>
@@ -138,6 +144,7 @@ const RecordingScreen = () => {
         setRecognitionStatus={setRecognitionStatus}
         audioBlob={audioBlob}
         recordingTime={recordingTime}
+        hasStartedRecording={hasStartedRecording}
       />
       
       {/* Main UI */}

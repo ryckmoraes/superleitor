@@ -33,23 +33,12 @@ const RecordingManager = ({
     stopRecording,
     recordingTime,
     audioData,
-    audioBlob
+    audioBlob,
+    hasStartedRecording
   } = useAudioAnalyzer();
   
-  const hasAudioDataRef = useRef(false);
-
-  // Track audio data presence to only start timer when audio is detected
-  useEffect(() => {
-    if (audioData && audioData.length > 0) {
-      // Check if there's actual audio data (not just silence)
-      const hasSignificantAudio = Array.from(audioData).some(val => val > 20);
-      
-      if (hasSignificantAudio && !hasAudioDataRef.current && isRecording) {
-        hasAudioDataRef.current = true;
-        console.log("Significant audio detected, starting timer");
-      }
-    }
-  }, [audioData, isRecording]);
+  // Track when initial welcome message has been spoken
+  const welcomeSpokenRef = useRef(false);
 
   // Toggle recording with improved audio feedback
   const toggleRecording = () => {
@@ -67,16 +56,28 @@ const RecordingManager = ({
         `Gravação finalizada após ${Math.floor(recordingTime)} segundos.`
       );
       
-      // Ensure the message is spoken
-      setTimeout(() => {
-        speakNaturally(stopMessage, true);
-      }, 300);
-      
-      // Process the story
-      setIsProcessing(true);
-      
-      // Reset audio data detection flag
-      hasAudioDataRef.current = false;
+      // Ensure the message is spoken only if we actually recorded something
+      if (hasStartedRecording) {
+        setTimeout(() => {
+          speakNaturally(stopMessage, true);
+        }, 300);
+        
+        // Process the story
+        setIsProcessing(true);
+      } else {
+        // If no actual recording happened
+        showToastOnly(
+          "Nenhuma história detectada",
+          "Não consegui ouvir sua história. Tente novamente falando mais alto."
+        );
+        
+        setTimeout(() => {
+          speakNaturally("Não consegui ouvir sua história. Vamos tentar novamente?", true);
+        }, 300);
+        
+        // Don't process anything
+        setIsProcessing(false);
+      }
       
       setIsRecording(false);
     } else {
@@ -95,9 +96,6 @@ const RecordingManager = ({
       startRecording();
       setIsStoryMode(true);
       
-      // Reset audio detection flag
-      hasAudioDataRef.current = false;
-      
       const startMessage = "Estou ouvindo! Pode contar sua história...";
       
       // Show toast
@@ -106,10 +104,15 @@ const RecordingManager = ({
         "Conte sua história para a Esfera Sonora!"
       );
       
-      // Ensure the message is spoken
-      setTimeout(() => {
-        speakNaturally(startMessage, true);
-      }, 300);
+      // Only speak the welcome message if it hasn't been spoken already this session
+      if (!welcomeSpokenRef.current) {
+        welcomeSpokenRef.current = true;
+        
+        // Ensure the message is spoken
+        setTimeout(() => {
+          speakNaturally(startMessage, true);
+        }, 300);
+      }
       
       setIsRecording(true);
     }
@@ -117,9 +120,10 @@ const RecordingManager = ({
 
   return {
     toggleRecording,
-    recordingTime: hasAudioDataRef.current ? recordingTime : 0, // Only show time if audio detected
+    recordingTime: hasStartedRecording ? recordingTime : 0, // Only show time if audio detected
     audioData,
-    audioBlob
+    audioBlob,
+    hasStartedRecording
   };
 };
 

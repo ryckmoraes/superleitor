@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 
 const useAudioAnalyzer = () => {
@@ -20,6 +19,7 @@ const useAudioAnalyzer = () => {
   const significantAudioDetectedRef = useRef(false);
   const consecutiveAudioDetectionsRef = useRef(0);
   const silenceCountRef = useRef(0);
+  const recordingStartedRef = useRef(false);
 
   const startRecording = async () => {
     try {
@@ -29,6 +29,7 @@ const useAudioAnalyzer = () => {
       significantAudioDetectedRef.current = false;
       consecutiveAudioDetectionsRef.current = 0;
       silenceCountRef.current = 0;
+      recordingStartedRef.current = false;
       
       // Request audio permission
       const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -66,21 +67,24 @@ const useAudioAnalyzer = () => {
         // IMPROVED: More reliable audio detection with threshold and consecutive frames
         const audioValues = Array.from(dataArrayRef.current);
         const average = audioValues.reduce((sum, val) => sum + val, 0) / audioValues.length;
-        const significantAudio = average > 15; // Lower threshold for better sensitivity
+        
+        // Higher threshold to better distinguish actual speech from background noise
+        const significantAudio = average > 20;
         
         if (significantAudio) {
           consecutiveAudioDetectionsRef.current++;
           silenceCountRef.current = 0;
         } else {
           silenceCountRef.current++;
-          if (silenceCountRef.current > 10) { // Only reset after 10 frames of silence
-            consecutiveAudioDetectionsRef.current = 0;
+          if (silenceCountRef.current > 15) { // Longer silence required to reset detection
+            consecutiveAudioDetectionsRef.current = Math.max(0, consecutiveAudioDetectionsRef.current - 1);
           }
         }
         
-        // Start timer after 3 consecutive detections to avoid false triggers
-        if (consecutiveAudioDetectionsRef.current >= 3 && !significantAudioDetectedRef.current) {
+        // Start timer after 5 consecutive detections to avoid false triggers
+        if (consecutiveAudioDetectionsRef.current >= 5 && !significantAudioDetectedRef.current) {
           significantAudioDetectedRef.current = true;
+          recordingStartedRef.current = true;
           console.log("Significant audio detected, starting timer now");
           
           // Start timer now
@@ -173,9 +177,12 @@ const useAudioAnalyzer = () => {
     // Reset refs
     analyserRef.current = null;
     dataArrayRef.current = null;
-    significantAudioDetectedRef.current = false;
-    consecutiveAudioDetectionsRef.current = 0;
+    
+    // Keep recording time and significant audio detection for displaying final summary
+    // significantAudioDetectedRef.current = false;
+    // consecutiveAudioDetectionsRef.current = 0;
     silenceCountRef.current = 0;
+    
     setAudioData(null);
     setIsRecording(false);
     // Don't reset recordingTime here to display total time at the end
@@ -213,7 +220,8 @@ const useAudioAnalyzer = () => {
     startRecording, 
     stopRecording,
     recordingTime,
-    audioBlob
+    audioBlob,
+    hasStartedRecording: recordingStartedRef.current
   };
 };
 

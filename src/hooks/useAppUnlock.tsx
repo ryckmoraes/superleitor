@@ -55,6 +55,11 @@ export const useAppUnlock = () => {
       setTimeout(() => {
         speakNaturally("Seu tempo acabou! Conte uma nova história para ganhar mais tempo de uso.", true);
       }, 500);
+      
+      // Navigate to recording screen after a few seconds
+      setTimeout(() => {
+        navigate('/recording');
+      }, 4000);
     }
     
     // Set up interval to check unlock status periodically
@@ -88,6 +93,7 @@ export const useAppUnlock = () => {
   // Reset unlock status (for testing)
   const resetUnlock = useCallback(() => {
     localStorage.removeItem('appUnlockExpiryTime');
+    localStorage.removeItem('wasUnlocked');
     setIsUnlocked(false);
     setRemainingTime(0);
   }, []);

@@ -1,4 +1,3 @@
-
 import { voskService } from './voskService';
 import { elevenLabsService } from './elevenlabs';
 
@@ -32,15 +31,81 @@ export const processRecognitionResult = (transcript: string): string => {
   return transcript.trim();
 };
 
+// Keeps track of active speech instances to prevent overlap
+let activeAudioElements: HTMLAudioElement[] = [];
+let activeSpeechSynthesisUtterance: SpeechSynthesisUtterance | null = null;
+
 /**
- * Speaks text using Web Speech API with enhanced naturalness
+ * Speaks text using ElevenLabs or Web Speech API with enhanced naturalness
  */
 export const speakNaturally = async (text: string, priority: boolean = false): Promise<void> => {
   try {
+    // Cancel any current speech if this is priority
+    if (priority) {
+      // Cancel any active audio elements
+      activeAudioElements.forEach(audio => {
+        audio.pause();
+        audio.remove();
+      });
+      activeAudioElements = [];
+      
+      // Cancel any active speech synthesis
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+      }
+      
+      if (activeSpeechSynthesisUtterance) {
+        activeSpeechSynthesisUtterance = null;
+      }
+    } else if (window.speechSynthesis.speaking || activeAudioElements.length > 0) {
+      // Skip non-priority speech if already speaking
+      console.log("Already speaking, skipping non-priority speech");
+      return;
+    }
+    
     // First try to use ElevenLabs for more natural speech if available
     if (elevenLabsService.hasApiKey()) {
       try {
-        await elevenLabsService.speak(text, priority);
+        const audioBlob = await elevenLabsService.textToSpeech(text);
+        
+        // Create an audio element to play the response
+        const audioElement = new Audio();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        
+        audioElement.src = audioUrl;
+        
+        // Add to active elements
+        activeAudioElements.push(audioElement);
+        
+        // Play the audio
+        await new Promise<void>((resolve, reject) => {
+          audioElement.onended = () => {
+            // Clean up resources
+            URL.revokeObjectURL(audioUrl);
+            const index = activeAudioElements.indexOf(audioElement);
+            if (index !== -1) {
+              activeAudioElements.splice(index, 1);
+            }
+            audioElement.remove();
+            resolve();
+          };
+          
+          audioElement.onerror = (error) => {
+            URL.revokeObjectURL(audioUrl);
+            const index = activeAudioElements.indexOf(audioElement);
+            if (index !== -1) {
+              activeAudioElements.splice(index, 1);
+            }
+            audioElement.remove();
+            reject(error);
+          };
+          
+          // Small delay before playing to prevent audio overlap
+          setTimeout(() => {
+            audioElement.play().catch(reject);
+          }, 150);
+        });
+        
         return;
       } catch (error) {
         console.log("ElevenLabs fallback to native TTS:", error);
@@ -50,17 +115,13 @@ export const speakNaturally = async (text: string, priority: boolean = false): P
     
     // Use native TTS with enhanced settings for more natural speech
     if ('speechSynthesis' in window) {
-      // Cancel any current speech if this is prioritary
-      if (priority && window.speechSynthesis.speaking) {
-        window.speechSynthesis.cancel();
-      }
-      
+      // Create utterance with enhanced settings
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'pt-BR';
       
       // Adjust pitch and rate for more natural speech
       utterance.pitch = 1.0;
-      utterance.rate = 0.95; // Slightly slower for more natural pacing
+      utterance.rate = 0.92; // Slightly slower for more natural pacing
       utterance.volume = 1.0;
       
       // Try to find a good voice
@@ -80,10 +141,23 @@ export const speakNaturally = async (text: string, priority: boolean = false): P
         utterance.voice = portugueseVoice;
       }
       
+      // Set up tracking for the current utterance
+      activeSpeechSynthesisUtterance = utterance;
+      
+      // Clear tracking when speech finishes
+      utterance.onend = () => {
+        if (activeSpeechSynthesisUtterance === utterance) {
+          activeSpeechSynthesisUtterance = null;
+        }
+      };
+      
       // Add a slight pause before speaking for more natural rhythm
       setTimeout(() => {
+        if (priority) {
+          window.speechSynthesis.cancel(); // Ensure no other speech is happening
+        }
         window.speechSynthesis.speak(utterance);
-      }, 50);
+      }, 200);
     }
   } catch (error) {
     console.error("Erro ao usar TTS:", error);
