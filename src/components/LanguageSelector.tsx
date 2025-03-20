@@ -253,7 +253,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
               <SelectTrigger>
                 <SelectValue placeholder="Selecione um idioma" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-background border border-border shadow-lg">
                 {models.map(model => (
                   <SelectItem key={model.id} value={model.id}>
                     <div className="flex items-center justify-between w-full">
@@ -336,11 +336,12 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
           </div>
         </div>
         
-        <DrawerFooter className="flex flex-row gap-2 justify-between">
+        <DrawerFooter className="flex-row justify-between gap-2 p-4 border-t">
           <Button 
             variant="outline" 
             onClick={handleClose}
             disabled={isProcessing}
+            className="flex-1"
           >
             <X className="h-4 w-4 mr-2" />
             Cancelar
@@ -349,11 +350,25 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
           <Button 
             onClick={handleSaveChanges}
             disabled={isProcessing || !!downloadingModelId || changesSaved}
+            className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
           >
             <Save className="h-4 w-4 mr-2" />
             Salvar e Aplicar
           </Button>
         </DrawerFooter>
+
+        {!changesSaved && (
+          <div className="fixed inset-x-0 bottom-32 flex justify-center z-50 pointer-events-none">
+            <div className="bg-background/95 border border-border p-3 rounded-lg shadow-lg max-w-sm animate-pulse">
+              <p className="text-center font-medium">
+                Alterações não salvas
+              </p>
+              <p className="text-center text-sm mt-1">
+                Clique em Salvar para confirmar as alterações de idioma.
+              </p>
+            </div>
+          </div>
+        )}
       </DrawerContent>
     </Drawer>
   );

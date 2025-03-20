@@ -23,6 +23,7 @@ const SpeechInitializer = () => {
         setLastModelChange(modelChangedAt);
         speechInitializedRef.current = false; // Force reinitialization
         setIsInitializing(true);
+        setInitProgress(0); // Reset progress
       }
     };
     
@@ -130,7 +131,7 @@ const SpeechInitializer = () => {
   // Mostra um componente visual temporário durante a inicialização
   if (isInitializing) {
     return (
-      <div className="fixed bottom-20 left-0 right-0 flex justify-center z-50">
+      <div className="fixed bottom-20 left-0 right-0 flex justify-center z-50 pointer-events-none">
         <div className="bg-background/95 border border-border p-3 rounded-lg shadow-lg w-64">
           <div className="text-sm font-medium mb-2">Carregando idioma...</div>
           <Progress value={initProgress} className="h-2" />
