@@ -236,10 +236,21 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
   return (
     <Drawer open={isOpen} onOpenChange={handleClose}>
       <DrawerContent className="max-h-[85vh]">
-        <DrawerHeader>
+        <DrawerHeader className="flex flex-row items-center justify-between pr-4">
           <DrawerTitle className="flex items-center gap-2">
             <Globe className="h-5 w-5" /> Selecionar Idioma
           </DrawerTitle>
+          
+          {/* Save button in the top-right corner */}
+          <Button 
+            onClick={handleSaveChanges}
+            disabled={isProcessing || !!downloadingModelId || changesSaved}
+            size="sm"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            <Save className="h-4 w-4 mr-1" />
+            Salvar
+          </Button>
         </DrawerHeader>
         
         <div className="p-4 space-y-6">
@@ -345,15 +356,6 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
           >
             <X className="h-4 w-4 mr-2" />
             Cancelar
-          </Button>
-          
-          <Button 
-            onClick={handleSaveChanges}
-            disabled={isProcessing || !!downloadingModelId || changesSaved}
-            className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            <Save className="h-4 w-4 mr-2" />
-            Salvar e Aplicar
           </Button>
         </DrawerFooter>
 
