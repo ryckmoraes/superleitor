@@ -337,7 +337,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
           
           <Button 
             onClick={handleSaveChanges}
-            disabled={isProcessing || downloadingModelId || changesSaved}
+            disabled={isProcessing || !!downloadingModelId || changesSaved}
           >
             <Save className="h-4 w-4 mr-2" />
             Salvar e Aplicar

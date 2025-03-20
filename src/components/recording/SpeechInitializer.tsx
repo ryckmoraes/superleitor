@@ -115,7 +115,10 @@ const SpeechInitializer = () => {
             "default"
           );
         } finally {
-          setIsInitializing(false);
+          // Adicionando um pequeno atraso antes de esconder o indicador de progresso
+          setTimeout(() => {
+            setIsInitializing(false);
+          }, 1000);
         }
       }
     };
