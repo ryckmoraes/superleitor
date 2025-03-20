@@ -12,6 +12,7 @@ class VoskService {
   private isInitialized: boolean = false;
   private model: any = null;
   private recognizer: any = null;
+  private lastModelChangeTimestamp: string | null = null;
   
   constructor() {
     this.initialize = this.initialize.bind(this);
@@ -23,9 +24,19 @@ class VoskService {
    */
   public async initialize(): Promise<boolean> {
     try {
-      if (this.isInitialized) {
+      // Check if we need to reinitialize due to language change
+      const modelChangedAt = localStorage.getItem('vosk_model_changed_at');
+      if (this.isInitialized && modelChangedAt === this.lastModelChangeTimestamp) {
         return true;
       }
+      
+      // Clean up previous resources if we're reinitializing
+      if (this.isInitialized) {
+        this.cleanup();
+      }
+      
+      // Store current timestamp to track model changes
+      this.lastModelChangeTimestamp = modelChangedAt;
       
       // Importação dinâmica do VOSK
       console.log("Importando módulo VOSK...");
@@ -43,6 +54,7 @@ class VoskService {
       const modelPath = currentModel ? currentModel.url : '/models/vosk-model-pt-br-small';
       
       console.log(`Carregando modelo VOSK: ${modelPath}`);
+      console.log(`Idioma selecionado: ${currentModel?.language || 'pt-BR'}`);
       
       try {
         // Verificar se a API do createModel existe

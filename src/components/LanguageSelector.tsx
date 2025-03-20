@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Globe, Download, Check, X } from "lucide-react";
 import { voskModelsService } from "@/services/voskModelsService";
 import { toast } from "@/components/ui/use-toast";
@@ -35,28 +35,56 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
   const [currentModelId, setCurrentModelId] = useState(voskModelsService.getCurrentModel()?.id || "pt-br-small");
   const [downloadingModelId, setDownloadingModelId] = useState<string | null>(null);
   const [downloadProgress, setDownloadProgress] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleLanguageChange = (modelId: string) => {
-    const model = models.find(m => m.id === modelId);
+  // Refresh models when drawer opens
+  useEffect(() => {
+    if (isOpen) {
+      setModels(voskModelsService.getAvailableModels());
+      setCurrentModelId(voskModelsService.getCurrentModel()?.id || "pt-br-small");
+    }
+  }, [isOpen]);
+
+  const handleLanguageChange = async (modelId: string) => {
+    if (isProcessing) return;
     
+    const model = models.find(m => m.id === modelId);
     if (!model) return;
     
-    if (model.installed) {
-      // Se o modelo já está instalado, apenas ative-o
-      voskModelsService.setCurrentModel(modelId);
-      setCurrentModelId(modelId);
-      
+    setIsProcessing(true);
+    
+    try {
+      if (model.installed) {
+        // Se o modelo já está instalado, apenas ative-o
+        voskModelsService.setCurrentModel(modelId);
+        setCurrentModelId(modelId);
+        
+        toast({
+          title: "Idioma alterado",
+          description: `O idioma foi alterado para ${model.name}`,
+        });
+        
+        // Reiniciar o serviço VOSK com o novo modelo
+        await voskService.cleanup();
+        await voskService.initialize().catch(console.error);
+        
+        // Fechar a janela após completar a alteração
+        setTimeout(() => {
+          onClose();
+        }, 1000);
+      } else {
+        // Se não está instalado, inicie o download
+        handleDownloadModel(modelId);
+      }
+    } catch (error) {
+      console.error("Erro ao mudar idioma:", error);
       toast({
-        title: "Idioma alterado",
-        description: `O idioma foi alterado para ${model.name}`,
+        title: "Erro ao mudar idioma",
+        description: "Ocorreu um erro ao alterar o idioma.",
+        variant: "destructive",
       });
-      
-      // Reiniciar o serviço VOSK com o novo modelo
-      voskService.cleanup();
-      voskService.initialize().catch(console.error);
-    } else {
-      // Se não está instalado, inicie o download
-      handleDownloadModel(modelId);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -99,8 +127,13 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         speakNaturally(message, true);
         
         // Reiniciar o serviço VOSK com o novo modelo
-        voskService.cleanup();
-        voskService.initialize().catch(console.error);
+        await voskService.cleanup();
+        await voskService.initialize().catch(console.error);
+        
+        // Fechar a janela após completar o download
+        setTimeout(() => {
+          onClose();
+        }, 2000);
       } else {
         toast({
           title: "Erro no download",
@@ -120,8 +153,20 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
     }
   };
 
+  // Handle close with pending operations
+  const handleClose = () => {
+    if (isProcessing || downloadingModelId) {
+      toast({
+        title: "Operação em andamento",
+        description: "Por favor, aguarde a conclusão da operação atual.",
+      });
+      return;
+    }
+    onClose();
+  };
+
   return (
-    <Drawer open={isOpen} onOpenChange={onClose}>
+    <Drawer open={isOpen} onOpenChange={handleClose}>
       <DrawerContent className="max-h-[85vh]">
         <DrawerHeader>
           <DrawerTitle className="flex items-center gap-2">
@@ -135,7 +180,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
             <Select 
               value={currentModelId} 
               onValueChange={handleLanguageChange}
-              disabled={!!downloadingModelId}
+              disabled={!!downloadingModelId || isProcessing}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione um idioma" />
@@ -190,7 +235,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
                       variant="outline" 
                       size="sm" 
                       onClick={() => handleLanguageChange(model.id)}
-                      disabled={currentModelId === model.id}
+                      disabled={currentModelId === model.id || isProcessing}
                     >
                       {currentModelId === model.id ? (
                         <>
@@ -206,7 +251,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
                       variant="outline" 
                       size="sm"
                       onClick={() => handleDownloadModel(model.id)}
-                      disabled={!!downloadingModelId}
+                      disabled={!!downloadingModelId || isProcessing}
                     >
                       <Download className="h-4 w-4 mr-2" />
                       Baixar
@@ -219,7 +264,11 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         </div>
         
         <DrawerFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button 
+            variant="outline" 
+            onClick={handleClose}
+            disabled={isProcessing}
+          >
             <X className="h-4 w-4 mr-2" />
             Fechar
           </Button>

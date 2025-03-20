@@ -15,7 +15,7 @@ class VoskModelsService {
     {
       id: 'pt-br-small',
       name: 'Português (Brasil) - Pequeno',
-      language: 'pt-BR',
+      language: 'pt-BR', // Ensure correct language code
       size: '45MB',
       url: '/models/vosk-model-pt-br-small',
       installed: true // Modelo padrão já instalado
@@ -23,7 +23,7 @@ class VoskModelsService {
     {
       id: 'pt-br-large',
       name: 'Português (Brasil) - Completo',
-      language: 'pt-BR',
+      language: 'pt-BR', // Ensure correct language code
       size: '1.5GB',
       url: 'https://alphacephei.com/vosk/models/vosk-model-pt-br-v3.zip',
       installed: false
@@ -58,7 +58,11 @@ class VoskModelsService {
   }
 
   public setCurrentModel(modelId: string): void {
+    // Store the selected model ID
     localStorage.setItem('vosk_current_model', modelId);
+    
+    // Add a timestamp to force reinitialization
+    localStorage.setItem('vosk_model_changed_at', Date.now().toString());
   }
 
   private async checkInstalledModels(): Promise<void> {
