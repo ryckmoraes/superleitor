@@ -27,7 +27,7 @@ class VoskService {
       }
       
       // Importação dinâmica do VOSK
-      const vosk = await import('vosk-browser');
+      const voskModule = await import('vosk-browser');
       
       // Carrega o modelo de idioma português
       console.log("Carregando modelo VOSK em português...");
@@ -36,50 +36,79 @@ class VoskService {
       const modelPath = '/models/vosk-model-pt-br-small';
       
       try {
+        // Obter o vosk direto do módulo ou do default
+        const vosk = voskModule.default || voskModule;
+        
+        // Criar o modelo
         this.model = await vosk.createModel(modelPath);
         console.log("Modelo VOSK carregado com sucesso");
         
-        // Cria o reconhecedor com configuração para português brasileiro
-        // Para acessar o Recognizer, precisamos verificar a estrutura da biblioteca
+        // Em vez de tentar acessar propriedades específicas, tentamos obter
+        // o construtor do reconhecedor de diferentes maneiras
         
-        // Em algumas versões do vosk-browser, o Recognizer está disponível diretamente
-        if (typeof vosk.Recognizer === 'function') {
-          console.log("Usando vosk.Recognizer");
-          this.recognizer = new vosk.Recognizer({
+        // Verificar se o vosk tem alguma propriedade que pode ser um construtor
+        console.log("Propriedades disponíveis em vosk:", Object.keys(vosk));
+        
+        // Tentar criar o reconhecedor diretamente com vosk como construtor
+        try {
+          console.log("Tentando criar reconhecedor usando vosk como construtor");
+          this.recognizer = new vosk({
             model: this.model,
             sampleRate: 16000
           });
-        } 
-        // Em outras, pode estar dentro do objeto default
-        else if (vosk.default && typeof vosk.default.Recognizer === 'function') {
-          console.log("Usando vosk.default.Recognizer");
-          this.recognizer = new vosk.default.Recognizer({
-            model: this.model,
-            sampleRate: 16000
-          });
-        }
-        // Verificar se existe KaldiRecognizer (nome alternativo em algumas versões)
-        else if (vosk.KaldiRecognizer) {
-          console.log("Usando vosk.KaldiRecognizer");
-          this.recognizer = new vosk.KaldiRecognizer({
-            model: this.model,
-            sampleRate: 16000
-          });
-        }
-        else if (vosk.default && vosk.default.KaldiRecognizer) {
-          console.log("Usando vosk.default.KaldiRecognizer");
-          this.recognizer = new vosk.default.KaldiRecognizer({
-            model: this.model,
-            sampleRate: 16000
-          });
-        }
-        else {
-          console.error("Não foi possível encontrar a classe Recognizer na API do VOSK");
-          console.log("Estrutura do objeto vosk:", Object.keys(vosk));
-          if (vosk.default) {
-            console.log("Estrutura do objeto vosk.default:", Object.keys(vosk.default));
+          console.log("Reconhecedor criado com sucesso usando vosk como construtor");
+        } catch (error) {
+          console.log("Não foi possível usar vosk como construtor:", error);
+          
+          // Tentar criar com qualquer função construtora disponível no vosk
+          const possibleConstructors = ['Recognizer', 'KaldiRecognizer', 'VoskRecognizer'];
+          let created = false;
+          
+          for (const constructorName of possibleConstructors) {
+            try {
+              if (typeof vosk[constructorName] === 'function') {
+                console.log(`Tentando criar com vosk.${constructorName}`);
+                this.recognizer = new vosk[constructorName]({
+                  model: this.model,
+                  sampleRate: 16000
+                });
+                console.log(`Reconhecedor criado com sucesso usando vosk.${constructorName}`);
+                created = true;
+                break;
+              }
+            } catch (e) {
+              console.log(`Erro ao usar vosk.${constructorName}:`, e);
+            }
           }
-          throw new Error("API do VOSK incompatível");
+          
+          // Se ainda não conseguimos criar, vamos tentar usar a função createRecognizer se existir
+          if (!created && typeof vosk.createRecognizer === 'function') {
+            try {
+              console.log("Tentando criar com vosk.createRecognizer");
+              this.recognizer = vosk.createRecognizer({
+                model: this.model,
+                sampleRate: 16000
+              });
+              console.log("Reconhecedor criado com sucesso usando vosk.createRecognizer");
+              created = true;
+            } catch (e) {
+              console.log("Erro ao usar vosk.createRecognizer:", e);
+            }
+          }
+          
+          // Se ainda não conseguimos, mostrar erro detalhado e falhar
+          if (!created) {
+            console.error("Não foi possível criar o reconhecedor");
+            console.log("vosk:", vosk);
+            
+            // Um último recurso é tentar acessar qualquer método interno
+            const keys = Object.keys(vosk);
+            for (const key of keys) {
+              console.log(`vosk.${key}:`, typeof vosk[key], vosk[key]);
+            }
+            
+            throw new Error("Não foi possível criar um reconhecedor VOSK");
+          }
         }
         
         this.isInitialized = true;
