@@ -40,7 +40,15 @@ class VoskService {
         console.log("Modelo VOSK carregado com sucesso");
         
         // Cria o reconhecedor com configuração para português brasileiro
-        this.recognizer = new vosk.Recognizer({
+        // Nota: A API do vosk-browser mudou, agora precisamos acessar a classe Recognizer de forma diferente
+        const KaldiRecognizer = vosk.default.Recognizer || vosk.default.KaldiRecognizer;
+        
+        if (!KaldiRecognizer) {
+          console.error("Não foi possível encontrar a classe Recognizer na API do VOSK");
+          throw new Error("API do VOSK incompatível");
+        }
+        
+        this.recognizer = new KaldiRecognizer({
           model: this.model,
           sampleRate: 16000
         });
