@@ -41,59 +41,73 @@ class VoskService {
         // Log the available properties for debugging
         console.log("Propriedades disponíveis em vosk:", Object.keys(vosk));
         
-        // Create the model using the documented API method
+        // Create the model using the documented createModel API method
         this.model = await vosk.createModel(modelPath);
         console.log("Modelo VOSK carregado com sucesso");
+        console.log("Métodos disponíveis no modelo:", Object.keys(this.model));
         
-        // Now create the recognizer using the most likely API pattern
-        // Most speech recognition libraries accept a configuration object with model and sampleRate
-        try {
-          // First, check if there's a documented way to create a recognizer with the model
-          if (typeof this.model.createRecognizer === 'function') {
-            this.recognizer = this.model.createRecognizer(16000); // Pass sample rate
-            console.log("Recognizer created with model.createRecognizer");
-          } 
-          // If there's a global createRecognizer function
-          else if (typeof vosk.createRecognizer === 'function') {
-            this.recognizer = vosk.createRecognizer(this.model, 16000);
-            console.log("Recognizer created with vosk.createRecognizer");
-          }
-          // Try the newer API pattern that uses a factory pattern
-          else if (typeof vosk.Recognizer === 'function') {
-            this.recognizer = new vosk.Recognizer({model: this.model, sampleRate: 16000});
-            console.log("Recognizer created with vosk.Recognizer constructor");
-          }
-          // Last resort - the model itself might be the recognizer or have methods to process audio
-          else {
-            console.log("Using model directly as recognizer");
-            this.recognizer = this.model;
-          }
-          
-          // Log the recognizer's available methods for debugging
-          console.log("Métodos disponíveis no reconhecedor:", 
-            this.recognizer ? Object.keys(this.recognizer) : "Reconhecedor não criado");
-          
-          if (!this.recognizer) {
-            throw new Error("Não foi possível criar um reconhecedor VOSK");
-          }
-          
-          this.isInitialized = true;
-          return true;
-        } catch (e) {
-          console.error("Erro ao criar reconhecedor:", e);
-          
-          // Fallback: if the model itself has the necessary methods, use it directly
-          if (this.model && 
-              typeof this.model.acceptWaveform === 'function' && 
-              typeof this.model.result === 'function') {
-            console.log("Usando modelo diretamente como reconhecedor");
-            this.recognizer = this.model;
-            this.isInitialized = true;
-            return true;
-          }
-          
-          throw e;
+        // Try to create a recognizer using the model's method if it exists
+        if (typeof this.model.createRecognizer === 'function') {
+          this.recognizer = await this.model.createRecognizer(16000);
+          console.log("Recognizer created with model.createRecognizer");
+        } 
+        // Try using a hypothetical createRecognizer function from the model class directly
+        else if (typeof this.model.constructor?.createRecognizer === 'function') {
+          this.recognizer = await this.model.constructor.createRecognizer(this.model, 16000);
+          console.log("Recognizer created with model.constructor.createRecognizer");
+        } 
+        // If the model has direct methods for recognition, use the model as the recognizer
+        else if (
+          typeof this.model.acceptWaveform === 'function' && 
+          typeof this.model.result === 'function'
+        ) {
+          console.log("Using model directly as recognizer (has required methods)");
+          this.recognizer = this.model;
         }
+        // Last attempt - try to construct a recognizer by inspecting the vosk object
+        else {
+          console.log("Attempting to construct a recognizer by inspecting vosk structure");
+          
+          // Dump all available properties and methods of vosk and this.model for debugging
+          for (const key in vosk) {
+            console.log(`vosk.${key} type:`, typeof vosk[key]);
+            if (typeof vosk[key] === 'function' && key.toLowerCase().includes('recognizer')) {
+              console.log(`Found potential recognizer constructor: ${key}`);
+            }
+          }
+          
+          // Look for any method that contains "recognizer" in its name
+          const recognizerMethod = Object.keys(vosk).find(
+            key => typeof vosk[key] === 'function' && key.toLowerCase().includes('recognizer')
+          );
+          
+          if (recognizerMethod) {
+            try {
+              console.log(`Trying to use ${recognizerMethod}`);
+              this.recognizer = await vosk[recognizerMethod](this.model, 16000);
+            } catch (e) {
+              console.error(`Error using ${recognizerMethod}:`, e);
+            }
+          }
+          
+          // If still no recognizer, use model directly as a last resort
+          if (!this.recognizer) {
+            console.log("FALLBACK: Using model directly as recognizer");
+            this.recognizer = this.model;
+          }
+        }
+        
+        // Log the recognizer's available methods for debugging
+        console.log("Métodos disponíveis no reconhecedor:", 
+          this.recognizer ? Object.keys(this.recognizer) : "Reconhecedor não criado");
+        
+        if (!this.recognizer) {
+          throw new Error("Não foi possível criar um reconhecedor VOSK");
+        }
+        
+        this.isInitialized = true;
+        return true;
+        
       } catch (error) {
         console.error("Erro ao carregar modelo VOSK:", error);
         throw new Error(`Falha ao carregar modelo VOSK: ${error}`);
