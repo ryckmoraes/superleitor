@@ -1,3 +1,4 @@
+
 import { voskService } from './voskService';
 import { elevenLabsService } from './elevenlabs';
 
@@ -66,7 +67,7 @@ export const speakNaturally = async (text: string, priority: boolean = false): P
     // First try to use ElevenLabs for more natural speech if available
     if (elevenLabsService.hasApiKey()) {
       try {
-        const audioBlob = await elevenLabsService.textToSpeech(text);
+        const audioBlob = await elevenLabsService.textToSpeech(text, elevenLabsService.getAgentId());
         
         // Create an audio element to play the response
         const audioElement = new Audio();
