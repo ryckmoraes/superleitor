@@ -43,8 +43,11 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
   // Refresh models when drawer opens
   useEffect(() => {
     if (isOpen) {
+      console.log("Language selector opened, refreshing models");
       setModels(voskModelsService.getAvailableModels());
-      setCurrentModelId(voskModelsService.getCurrentModel()?.id || "pt-br-small");
+      const current = voskModelsService.getCurrentModel();
+      setCurrentModelId(current?.id || "pt-br-small");
+      console.log("Current model ID:", current?.id);
       setChangesSaved(true);
     }
   }, [isOpen]);
@@ -55,6 +58,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
     const model = models.find(m => m.id === modelId);
     if (!model) return;
     
+    console.log("Language changed to:", model.name);
     setIsProcessing(true);
     
     try {
@@ -69,7 +73,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         });
       } else {
         // Se não está instalado, inicie o download
-        handleDownloadModel(modelId);
+        await handleDownloadModel(modelId);
       }
     } catch (error) {
       console.error("Erro ao mudar idioma:", error);
@@ -87,6 +91,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
     const model = models.find(m => m.id === modelId);
     if (!model) return;
     
+    console.log("Downloading model:", model.name);
     setDownloadingModelId(modelId);
     setDownloadProgress(0);
     
@@ -99,12 +104,16 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
     try {
       const success = await voskModelsService.downloadModel(
         modelId,
-        (progress) => setDownloadProgress(progress)
+        (progress) => {
+          console.log(`Download progress: ${progress}%`);
+          setDownloadProgress(progress);
+        }
       );
       
       if (success) {
         // Atualizar a lista de modelos
-        setModels(voskModelsService.getAvailableModels());
+        const updatedModels = voskModelsService.getAvailableModels();
+        setModels(updatedModels);
         setCurrentModelId(modelId);
         setChangesSaved(false);
         
@@ -140,6 +149,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
       return;
     }
     
+    console.log("Saving language changes, selected model:", currentModelId);
     setIsProcessing(true);
     
     try {
@@ -186,6 +196,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
       
       // Fechar a janela e navegar para a página inicial
       setTimeout(() => {
+        console.log("Redirecting to home after language change");
         onClose();
         navigate("/");
       }, 2000);

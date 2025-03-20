@@ -110,6 +110,11 @@ class VoskModelsService {
     }
   ];
 
+  constructor() {
+    // Check installed models on initialization
+    this.checkInstalledModels();
+  }
+
   public getAvailableModels(): VoskModel[] {
     // Verificar quais modelos já estão instalados no IndexedDB
     this.checkInstalledModels();
@@ -118,21 +123,27 @@ class VoskModelsService {
 
   public getCurrentModel(): VoskModel | undefined {
     const currentModelId = localStorage.getItem('vosk_current_model') || 'pt-br-small';
+    console.log("Getting current model:", currentModelId);
     return this.models.find(model => model.id === currentModelId);
   }
 
   public setCurrentModel(modelId: string): void {
+    console.log("Setting current model to:", modelId);
+    
     // Store the selected model ID
     localStorage.setItem('vosk_current_model', modelId);
     
     // Add a timestamp to force reinitialization
-    localStorage.setItem('vosk_model_changed_at', Date.now().toString());
+    const timestamp = Date.now().toString();
+    localStorage.setItem('vosk_model_changed_at', timestamp);
+    console.log("Model change timestamp set:", timestamp);
   }
 
   private async checkInstalledModels(): Promise<void> {
     try {
-      // Verificar modelos instalados no IndexedDB
+      // Verificar modelos instalados no localStorage
       const installedModels = JSON.parse(localStorage.getItem('vosk_installed_models') || '[]');
+      console.log("Installed models:", installedModels);
       
       // Atualizar o estado de instalação dos modelos
       this.models = this.models.map(model => ({
@@ -173,7 +184,7 @@ class VoskModelsService {
           
           console.log(`Download do modelo ${model.name} concluído`);
         }
-      }, 500);
+      }, 200); // Acelerando o progresso para fins de demonstração
 
       return true;
     } catch (error) {
@@ -193,15 +204,7 @@ class VoskModelsService {
     if (!installedModels.includes(modelId)) {
       installedModels.push(modelId);
       localStorage.setItem('vosk_installed_models', JSON.stringify(installedModels));
-    }
-    
-    // Se este for o primeiro modelo do idioma a ser instalado, defini-lo como atual
-    const model = this.models.find(m => m.id === modelId);
-    if (model) {
-      const currentModel = this.getCurrentModel();
-      if (!currentModel || currentModel.language !== model.language) {
-        this.setCurrentModel(modelId);
-      }
+      console.log(`Modelo ${modelId} marcado como instalado`);
     }
   }
 }

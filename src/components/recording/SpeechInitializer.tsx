@@ -19,6 +19,7 @@ const SpeechInitializer = () => {
     const checkModelChanges = () => {
       const modelChangedAt = localStorage.getItem('vosk_model_changed_at');
       if (modelChangedAt && modelChangedAt !== lastModelChange) {
+        console.log("Model change detected at:", modelChangedAt);
         setLastModelChange(modelChangedAt);
         speechInitializedRef.current = false; // Force reinitialization
         setIsInitializing(true);
@@ -118,7 +119,7 @@ const SpeechInitializer = () => {
           // Adicionando um pequeno atraso antes de esconder o indicador de progresso
           setTimeout(() => {
             setIsInitializing(false);
-          }, 1000);
+          }, 1500);
         }
       }
     };
@@ -129,7 +130,7 @@ const SpeechInitializer = () => {
   // Mostra um componente visual temporário durante a inicialização
   if (isInitializing) {
     return (
-      <div className="fixed bottom-20 left-0 right-0 flex justify-center z-50 pointer-events-none">
+      <div className="fixed bottom-20 left-0 right-0 flex justify-center z-50">
         <div className="bg-background/95 border border-border p-3 rounded-lg shadow-lg w-64">
           <div className="text-sm font-medium mb-2">Carregando idioma...</div>
           <Progress value={initProgress} className="h-2" />
