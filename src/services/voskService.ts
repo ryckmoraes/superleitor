@@ -40,21 +40,47 @@ class VoskService {
         console.log("Modelo VOSK carregado com sucesso");
         
         // Cria o reconhecedor com configuração para português brasileiro
-        // A API do vosk-browser expõe a classe Recognizer de forma diferente do que esperávamos
+        // Para acessar o Recognizer, precisamos verificar a estrutura da biblioteca
         
-        // Primeiro, vamos ver se conseguimos obter a classe Recognizer da API
-        const RecognizerClass = vosk.default;
-        
-        if (!RecognizerClass) {
+        // Em algumas versões do vosk-browser, o Recognizer está disponível diretamente
+        if (typeof vosk.Recognizer === 'function') {
+          console.log("Usando vosk.Recognizer");
+          this.recognizer = new vosk.Recognizer({
+            model: this.model,
+            sampleRate: 16000
+          });
+        } 
+        // Em outras, pode estar dentro do objeto default
+        else if (vosk.default && typeof vosk.default.Recognizer === 'function') {
+          console.log("Usando vosk.default.Recognizer");
+          this.recognizer = new vosk.default.Recognizer({
+            model: this.model,
+            sampleRate: 16000
+          });
+        }
+        // Verificar se existe KaldiRecognizer (nome alternativo em algumas versões)
+        else if (vosk.KaldiRecognizer) {
+          console.log("Usando vosk.KaldiRecognizer");
+          this.recognizer = new vosk.KaldiRecognizer({
+            model: this.model,
+            sampleRate: 16000
+          });
+        }
+        else if (vosk.default && vosk.default.KaldiRecognizer) {
+          console.log("Usando vosk.default.KaldiRecognizer");
+          this.recognizer = new vosk.default.KaldiRecognizer({
+            model: this.model,
+            sampleRate: 16000
+          });
+        }
+        else {
           console.error("Não foi possível encontrar a classe Recognizer na API do VOSK");
+          console.log("Estrutura do objeto vosk:", Object.keys(vosk));
+          if (vosk.default) {
+            console.log("Estrutura do objeto vosk.default:", Object.keys(vosk.default));
+          }
           throw new Error("API do VOSK incompatível");
         }
-        
-        // Cria um novo reconhecedor
-        this.recognizer = new RecognizerClass({
-          model: this.model,
-          sampleRate: 16000
-        });
         
         this.isInitialized = true;
         return true;
