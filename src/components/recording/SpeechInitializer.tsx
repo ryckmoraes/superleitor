@@ -1,7 +1,7 @@
 
 import { useEffect, useRef } from "react";
 import { initVoices } from "@/services/audioProcessor";
-import { elevenLabsService } from "@/services/elevenlabs";
+import { voskService } from "@/services/voskService";
 
 const SpeechInitializer = () => {
   const speechInitializedRef = useRef(false);
@@ -20,13 +20,12 @@ const SpeechInitializer = () => {
         console.log("Síntese de fala inicializada:", initialized);
       });
       
-      // Verifica se a chave API do ElevenLabs está configurada
-      if (!elevenLabsService.hasApiKey()) {
-        console.log("Nenhuma chave API ElevenLabs definida - recursos de voz usarão fallback");
-      } else {
-        console.log("Chave API ElevenLabs configurada:", elevenLabsService.getApiKey()?.substring(0, 3) + "...");
-        console.log("Usando agent ID:", elevenLabsService.getAgentId());
-      }
+      // Inicializa o VOSK para reconhecimento de fala
+      voskService.initialize().then((initialized) => {
+        console.log("VOSK inicializado:", initialized);
+      }).catch(error => {
+        console.error("Erro ao inicializar VOSK:", error);
+      });
     }
   }, []);
 

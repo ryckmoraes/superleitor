@@ -1,4 +1,6 @@
 
+import { voskService } from './voskService';
+
 /**
  * Initializes available voices for speech synthesis.
  * @returns {Promise<boolean>} - Resolves with true if voices are initialized, false otherwise.
@@ -29,11 +31,8 @@ export const processRecognitionResult = (transcript: string): string => {
   return transcript.trim();
 };
 
-import { elevenLabsService } from './elevenlabs';
-
 /**
- * Speaks text using ElevenLabs voice service
- * Falls back to Web Speech API if ElevenLabs is not available
+ * Speaks text using Web Speech API
  */
 export const speakNaturally = async (text: string, priority: boolean = false): Promise<void> => {
   try {
@@ -42,17 +41,6 @@ export const speakNaturally = async (text: string, priority: boolean = false): P
       window.speechSynthesis.cancel();
     }
 
-    // Verifica se ElevenLabs está configurado
-    if (elevenLabsService.hasApiKey()) {
-      console.log("Usando ElevenLabs para text-to-speech");
-      return await elevenLabsService.speak(text, priority);
-    } else {
-      console.log("Chave API ElevenLabs não encontrada, usando TTS do navegador");
-      throw new Error("Usando TTS alternativo");
-    }
-  } catch (error) {
-    console.log("Usando TTS do navegador:", error);
-    
     // Usa o TTS nativo
     if ('speechSynthesis' in window) {
       // Cancela qualquer fala atual se esta for prioritária
@@ -80,5 +68,7 @@ export const speakNaturally = async (text: string, priority: boolean = false): P
       
       window.speechSynthesis.speak(utterance);
     }
+  } catch (error) {
+    console.error("Erro ao usar TTS:", error);
   }
 };

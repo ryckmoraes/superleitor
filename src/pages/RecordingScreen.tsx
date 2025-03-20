@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import HamburgerMenu from "@/components/HamburgerMenu";
-import { useElevenLabsSetup } from "@/hooks/useElevenLabsSetup";
+import { useVoskSetup } from "@/hooks/useVoskSetup";
 import { showToastOnly } from "@/services/notificationService";
 
 // Import refactored components
@@ -27,8 +27,8 @@ const RecordingScreen = () => {
   // Create a ref for the PatternDetector
   const patternDetectorRef = useRef<PatternDetectorRef>(null);
   
-  // Setup the ElevenLabs API key
-  const { hasApiKey } = useElevenLabsSetup();
+  // Setup the VOSK recognition
+  const { isInitialized, isLoading, error } = useVoskSetup();
   
   // Theme management
   const { isDarkMode, toggleTheme } = ThemeManager();
@@ -55,14 +55,12 @@ const RecordingScreen = () => {
     }
   }, [errorMessage]);
   
-  // Ensure API key is set
+  // Show VOSK initialization error
   useEffect(() => {
-    if (!hasApiKey) {
-      console.error("No ElevenLabs API key found");
-    } else {
-      console.log("ElevenLabs API key found");
+    if (error) {
+      setErrorMessage(`Erro ao inicializar VOSK: ${error}`);
     }
-  }, [hasApiKey]);
+  }, [error]);
   
   // Helper function to reset pattern detection
   const resetPatternDetection = () => {
@@ -86,6 +84,11 @@ const RecordingScreen = () => {
   
   const { toggleRecording, recordingTime, audioData, audioBlob } = recordingManager;
 
+  // Função para referenciar o detector de padrões
+  const setPatternDetectorRef = (detector: PatternDetectorRef | null) => {
+    patternDetectorRef.current = detector;
+  };
+
   return (
     <>
       {/* Speech initialization */}
@@ -96,7 +99,7 @@ const RecordingScreen = () => {
       
       {/* Pattern detection - só passa audioData se estiver gravando */}
       <PatternDetector 
-        ref={patternDetectorRef}
+        ref={setPatternDetectorRef}
         audioData={isRecording ? audioData : null} 
         isRecording={isRecording} 
       />
