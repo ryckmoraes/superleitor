@@ -228,6 +228,12 @@ const SpeechRecognitionHandler = ({
     };
   }, []);
 
+  // Calculate earned time based on recording duration
+  const getEarnedTime = (seconds: number): number => {
+    // For every 30 seconds of story, grant 5 minutes of app time
+    return Math.ceil(seconds / 30) * 5;
+  };
+
   // Handle continue button
   const handleContinue = () => {
     setShowSummary(false);
@@ -247,6 +253,31 @@ const SpeechRecognitionHandler = ({
     navigate("/");
   };
 
+  // Handle unlock app button
+  const handleUnlock = () => {
+    // Calculate unlock time in minutes
+    const earnedMinutes = getEarnedTime(recordingTime);
+    
+    // Store the unlock expiry time in localStorage
+    const expiryTime = Date.now() + (earnedMinutes * 60 * 1000);
+    localStorage.setItem('appUnlockExpiryTime', expiryTime.toString());
+    
+    // Show success message
+    showToastOnly(
+      "App Desbloqueado!", 
+      `Você ganhou ${earnedMinutes} minutos de uso! Aproveite!`,
+      "default"
+    );
+    
+    // Speak the success message
+    speakNaturally(`Parabéns! Você desbloqueou o SuperLeitor por ${earnedMinutes} minutos. Aproveite!`, true);
+    
+    // Navigate to home screen
+    setTimeout(() => {
+      navigate("/");
+    }, 3000);
+  };
+
   // Render the summary component if needed
   if (showSummary && !isRecording && !isProcessing) {
     return (
@@ -256,6 +287,7 @@ const SpeechRecognitionHandler = ({
         recordingTime={recordingTime}
         onContinue={handleContinue}
         onExit={handleExit}
+        onUnlock={handleUnlock}
       />
     );
   }

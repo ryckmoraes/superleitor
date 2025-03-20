@@ -1,6 +1,6 @@
 
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Clock } from "lucide-react";
+import { Loader2, Clock, LockOpen, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 
@@ -12,6 +12,7 @@ interface StoryTranscriptProps {
   recordingTime?: number;
   onContinue?: () => void;
   onExit?: () => void;
+  onUnlock?: () => void;
 }
 
 const StoryTranscript = ({ 
@@ -21,7 +22,8 @@ const StoryTranscript = ({
   recognitionStatus,
   recordingTime,
   onContinue,
-  onExit
+  onExit,
+  onUnlock
 }: StoryTranscriptProps) => {
   const [showSummary, setShowSummary] = useState(false);
   
@@ -39,39 +41,66 @@ const StoryTranscript = ({
   
   if (!storyTranscript && !isProcessing && !recognitionStatus && !showSummary) return null;
   
+  // Calculate earned time based on recording duration
+  const getEarnedTime = (seconds: number): number => {
+    // For every 30 seconds of story, grant 5 minutes of app time (adjust as needed)
+    return Math.ceil(seconds / 30) * 5;
+  };
+  
   // Show recording summary with time and controls
   if (showSummary && recordingTime) {
+    const earnedMinutes = getEarnedTime(recordingTime);
+    
     return (
-      <div className="fixed inset-0 flex items-center justify-center z-20 bg-black/50 backdrop-blur-sm">
+      <div className="fixed inset-0 flex items-center justify-center z-20 bg-black/70 backdrop-blur-sm">
         <div className="max-w-md w-full mx-auto bg-card rounded-lg border shadow-lg p-6">
-          <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-primary" />
-            Resumo da História
+          <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 text-primary">
+            <Clock className="w-6 h-6 text-primary" />
+            História Concluída!
           </h3>
           
-          <ScrollArea className="h-48 mb-4 rounded border p-3">
+          <ScrollArea className="h-48 mb-6 rounded border p-4 bg-muted/20">
             <p className="text-sm">{storyTranscript}</p>
           </ScrollArea>
           
-          <div className="text-sm text-muted-foreground mb-4">
-            Tempo de gravação: {Math.floor(recordingTime)} segundos
+          <div className="text-center mb-6 p-3 bg-primary/10 rounded-lg">
+            <p className="text-sm text-muted-foreground mb-1">
+              Tempo de gravação: <span className="font-semibold">{Math.floor(recordingTime)} segundos</span>
+            </p>
+            <p className="text-base font-semibold text-primary">
+              Tempo desbloqueado: {earnedMinutes} minutos
+            </p>
           </div>
           
-          <div className="flex space-x-3 justify-between">
+          <div className="grid grid-cols-1 gap-4">
+            {onUnlock && (
+              <Button 
+                onClick={onUnlock} 
+                className="w-full bg-primary hover:bg-primary/90 text-base flex items-center justify-center gap-2"
+                size="lg"
+              >
+                <LockOpen className="w-5 h-5" />
+                Desbloquear App por {earnedMinutes} minutos
+              </Button>
+            )}
+            
             {onContinue && (
               <Button 
                 onClick={onContinue} 
-                className="flex-1 bg-primary hover:bg-primary/90"
+                variant="outline" 
+                className="w-full text-base flex items-center justify-center gap-2"
+                size="lg"
               >
-                Continuar História
+                <BookOpen className="w-5 h-5" />
+                Continuar a História
               </Button>
             )}
             
             {onExit && (
               <Button 
                 onClick={onExit} 
-                variant="outline" 
-                className="flex-1"
+                variant="ghost" 
+                className="w-full mt-2"
               >
                 Finalizar
               </Button>

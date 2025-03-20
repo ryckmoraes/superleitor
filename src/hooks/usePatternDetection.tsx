@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 
 type PatternType = 'music' | 'rhythm' | 'voice-change' | null;
@@ -18,15 +17,15 @@ const usePatternDetection = (audioData: Uint8Array | null, isRecording: boolean)
   const voiceProfileRef = useRef<number[]>([]);
   const voiceChangesDetectedRef = useRef(0);
   
-  // Enhanced detection constants for more accurate detection
-  const DETECTION_THRESHOLD = 0.93;  // Mais estrito para evitar falsos positivos
-  const REQUIRED_CONSISTENT_FRAMES = 60; // Mais frames para detecção confiável
-  const COOLDOWN_FRAMES = 180; // 3 segundos de cooldown para evitar detecções repetidas
-  const PATTERN_MEMORY = 40; // Mais frames para analisar
-  const MIN_AMPLITUDE = 70; // Limite mais alto para evitar falsos positivos (era 65)
-  const INITIAL_COLLECTION_FRAMES = 180; // Coletar dados de baseline por 3 segundos antes da detecção
-  const VOICE_PROFILE_SIZE = 600; // 10 segundos de dados de voz para o perfil
-  const VOICE_CHANGE_THRESHOLD = 0.65; // Limite para detectar mudanças de voz
+  // Enhanced detection constants with improved thresholds to prevent false positives
+  const DETECTION_THRESHOLD = 0.95;  // Much more strict to prevent false positives (was 0.93)
+  const REQUIRED_CONSISTENT_FRAMES = 90; // More frames for reliable detection (was 60)
+  const COOLDOWN_FRAMES = 240; // 4 seconds of cooldown to avoid repeated detections (was 180)
+  const PATTERN_MEMORY = 50; // More frames to analyze for better pattern detection (was 40)
+  const MIN_AMPLITUDE = 85; // Higher limit to avoid false positives (was 70)
+  const INITIAL_COLLECTION_FRAMES = 240; // Collect baseline data for 4 seconds before detection (was 180)
+  const VOICE_PROFILE_SIZE = 600; // 10 seconds of voice data for the profile
+  const VOICE_CHANGE_THRESHOLD = 0.62; // More flexible to prevent false positives (was 0.65)
   
   // Reset detection state at the beginning
   useEffect(() => {
@@ -36,7 +35,7 @@ const usePatternDetection = (audioData: Uint8Array | null, isRecording: boolean)
   }, [isRecording]);
   
   useEffect(() => {
-    // Não processa se não estiver gravando ou se não houver dados de áudio
+    // Don't process if not recording or if no audio data
     if (!isRecording || !audioData || audioData.length === 0) {
       return;
     }
@@ -47,9 +46,9 @@ const usePatternDetection = (audioData: Uint8Array | null, isRecording: boolean)
       return;
     }
     
-    // Process only every third frame to reduce CPU usage and false positives
+    // Process only every fourth frame to reduce CPU usage and false positives (was third)
     frameCountRef.current++;
-    if (frameCountRef.current % 3 !== 0) {
+    if (frameCountRef.current % 4 !== 0) {
       return;
     }
     
@@ -132,11 +131,11 @@ const usePatternDetection = (audioData: Uint8Array | null, isRecording: boolean)
       }
     }
     
-    if (chunks.length >= 10) { // Require more chunks for detection (era 8)
+    // Need more chunks for reliable detection (was 10)
+    if (chunks.length >= 12) {
       // Compare chunks to detect repetition using a sliding window approach
       let similarChunks = 0;
       let consecutiveSimilar = 0;
-      const maxConsecutive = 0;
       
       for (let i = 1; i < chunks.length; i++) {
         const similarity = calculateSimilarity(chunks[i-1], chunks[i]);
@@ -153,8 +152,8 @@ const usePatternDetection = (audioData: Uint8Array | null, isRecording: boolean)
             
             // If we detect a repeating pattern of high similarity every other chunk
             // This is very characteristic of music with consistent beat patterns
-            if (similarity13 > 0.85 && similarity24 > 0.85) { // Era 0.8
-              similarChunks += 2; // Boost the similarity count
+            if (similarity13 > 0.90 && similarity24 > 0.90) { // More strict (was 0.85)
+              similarChunks += 1; // Add less boost (was 2)
             }
           }
         } else {
@@ -162,28 +161,23 @@ const usePatternDetection = (audioData: Uint8Array | null, isRecording: boolean)
         }
       }
       
-      // Critérios mais estritos para detecção de música:
-      // Precisamos de mais chunks similares E um padrão de ritmo claro
-      if ((similarChunks >= Math.min(8, chunks.length - 1) && hasBeatPattern(chunks)) || 
-          (similarChunks >= 10)) { // Era 7 e 5
+      // More strict criteria for music detection:
+      // We need more similar chunks AND a clear rhythm pattern
+      // Increased both thresholds to reduce false positives
+      if ((similarChunks >= Math.min(9, chunks.length - 1) && hasBeatPattern(chunks)) || 
+          (similarChunks >= 12)) { // Increased from 8 and 10
         
         // Detect pattern type based on frequency distribution
         const isMusic = isMusicPattern(chunks.flat());
         
-        // Log para debug
         console.log(`[usePatternDetection] Possível padrão musical detectado: ${isMusic ? 'música' : 'ritmo'}, similarChunks: ${similarChunks}`);
         
         setPatternType(isMusic ? 'music' : 'rhythm');
-        patternDetected = true;
+        setPatternDetected(true);
         
         // Set cooldown to prevent repeated detections
         detectionCooldownRef.current = COOLDOWN_FRAMES;
       }
-    }
-    
-    // Update detection state
-    if (patternDetected) {
-      setPatternDetected(true);
     }
   };
   
@@ -213,7 +207,7 @@ const usePatternDetection = (audioData: Uint8Array | null, isRecording: boolean)
         voiceChangesDetectedRef.current++;
         
         // If we detect multiple voice changes in succession
-        if (voiceChangesDetectedRef.current > 12) { // Era 10
+        if (voiceChangesDetectedRef.current > 15) { // Increased from 12 for fewer false positives
           console.log("[usePatternDetection] Significant voice change detected");
           setPatternType('voice-change');
           setPatternDetected(true);
@@ -270,7 +264,7 @@ const usePatternDetection = (audioData: Uint8Array | null, isRecording: boolean)
     for (let i = 1; i < energyProfile.length - 1; i++) {
       if (energyProfile[i] > energyProfile[i-1] && 
           energyProfile[i] > energyProfile[i+1] &&
-          energyProfile[i] > 1.2 * (energyProfile.reduce((a, b) => a + b, 0) / energyProfile.length)) {
+          energyProfile[i] > 1.25 * (energyProfile.reduce((a, b) => a + b, 0) / energyProfile.length)) { // Increased threshold
         
         peakCount++;
         
@@ -283,7 +277,7 @@ const usePatternDetection = (audioData: Uint8Array | null, isRecording: boolean)
     }
     
     // If we have enough peaks, check if distances are regular
-    if (peakDistances.length >= 3) {
+    if (peakDistances.length >= 4) { // Require more peaks (was 3)
       const avgDistance = peakDistances.reduce((a, b) => a + b, 0) / peakDistances.length;
       
       // Calculate how consistent the peak distances are
@@ -291,7 +285,8 @@ const usePatternDetection = (audioData: Uint8Array | null, isRecording: boolean)
         sum + Math.abs(dist - avgDistance), 0) / peakDistances.length;
       
       // If variance is low, peaks are regularly spaced (like in music)
-      return distanceVariance / avgDistance < 0.25; // Era 0.3 (mais restritivo)
+      // More restrictive threshold (was 0.25)
+      return distanceVariance / avgDistance < 0.22;
     }
     
     return false;
@@ -312,22 +307,22 @@ const usePatternDetection = (audioData: Uint8Array | null, isRecording: boolean)
     
     // Enhanced music detection criteria
     // 1. Check for balanced frequency distribution (music has more harmonics)
-    const isBalanced = (midAvg > lowAvg * 0.7) && (highAvg > lowAvg * 0.5);
+    const isBalanced = (midAvg > lowAvg * 0.75) && (highAvg > lowAvg * 0.55);
     
     // 2. Check for strong peaks in certain frequency ranges (music instruments)
-    const hasMusicPeaks = pattern.some(val => val > 160); // Music often has strong peaks (era 150)
+    const hasMusicPeaks = pattern.some(val => val > 175); // Increased threshold (was 160)
     
     // 3. Check the ratio between highest and lowest frequency components
     const maxVal = Math.max(...pattern);
     const minVal = Math.min(...pattern.filter(v => v > 0));
     const dynamicRange = maxVal / (minVal || 1);
     
-    // Combined criteria
-    return isBalanced && (hasMusicPeaks || dynamicRange > 10); // Era 8
+    // Combined criteria - require more conditions to be true
+    return isBalanced && hasMusicPeaks && dynamicRange > 12; // Increased threshold (was 10)
   };
   
   /**
-   * Reset detection state when needed (e.g., when starting a new recording)
+   * Reset detection state when needed
    */
   const resetDetection = () => {
     setPatternDetected(false);

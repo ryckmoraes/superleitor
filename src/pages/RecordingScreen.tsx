@@ -3,6 +3,8 @@ import { useState, useEffect, useRef } from "react";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import { useVoskSetup } from "@/hooks/useVoskSetup";
 import { showToastOnly } from "@/services/notificationService";
+import { speakNaturally } from "@/services/audioProcessor";
+import { useAppUnlock } from "@/hooks/useAppUnlock";
 
 // Import refactored components
 import RecordingMainView from "@/components/recording/RecordingMainView";
@@ -30,6 +32,9 @@ const RecordingScreen = () => {
   // Setup the VOSK recognition
   const { isInitialized, isLoading, error } = useVoskSetup();
   
+  // Get app unlock status
+  const { isUnlocked, remainingTime, checkUnlockStatus } = useAppUnlock();
+  
   // Theme management
   const { isDarkMode, toggleTheme } = ThemeManager();
   
@@ -47,6 +52,30 @@ const RecordingScreen = () => {
     
     return () => clearTimeout(timer);
   }, []);
+
+  // Show unlock status message when screen loads
+  useEffect(() => {
+    if (loaded) {
+      // Check if app is already unlocked
+      if (checkUnlockStatus() && isUnlocked && remainingTime > 0) {
+        setTimeout(() => {
+          showToastOnly(
+            "App Desbloqueado",
+            `Você ainda tem ${remainingTime} minutos de uso disponíveis.`,
+            "default"
+          );
+          
+          // Welcome back message if unlocked
+          speakNaturally("Bem-vindo ao SuperLeitor! Você pode contar mais histórias ou continuar usando o app.", true);
+        }, 1000);
+      } else {
+        // If not unlocked, prompt user to tell a story
+        setTimeout(() => {
+          speakNaturally("Olá! Conte-me uma história para desbloquear o SuperLeitor.", true);
+        }, 1000);
+      }
+    }
+  }, [loaded, isUnlocked, remainingTime, checkUnlockStatus]);
 
   // Show error messages
   useEffect(() => {
@@ -84,11 +113,6 @@ const RecordingScreen = () => {
   
   const { toggleRecording, recordingTime, audioData, audioBlob } = recordingManager;
 
-  // Função para referenciar o detector de padrões
-  const setPatternDetectorRef = (detector: PatternDetectorRef | null) => {
-    patternDetectorRef.current = detector;
-  };
-
   return (
     <>
       {/* Speech initialization */}
@@ -97,9 +121,9 @@ const RecordingScreen = () => {
       {/* Welcome message */}
       <WelcomeHandler loaded={loaded} />
       
-      {/* Pattern detection - só passa audioData se estiver gravando */}
+      {/* Pattern detection - only pass audioData if recording */}
       <PatternDetector 
-        ref={setPatternDetectorRef}
+        ref={patternDetectorRef}
         audioData={isRecording ? audioData : null} 
         isRecording={isRecording} 
       />
@@ -129,6 +153,13 @@ const RecordingScreen = () => {
         interimTranscript={interimTranscript}
         recognitionStatus={recognitionStatus}
       />
+      
+      {/* Show unlock status if available */}
+      {isUnlocked && remainingTime > 0 && (
+        <div className="fixed top-20 right-4 bg-primary/10 py-1 px-3 rounded-full text-xs">
+          Tempo restante: {remainingTime} min
+        </div>
+      )}
       
       {/* Hamburger menu with theme toggle */}
       <HamburgerMenu isDarkMode={isDarkMode} toggleTheme={toggleTheme} />

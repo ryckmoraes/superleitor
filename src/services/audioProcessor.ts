@@ -1,5 +1,6 @@
 
 import { voskService } from './voskService';
+import { elevenLabsService } from './elevenlabs';
 
 /**
  * Initializes available voices for speech synthesis.
@@ -32,18 +33,24 @@ export const processRecognitionResult = (transcript: string): string => {
 };
 
 /**
- * Speaks text using Web Speech API
+ * Speaks text using Web Speech API with enhanced naturalness
  */
 export const speakNaturally = async (text: string, priority: boolean = false): Promise<void> => {
   try {
-    // Cancela qualquer fala atual se esta for prioritária
-    if (priority && window.speechSynthesis.speaking) {
-      window.speechSynthesis.cancel();
+    // First try to use ElevenLabs for more natural speech if available
+    if (elevenLabsService.hasApiKey()) {
+      try {
+        await elevenLabsService.speak(text, priority);
+        return;
+      } catch (error) {
+        console.log("ElevenLabs fallback to native TTS:", error);
+        // Fall back to native TTS if ElevenLabs fails
+      }
     }
-
-    // Usa o TTS nativo
+    
+    // Use native TTS with enhanced settings for more natural speech
     if ('speechSynthesis' in window) {
-      // Cancela qualquer fala atual se esta for prioritária
+      // Cancel any current speech if this is prioritary
       if (priority && window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
       }
@@ -51,14 +58,21 @@ export const speakNaturally = async (text: string, priority: boolean = false): P
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'pt-BR';
       
-      // Ajusta pitch e rate para uma fala mais natural
+      // Adjust pitch and rate for more natural speech
       utterance.pitch = 1.0;
-      utterance.rate = 1.0;
+      utterance.rate = 0.95; // Slightly slower for more natural pacing
+      utterance.volume = 1.0;
       
-      // Procura uma boa voz se disponível
+      // Try to find a good voice
       const voices = window.speechSynthesis.getVoices();
-      const brazilianVoice = voices.find(voice => voice.lang.includes('pt-BR'));
-      const portugueseVoice = voices.find(voice => voice.lang.includes('pt'));
+      
+      // Find the best Portuguese voice available
+      const brazilianVoice = voices.find(voice => 
+        voice.lang.includes('pt-BR') && (voice.name.includes('female') || voice.localService === true)
+      );
+      const portugueseVoice = voices.find(voice => 
+        voice.lang.includes('pt') && (voice.name.includes('female') || voice.localService === true)
+      );
       
       if (brazilianVoice) {
         utterance.voice = brazilianVoice;
@@ -66,7 +80,10 @@ export const speakNaturally = async (text: string, priority: boolean = false): P
         utterance.voice = portugueseVoice;
       }
       
-      window.speechSynthesis.speak(utterance);
+      // Add a slight pause before speaking for more natural rhythm
+      setTimeout(() => {
+        window.speechSynthesis.speak(utterance);
+      }, 50);
     }
   } catch (error) {
     console.error("Erro ao usar TTS:", error);
