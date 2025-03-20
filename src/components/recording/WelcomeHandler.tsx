@@ -1,8 +1,9 @@
 
 import { useEffect, useRef } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { speakNaturally } from "@/services/audioProcessor";
+import { speakNaturally, getLocalizedGreeting } from "@/services/audioProcessor";
 import { showToastOnly } from "@/services/notificationService";
+import { voskService } from "@/services/voskService";
 
 interface WelcomeHandlerProps {
   loaded: boolean;
@@ -14,9 +15,45 @@ const WelcomeHandler = ({ loaded }: WelcomeHandlerProps) => {
 
   // Improved welcome message function
   const speakWelcomeMessage = () => {
+    // Get the current language
+    const currentLanguage = voskService.isVoskWorking() ? voskService.getCurrentLanguage() : 'pt-BR';
+    
     if (onboardingData.superReaderName) {
-      // Create welcome message with the SuperLeitor name
-      const welcomeMessage = `Olá ${onboardingData.superReaderName}! Que bom te ver! Que história você quer me contar hoje?`;
+      // Create personalized greeting based on language
+      let welcomeMessage = "";
+      
+      switch (currentLanguage.substring(0, 2)) {
+        case 'pt':
+          welcomeMessage = `Olá ${onboardingData.superReaderName}! Que bom te ver! Que história você quer me contar hoje?`;
+          break;
+        case 'en':
+          welcomeMessage = `Hello ${onboardingData.superReaderName}! Great to see you! What story would you like to tell me today?`;
+          break;
+        case 'es':
+          welcomeMessage = `¡Hola ${onboardingData.superReaderName}! ¡Qué bueno verte! ¿Qué historia quieres contarme hoy?`;
+          break;
+        case 'fr':
+          welcomeMessage = `Bonjour ${onboardingData.superReaderName}! C'est bon de te voir! Quelle histoire veux-tu me raconter aujourd'hui?`;
+          break;
+        case 'de':
+          welcomeMessage = `Hallo ${onboardingData.superReaderName}! Schön dich zu sehen! Welche Geschichte möchtest du mir heute erzählen?`;
+          break;
+        case 'it':
+          welcomeMessage = `Ciao ${onboardingData.superReaderName}! È bello vederti! Che storia vuoi raccontarmi oggi?`;
+          break;
+        case 'ru':
+          welcomeMessage = `Привет ${onboardingData.superReaderName}! Рад тебя видеть! Какую историю ты хочешь рассказать мне сегодня?`;
+          break;
+        case 'zh':
+          welcomeMessage = `你好 ${onboardingData.superReaderName}！很高兴见到你！今天你想给我讲什么故事？`;
+          break;
+        case 'ja':
+          welcomeMessage = `こんにちは ${onboardingData.superReaderName}！会えて嬉しいです！今日はどんな話を聞かせてくれますか？`;
+          break;
+        default:
+          welcomeMessage = `Olá ${onboardingData.superReaderName}! Que bom te ver! Que história você quer me contar hoje?`;
+      }
+      
       console.log("Speaking welcome message:", welcomeMessage);
       
       // Show toast message
@@ -33,12 +70,15 @@ const WelcomeHandler = ({ loaded }: WelcomeHandlerProps) => {
         superReaderName: onboardingData.superReaderName
       });
       
-      // Show generic toast if name is not set
-      showToastOnly("Bem-vindo!", "Olá! Que bom te ver! Que história você quer me contar hoje?");
+      // Get generic greeting in current language
+      const genericWelcome = getLocalizedGreeting(currentLanguage);
+      
+      // Show generic toast
+      showToastOnly("Bem-vindo!", genericWelcome);
       
       // Speak generic welcome
       setTimeout(() => {
-        speakNaturally("Olá! Que bom te ver! Que história você quer me contar hoje?", true);
+        speakNaturally(genericWelcome, true);
       }, 1000);
     }
   };

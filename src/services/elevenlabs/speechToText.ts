@@ -2,6 +2,7 @@
 // ElevenLabs speech-to-text service
 import { ELEVENLABS_API_URL } from './config';
 import { keyManagement } from './keyManagement';
+import { voskService } from '../voskService';
 
 /**
  * Service for transcribing audio using ElevenLabs
@@ -15,10 +16,18 @@ export const speechToTextService = {
       throw new Error("ElevenLabs API key not set");
     }
     
+    // Get the current language code
+    const currentLanguage = voskService.isVoskWorking() 
+      ? voskService.getCurrentLanguage() 
+      : 'pt-BR';
+    
+    // Convert to two-letter code for ElevenLabs API
+    const languageCode = currentLanguage.substring(0, 2);
+    
     // Create form data with the audio blob
     const formData = new FormData();
     formData.append('audio', audioBlob, 'audio.wav');
-    formData.append('language', 'pt'); // Portuguese
+    formData.append('language', languageCode); // Use current language
     
     try {
       const response = await fetch(

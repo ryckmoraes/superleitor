@@ -37,6 +37,34 @@ let activeAudioElements: HTMLAudioElement[] = [];
 let activeSpeechSynthesisUtterance: SpeechSynthesisUtterance | null = null;
 
 /**
+ * Get the localized greeting for the selected language
+ */
+export const getLocalizedGreeting = (language: string): string => {
+  switch (language.substring(0, 2)) {
+    case 'pt':
+      return "Olá! Como posso ajudar?";
+    case 'en':
+      return "Hello! How can I help you?";
+    case 'es':
+      return "¡Hola! ¿Cómo puedo ayudarte?";
+    case 'fr':
+      return "Bonjour! Comment puis-je vous aider?";
+    case 'de':
+      return "Hallo! Wie kann ich Ihnen helfen?";
+    case 'it':
+      return "Ciao! Come posso aiutarti?";
+    case 'ru':
+      return "Привет! Чем я могу помочь?";
+    case 'zh':
+      return "你好！我能帮你什么忙？";
+    case 'ja':
+      return "こんにちは！どのようにお手伝いできますか？";
+    default:
+      return "Hello! How can I help you?";
+  }
+};
+
+/**
  * Speaks text using ElevenLabs or Web Speech API with enhanced naturalness
  */
 export const speakNaturally = async (text: string, priority: boolean = false): Promise<void> => {

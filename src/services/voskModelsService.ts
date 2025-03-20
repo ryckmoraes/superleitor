@@ -15,7 +15,7 @@ class VoskModelsService {
     {
       id: 'pt-br-small',
       name: 'Português (Brasil) - Pequeno',
-      language: 'pt-BR', // Ensure correct language code
+      language: 'pt-BR',
       size: '45MB',
       url: '/models/vosk-model-pt-br-small',
       installed: true // Modelo padrão já instalado
@@ -23,7 +23,7 @@ class VoskModelsService {
     {
       id: 'pt-br-large',
       name: 'Português (Brasil) - Completo',
-      language: 'pt-BR', // Ensure correct language code
+      language: 'pt-BR',
       size: '1.5GB',
       url: 'https://alphacephei.com/vosk/models/vosk-model-pt-br-v3.zip',
       installed: false
@@ -37,11 +37,75 @@ class VoskModelsService {
       installed: false
     },
     {
+      id: 'en-us-large',
+      name: 'English (US) - Large',
+      language: 'en-US',
+      size: '1.6GB',
+      url: 'https://alphacephei.com/vosk/models/vosk-model-en-us-0.22.zip',
+      installed: false
+    },
+    {
       id: 'es-small',
       name: 'Español - Pequeño',
       language: 'es-ES',
       size: '39MB',
       url: 'https://alphacephei.com/vosk/models/vosk-model-small-es-0.42.zip',
+      installed: false
+    },
+    {
+      id: 'es-large',
+      name: 'Español - Completo',
+      language: 'es-ES',
+      size: '1.2GB',
+      url: 'https://alphacephei.com/vosk/models/vosk-model-es-0.42.zip',
+      installed: false
+    },
+    {
+      id: 'fr-small',
+      name: 'Français - Petit',
+      language: 'fr-FR',
+      size: '41MB',
+      url: 'https://alphacephei.com/vosk/models/vosk-model-small-fr-0.22.zip',
+      installed: false
+    },
+    {
+      id: 'de-small',
+      name: 'Deutsch - Klein',
+      language: 'de-DE',
+      size: '45MB',
+      url: 'https://alphacephei.com/vosk/models/vosk-model-small-de-0.15.zip',
+      installed: false
+    },
+    {
+      id: 'it-small',
+      name: 'Italiano - Piccolo',
+      language: 'it-IT',
+      size: '48MB',
+      url: 'https://alphacephei.com/vosk/models/vosk-model-small-it-0.22.zip',
+      installed: false
+    },
+    {
+      id: 'ru-small',
+      name: 'Русский - Маленький',
+      language: 'ru-RU',
+      size: '45MB',
+      url: 'https://alphacephei.com/vosk/models/vosk-model-small-ru-0.22.zip',
+      installed: false
+    },
+    {
+      id: 'cn-small',
+      name: '中文 - 小型',
+      language: 'zh-CN',
+      size: '40MB',
+      url: 'https://alphacephei.com/vosk/models/vosk-model-small-cn-0.22.zip',
+      installed: false
+    },
+    {
+      id: 'ja-small',
+      name: '日本語 - 小さい',
+      language: 'ja-JP',
+      size: '48MB',
+      url: 'https://alphacephei.com/vosk/models/vosk-model-small-ja-0.22.zip',
       installed: false
     }
   ];

@@ -59,7 +59,18 @@ const SpeechInitializer = () => {
           setVoskInitialized(initialized);
           
           if (initialized) {
-            console.log(`VOSK está disponível para reconhecimento offline - Idioma: ${currentModel?.name || 'Padrão'}`);
+            const language = currentModel?.language || 'pt-BR';
+            const languageName = language === 'pt-BR' ? 'Português (Brasil)' :
+                                language === 'en-US' ? 'English (US)' :
+                                language === 'es-ES' ? 'Español' :
+                                language === 'fr-FR' ? 'Français' :
+                                language === 'de-DE' ? 'Deutsch' :
+                                language === 'it-IT' ? 'Italiano' :
+                                language === 'ru-RU' ? 'Русский' :
+                                language === 'zh-CN' ? '中文' :
+                                language === 'ja-JP' ? '日本語' : 'Desconhecido';
+                                
+            console.log(`VOSK está disponível para reconhecimento offline - Idioma: ${languageName}`);
           } else {
             console.warn("VOSK não está totalmente funcional, usando alternativas");
             showToastOnly(
