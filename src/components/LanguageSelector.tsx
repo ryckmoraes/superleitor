@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Globe, Download, Check, X, Save } from "lucide-react";
 import { voskModelsService } from "@/services/voskModelsService";
@@ -365,21 +364,19 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
           </Button>
         </DrawerFooter>
 
-        {/* Operação em andamento dialog */}
+        {/* Improved Operation in progress dialog with prominent progress bar */}
         {(isProcessing || downloadingModelId) && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-background p-6 rounded-lg shadow-lg max-w-sm mx-auto">
               <h3 className="text-xl font-bold mb-2">Operação em andamento</h3>
               <p className="mb-4">Por favor, aguarde a conclusão da operação atual.</p>
-              {downloadingModelId && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span>Progresso</span>
-                    <span className="font-bold">{downloadProgress}%</span>
-                  </div>
-                  <Progress value={downloadProgress} className="h-4" />
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Progresso</span>
+                  <span className="text-lg font-bold text-primary">{downloadProgress}%</span>
                 </div>
-              )}
+                <Progress value={downloadProgress} className="h-6" />
+              </div>
             </div>
           </div>
         )}
