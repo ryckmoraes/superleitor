@@ -45,6 +45,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
   const [hasChanges, setHasChanges] = useState(false);
   const [downloadStatus, setDownloadStatus] = useState<string>("");
   const [forceShowDownload, setForceShowDownload] = useState(false);
+  const [autoCloseAfterDownload, setAutoCloseAfterDownload] = useState(false);
 
   // Make sure the download section is visible if a model is being downloaded
   useEffect(() => {
@@ -62,6 +63,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
       setCurrentModelId(currentModel?.id || "pt-br-small");
       setSelectedModelId(currentModel?.id || "pt-br-small");
       setHasChanges(false);
+      setAutoCloseAfterDownload(false);
       
       // Check for active downloads
       const activeDownloads = models.filter(model => voskModelsService.isModelDownloading(model.id));
@@ -135,6 +137,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         }, 1000);
       } else {
         // Se não está instalado, inicie o download
+        setAutoCloseAfterDownload(true); // Set to auto-close after download is complete
         handleDownloadModel(selectedModelId);
       }
     } catch (error) {
@@ -310,9 +313,11 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         });
         
         // Fechar a janela após completar o download
-        setTimeout(() => {
-          onClose();
-        }, 2000);
+        if (autoCloseAfterDownload) {
+          setTimeout(() => {
+            onClose();
+          }, 2000);
+        }
       } else {
         setDownloadStatus("Erro no download");
         toast({
@@ -332,7 +337,10 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
     } finally {
       setTimeout(() => {
         setDownloadingModelId(null);
-        setForceShowDownload(false);
+        // Don't hide the progress bar when auto-closing
+        if (!autoCloseAfterDownload) {
+          setForceShowDownload(false);
+        }
       }, 1000);
     }
   };
@@ -425,10 +433,18 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
             {hasChanges && !models.find(m => m.id === selectedModelId)?.installed && (
               <p className="text-xs text-amber-500 mt-1">
                 Este modelo precisa ser baixado antes de ser usado.
+                <Button 
+                  variant="link" 
+                  className="text-xs p-0 h-auto" 
+                  onClick={() => handleDownloadModel(selectedModelId)}
+                >
+                  Baixar agora
+                </Button>
               </p>
             )}
           </div>
 
+          {/* Always show download panel when there's an active download or forceShowDownload is true */}
           {(downloadingModelId || forceShowDownload) && (
             <div className="space-y-4 border rounded-lg p-4 bg-muted/30">
               <div className="space-y-2">
