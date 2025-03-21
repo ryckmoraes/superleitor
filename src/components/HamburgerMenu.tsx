@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Menu, X, Settings as SettingsIcon, LogOut, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,6 @@ import Settings from "./Settings";
 import LanguageSelector from "./LanguageSelector";
 import PasswordDialog from "./PasswordDialog";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 
 interface HamburgerMenuProps {
   isDarkMode: boolean;
@@ -15,7 +15,6 @@ interface HamburgerMenuProps {
 }
 
 const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
-  
   const [isOpen, setIsOpen] = useState(false);
   const [showTrigger, setShowTrigger] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -267,12 +266,10 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
         isDarkMode={isDarkMode}
       />
 
-      {/* Update this to properly use the Drawer component */}
-      <Drawer open={languageSelectorOpen} onOpenChange={setLanguageSelectorOpen}>
-        <DrawerContent>
-          <LanguageSelector />
-        </DrawerContent>
-      </Drawer>
+      <LanguageSelector
+        isOpen={languageSelectorOpen}
+        onClose={() => setLanguageSelectorOpen(false)}
+      />
 
       <PasswordDialog
         isOpen={passwordDialogOpen}
