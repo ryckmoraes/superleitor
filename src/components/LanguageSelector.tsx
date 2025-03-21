@@ -95,12 +95,6 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
     setDownloadingModelId(modelId);
     setDownloadProgress(0);
     
-    showToastOnly(
-      "Download iniciado",
-      `Baixando modelo para ${model.name}. Tamanho: ${model.size}`,
-      "default"
-    );
-    
     try {
       const success = await voskModelsService.downloadModel(
         modelId,
@@ -142,15 +136,24 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
 
   const handleSaveChanges = async () => {
     if (isProcessing || downloadingModelId) {
-      toast({
-        title: "Operação em andamento",
-        description: "Por favor, aguarde a conclusão da operação atual.",
-      });
+      // Em vez de apenas mostrar um toast, vamos exibir um diálogo de operação em andamento
+      showToastOnly(
+        "Operação em andamento",
+        "Por favor, aguarde a conclusão da operação atual.",
+        "default"
+      );
       return;
     }
     
     console.log("Saving language changes, selected model:", currentModelId);
     setIsProcessing(true);
+    
+    // Mostrar diálogo de operação em andamento
+    showToastOnly(
+      "Salvando configurações",
+      "Aplicando novo idioma, por favor aguarde...",
+      "default"
+    );
     
     try {
       // Definir o modelo atual no serviço
@@ -194,12 +197,12 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
       await voskService.cleanup();
       await voskService.initialize().catch(console.error);
       
-      // Fechar a janela e navegar para a página inicial
+      // Fechar a janela e navegar para a página inicial automaticamente
+      console.log("Redirecting to home after language change");
       setTimeout(() => {
-        console.log("Redirecting to home after language change");
         onClose();
         navigate("/");
-      }, 2000);
+      }, 1000); // Reduzir o tempo de espera para 1 segundo
     } catch (error) {
       console.error("Erro ao salvar configuração:", error);
       toast({
@@ -215,18 +218,21 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
   // Handle close with pending operations
   const handleClose = () => {
     if (isProcessing || downloadingModelId) {
-      toast({
-        title: "Operação em andamento",
-        description: "Por favor, aguarde a conclusão da operação atual.",
-      });
+      // Em vez de apenas mostrar um toast, vamos exibir um diálogo mais visível
+      showToastOnly(
+        "Operação em andamento",
+        "Por favor, aguarde a conclusão da operação atual.",
+        "default"
+      );
       return;
     }
     
     if (!changesSaved) {
-      toast({
-        title: "Alterações não salvas",
-        description: "Clique em Salvar para confirmar as alterações de idioma.",
-      });
+      showToastOnly(
+        "Alterações não salvas",
+        "Clique em Salvar para confirmar as alterações de idioma.",
+        "default"
+      );
       return;
     }
     
@@ -282,12 +288,12 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
           </div>
 
           {downloadingModelId && (
-            <div className="space-y-2">
+            <div className="space-y-2 p-4 bg-background/90 border border-border rounded-lg shadow-md">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Baixando modelo...</span>
-                <span className="text-sm">{downloadProgress}%</span>
+                <span className="text-sm font-bold">{downloadProgress}%</span>
               </div>
-              <Progress value={downloadProgress} className="h-3" />
+              <Progress value={downloadProgress} className="h-4" />
             </div>
           )}
 
@@ -311,7 +317,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
                         Baixando...
                       </Button>
                       <div className="w-full max-w-[120px]">
-                        <Progress value={downloadProgress} className="h-2" />
+                        <Progress value={downloadProgress} className="h-3" />
                       </div>
                     </div>
                   ) : model.installed ? (
@@ -358,6 +364,25 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
             Cancelar
           </Button>
         </DrawerFooter>
+
+        {/* Operação em andamento dialog */}
+        {(isProcessing || downloadingModelId) && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-background p-6 rounded-lg shadow-lg max-w-sm mx-auto">
+              <h3 className="text-xl font-bold mb-2">Operação em andamento</h3>
+              <p className="mb-4">Por favor, aguarde a conclusão da operação atual.</p>
+              {downloadingModelId && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span>Progresso</span>
+                    <span className="font-bold">{downloadProgress}%</span>
+                  </div>
+                  <Progress value={downloadProgress} className="h-4" />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {!changesSaved && (
           <div className="fixed inset-x-0 bottom-32 flex justify-center z-50 pointer-events-none">
