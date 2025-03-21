@@ -405,6 +405,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         </DrawerHeader>
         
         <div className="p-4 space-y-6">
+          {/* Model selection section */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Idioma Selecionado</label>
             <Select 
@@ -444,57 +445,59 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
             )}
           </div>
 
-          {/* Always show download panel when there's an active download or forceShowDownload is true */}
+          {/* Centered download progress section */}
           {(downloadingModelId || forceShowDownload) && (
-            <div className="space-y-4 border rounded-lg p-4 bg-muted/30">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">
-                    {downloadStatus || `Baixando ${models.find(m => m.id === downloadingModelId)?.name || "modelo"}...`}
-                  </span>
-                  <span className="text-sm">{downloadProgress}%</span>
-                </div>
-                <Progress value={downloadProgress} className="h-3" />
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+              <div className="bg-background rounded-lg p-6 max-w-md w-full mx-4 shadow-lg border border-border">
+                <h3 className="text-lg font-semibold mb-4">
+                  {downloadStatus || `Baixando ${models.find(m => m.id === downloadingModelId)?.name || "modelo"}`}
+                </h3>
                 
-                <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground mt-2">
-                  <div>
-                    <span className="font-medium">Velocidade:</span> {downloadSpeed}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium">{downloadProgress}%</span>
+                    <span className="text-sm">{downloadedSize} / {totalSize}</span>
                   </div>
-                  <div>
-                    <span className="font-medium">Tamanho:</span> {downloadedSize} / {totalSize}
+                  
+                  <Progress value={downloadProgress} className="h-3 w-full" />
+                  
+                  <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground mt-2">
+                    <div>
+                      <span className="font-medium">Velocidade:</span> {downloadSpeed}
+                    </div>
+                    <div>
+                      <span className="font-medium">Tempo restante:</span> {estimatedTime}
+                    </div>
+                    <div className="col-span-2">
+                      <span className="font-medium">Modelo:</span> {models.find(m => m.id === downloadingModelId)?.name || "Desconhecido"}
+                    </div>
                   </div>
-                  <div>
-                    <span className="font-medium">Tempo restante:</span> {estimatedTime}
-                  </div>
-                  <div>
-                    <span className="font-medium">Modelo:</span> {models.find(m => m.id === downloadingModelId)?.name || "Desconhecido"}
-                  </div>
+                  
+                  <Alert variant="default" className="mt-4 py-2">
+                    <AlertTitle className="text-sm">Download em andamento</AlertTitle>
+                    <AlertDescription className="text-xs flex items-center">
+                      <ExternalLink className="h-3 w-3 mr-1 inline-block" />
+                      Baixando de alphacephei.com (servidor oficial VOSK)
+                    </AlertDescription>
+                  </Alert>
+                  
+                  {downloadingModelId && downloadProgress < 95 && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={cancelDownload} 
+                      className="w-full mt-4"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Cancelar Download
+                    </Button>
+                  )}
                 </div>
-                
-                <Alert variant="info" className="mt-2 py-2">
-                  <AlertTitle className="text-xs">Download em andamento</AlertTitle>
-                  <AlertDescription className="text-xs flex items-center">
-                    <ExternalLink className="h-3 w-3 mr-1 inline-block" />
-                    Baixando de alphacephei.com (servidor oficial VOSK)
-                  </AlertDescription>
-                </Alert>
               </div>
-              
-              {downloadingModelId && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={cancelDownload} 
-                  className="w-full"
-                  disabled={downloadProgress > 95}
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Cancelar Download
-                </Button>
-              )}
             </div>
           )}
 
+          {/* Models list section */}
           <div className="space-y-2">
             <h3 className="text-sm font-medium">Modelos Disponíveis</h3>
             <div className="space-y-4 mt-2 max-h-[50vh] overflow-y-auto pr-1">
