@@ -24,8 +24,6 @@ export const speechToTextService = {
     // Convert to two-letter code for ElevenLabs API
     const languageCode = currentLanguage.substring(0, 2);
     
-    console.log(`Transcribing audio with ElevenLabs in language: ${languageCode}`);
-    
     // Create form data with the audio blob
     const formData = new FormData();
     formData.append('audio', audioBlob, 'audio.wav');
