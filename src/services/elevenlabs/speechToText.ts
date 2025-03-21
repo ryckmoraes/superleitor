@@ -3,6 +3,7 @@
 import { ELEVENLABS_API_URL } from './config';
 import { keyManagement } from './keyManagement';
 import { voskService } from '../voskService';
+import { voskModelsService } from '../voskModelsService';
 
 /**
  * Service for transcribing audio using ElevenLabs
@@ -16,9 +17,9 @@ export const speechToTextService = {
       throw new Error("ElevenLabs API key not set");
     }
     
-    // Get the current language code
+    // Get the current language code from the voskModelsService
     const currentLanguage = voskService.isVoskWorking() 
-      ? voskService.getCurrentLanguage() 
+      ? voskModelsService.getCurrentLanguage() 
       : 'pt-BR';
     
     // Convert to two-letter code for ElevenLabs API

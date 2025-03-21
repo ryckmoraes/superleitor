@@ -110,6 +110,8 @@ class VoskModelsService {
     }
   ];
 
+  private activeDownloads: Map<string, { controller: AbortController, promise: Promise<boolean> }> = new Map();
+
   public getAvailableModels(): VoskModel[] {
     // Verificar quais modelos já estão instalados no IndexedDB
     this.checkInstalledModels();
@@ -119,6 +121,11 @@ class VoskModelsService {
   public getCurrentModel(): VoskModel | undefined {
     const currentModelId = localStorage.getItem('vosk_current_model') || 'pt-br-small';
     return this.models.find(model => model.id === currentModelId);
+  }
+
+  public getCurrentLanguage(): string {
+    const currentModel = this.getCurrentModel();
+    return currentModel ? currentModel.language : 'pt-BR';
   }
 
   public setCurrentModel(modelId: string): void {
@@ -144,8 +151,25 @@ class VoskModelsService {
     }
   }
 
+  public isModelDownloading(modelId: string): boolean {
+    return this.activeDownloads.has(modelId);
+  }
+
+  public abortDownload(modelId: string): void {
+    const download = this.activeDownloads.get(modelId);
+    if (download) {
+      download.controller.abort();
+      this.activeDownloads.delete(modelId);
+    }
+  }
+
   public async downloadModel(modelId: string, progressCallback?: (progress: number) => void): Promise<boolean> {
     try {
+      // If already downloading, return the existing promise
+      if (this.activeDownloads.has(modelId)) {
+        return this.activeDownloads.get(modelId)!.promise;
+      }
+
       const model = this.models.find(m => m.id === modelId);
       if (!model) {
         throw new Error(`Modelo com ID ${modelId} não encontrado`);
@@ -156,29 +180,94 @@ class VoskModelsService {
         return true;
       }
 
-      // Simulação de download (em uma implementação real, seria feito o download do arquivo ZIP)
-      console.log(`Iniciando download do modelo ${model.name} de ${model.url}`);
-      
-      // Simulação do progresso do download
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += 5;
-        if (progressCallback) progressCallback(progress);
-        
-        if (progress >= 100) {
-          clearInterval(interval);
-          
-          // Marcar como instalado
-          this.markModelAsInstalled(modelId);
-          
-          console.log(`Download do modelo ${model.name} concluído`);
-        }
-      }, 500);
+      // Create an abort controller for cancellation
+      const controller = new AbortController();
+      const signal = controller.signal;
 
-      return true;
+      // Setup progress tracking
+      const downloadPromise = this.performModelDownload(model, signal, progressCallback);
+      
+      // Store the download in active downloads
+      this.activeDownloads.set(modelId, { controller, promise: downloadPromise });
+
+      try {
+        const result = await downloadPromise;
+        return result;
+      } finally {
+        // Clean up when download completes or fails
+        this.activeDownloads.delete(modelId);
+      }
     } catch (error) {
       console.error('Erro ao baixar modelo:', error);
       return false;
+    }
+  }
+
+  private async performModelDownload(model: VoskModel, signal: AbortSignal, progressCallback?: (progress: number) => void): Promise<boolean> {
+    try {
+      console.log(`Iniciando download do modelo ${model.name} de ${model.url}`);
+      
+      // Fetch the file with progress reporting
+      const response = await fetch(model.url, { signal });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const contentLength = Number(response.headers.get('Content-Length')) || 0;
+      const reader = response.body?.getReader();
+      
+      if (!reader) {
+        throw new Error('Não foi possível ler o arquivo');
+      }
+      
+      let receivedLength = 0;
+      const chunks: Uint8Array[] = [];
+      
+      // Process the data chunks
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) {
+          break;
+        }
+        
+        chunks.push(value);
+        receivedLength += value.length;
+        
+        // Calculate and report progress
+        let progress = contentLength ? Math.round((receivedLength / contentLength) * 100) : 0;
+        if (progressCallback) {
+          progressCallback(progress);
+        }
+      }
+      
+      // Combine chunks into a single Uint8Array
+      const allChunks = new Uint8Array(receivedLength);
+      let position = 0;
+      for (const chunk of chunks) {
+        allChunks.set(chunk, position);
+        position += chunk.length;
+      }
+      
+      // Create a blob from the array
+      const blob = new Blob([allChunks]);
+      
+      // For demo purposes, we'll just store a flag in localStorage
+      // In a real implementation, this would extract and store the model files
+      console.log(`Download do modelo ${model.name} concluído (${receivedLength} bytes)`);
+      
+      // Mark as installed
+      this.markModelAsInstalled(model.id);
+      
+      return true;
+    } catch (error) {
+      if (signal.aborted) {
+        console.log(`Download do modelo ${model.name} cancelado pelo usuário`);
+        return false;
+      }
+      console.error('Erro durante o download do modelo:', error);
+      throw error;
     }
   }
 
@@ -193,15 +282,6 @@ class VoskModelsService {
     if (!installedModels.includes(modelId)) {
       installedModels.push(modelId);
       localStorage.setItem('vosk_installed_models', JSON.stringify(installedModels));
-    }
-    
-    // Se este for o primeiro modelo do idioma a ser instalado, defini-lo como atual
-    const model = this.models.find(m => m.id === modelId);
-    if (model) {
-      const currentModel = this.getCurrentModel();
-      if (!currentModel || currentModel.language !== model.language) {
-        this.setCurrentModel(modelId);
-      }
     }
   }
 }

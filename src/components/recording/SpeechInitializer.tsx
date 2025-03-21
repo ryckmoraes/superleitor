@@ -60,17 +60,16 @@ const SpeechInitializer = () => {
           
           if (initialized) {
             const language = currentModel?.language || 'pt-BR';
-            const languageName = language === 'pt-BR' ? 'Português (Brasil)' :
-                                language === 'en-US' ? 'English (US)' :
-                                language === 'es-ES' ? 'Español' :
-                                language === 'fr-FR' ? 'Français' :
-                                language === 'de-DE' ? 'Deutsch' :
-                                language === 'it-IT' ? 'Italiano' :
-                                language === 'ru-RU' ? 'Русский' :
-                                language === 'zh-CN' ? '中文' :
-                                language === 'ja-JP' ? '日本語' : 'Desconhecido';
+            const languageName = getLanguageName(language);
                                 
             console.log(`VOSK está disponível para reconhecimento offline - Idioma: ${languageName}`);
+            
+            // Notify user about the active language
+            showToastOnly(
+              "Reconhecimento de fala", 
+              `Usando reconhecimento de fala em ${languageName}`,
+              "default"
+            );
           } else {
             console.warn("VOSK não está totalmente funcional, usando alternativas");
             showToastOnly(
@@ -95,6 +94,22 @@ const SpeechInitializer = () => {
     
     initializeSpeech();
   }, [lastModelChange]);
+
+  // Helper function to get language name
+  const getLanguageName = (language: string): string => {
+    switch (language) {
+      case 'pt-BR': return 'Português (Brasil)';
+      case 'en-US': return 'English (US)';
+      case 'es-ES': return 'Español';
+      case 'fr-FR': return 'Français';
+      case 'de-DE': return 'Deutsch';
+      case 'it-IT': return 'Italiano';
+      case 'ru-RU': return 'Русский';
+      case 'zh-CN': return '中文';
+      case 'ja-JP': return '日本語';
+      default: return 'Desconhecido';
+    }
+  };
 
   return null; // Este é um componente de configuração, não visual
 };

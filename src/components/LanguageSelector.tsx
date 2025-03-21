@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Globe, Download, Check, X } from "lucide-react";
+import { Globe, Download, Check, X, Save, RotateCw } from "lucide-react";
 import { voskModelsService } from "@/services/voskModelsService";
 import { toast } from "@/components/ui/use-toast";
 import { showToastOnly } from "@/services/notificationService";
@@ -32,35 +32,68 @@ interface LanguageSelectorProps {
 
 const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
   const [models, setModels] = useState(voskModelsService.getAvailableModels());
-  const [currentModelId, setCurrentModelId] = useState(voskModelsService.getCurrentModel()?.id || "pt-br-small");
+  const [selectedModelId, setSelectedModelId] = useState<string>(voskModelsService.getCurrentModel()?.id || "pt-br-small");
+  const [currentModelId, setCurrentModelId] = useState<string>(voskModelsService.getCurrentModel()?.id || "pt-br-small");
   const [downloadingModelId, setDownloadingModelId] = useState<string | null>(null);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
 
   // Refresh models when drawer opens
   useEffect(() => {
     if (isOpen) {
       setModels(voskModelsService.getAvailableModels());
-      setCurrentModelId(voskModelsService.getCurrentModel()?.id || "pt-br-small");
+      const currentModel = voskModelsService.getCurrentModel();
+      setCurrentModelId(currentModel?.id || "pt-br-small");
+      setSelectedModelId(currentModel?.id || "pt-br-small");
+      setHasChanges(false);
     }
   }, [isOpen]);
 
-  const handleLanguageChange = async (modelId: string) => {
-    if (isProcessing) return;
+  // Check for active downloads
+  useEffect(() => {
+    const checkDownloads = () => {
+      models.forEach(model => {
+        if (voskModelsService.isModelDownloading(model.id) && downloadingModelId !== model.id) {
+          setDownloadingModelId(model.id);
+        }
+      });
+    };
+    
+    if (isOpen) {
+      checkDownloads();
+      const interval = setInterval(checkDownloads, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [isOpen, models, downloadingModelId]);
+
+  const handleLanguageSelection = (modelId: string) => {
+    if (isProcessing || downloadingModelId) return;
     
     const model = models.find(m => m.id === modelId);
+    if (!model) return;
+    
+    setSelectedModelId(modelId);
+    setHasChanges(modelId !== currentModelId);
+  };
+
+  const handleSaveLanguage = async () => {
+    if (isProcessing || downloadingModelId) return;
+    if (!hasChanges) return;
+    
+    const model = models.find(m => m.id === selectedModelId);
     if (!model) return;
     
     setIsProcessing(true);
     
     try {
       if (model.installed) {
-        // Se o modelo já está instalado, apenas ative-o
-        voskModelsService.setCurrentModel(modelId);
-        setCurrentModelId(modelId);
+        // Apply the selected language
+        voskModelsService.setCurrentModel(selectedModelId);
+        setCurrentModelId(selectedModelId);
         
         toast({
-          title: "Idioma alterado",
+          title: "Idioma salvo",
           description: `O idioma foi alterado para ${model.name}`,
         });
         
@@ -68,13 +101,16 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         await voskService.cleanup();
         await voskService.initialize().catch(console.error);
         
+        // Update UI language based on selection
+        updateUILanguage(model.language);
+        
         // Fechar a janela após completar a alteração
         setTimeout(() => {
           onClose();
         }, 1000);
       } else {
         // Se não está instalado, inicie o download
-        handleDownloadModel(modelId);
+        handleDownloadModel(selectedModelId);
       }
     } catch (error) {
       console.error("Erro ao mudar idioma:", error);
@@ -85,10 +121,39 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
       });
     } finally {
       setIsProcessing(false);
+      setHasChanges(false);
     }
   };
 
+  const updateUILanguage = (language: string) => {
+    // Determine text based on language
+    const welcomeMessage = language.startsWith('pt') 
+      ? "Idioma alterado para Português!"
+      : language.startsWith('en')
+        ? "Language changed to English!"
+        : language.startsWith('es')
+          ? "¡Idioma cambiado a Español!"
+          : language.startsWith('fr')
+            ? "Langue changée en Français!"
+            : language.startsWith('de')
+              ? "Sprache auf Deutsch geändert!"
+              : "Language changed!";
+    
+    // Speak the confirmation in the selected language
+    speakNaturally(welcomeMessage, true);
+  };
+
   const handleDownloadModel = async (modelId: string) => {
+    if (downloadingModelId) {
+      // Only allow one download at a time
+      showToastOnly(
+        "Download em andamento",
+        "Aguarde o download atual terminar antes de iniciar outro.",
+        "default"
+      );
+      return;
+    }
+    
     const model = models.find(m => m.id === modelId);
     if (!model) return;
     
@@ -108,27 +173,30 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
       );
       
       if (success) {
-        // Atualizar a lista de modelos
+        // Refresh models list
         setModels(voskModelsService.getAvailableModels());
-        setCurrentModelId(modelId);
+        
+        // Apply the language if it was selected
+        if (selectedModelId === modelId) {
+          voskModelsService.setCurrentModel(modelId);
+          setCurrentModelId(modelId);
+          setHasChanges(false);
+          
+          // Update UI language
+          const updatedModel = models.find(m => m.id === modelId);
+          if (updatedModel) {
+            updateUILanguage(updatedModel.language);
+          }
+          
+          // Reiniciar o serviço VOSK com o novo modelo
+          await voskService.cleanup();
+          await voskService.initialize().catch(console.error);
+        }
         
         toast({
           title: "Download concluído",
           description: `O modelo para ${model.name} foi instalado com sucesso!`,
         });
-        
-        // Falar a confirmação no idioma instalado
-        const message = model.language.startsWith('pt') 
-          ? "Modelo de idioma instalado com sucesso!" 
-          : model.language.startsWith('en')
-            ? "Language model successfully installed!"
-            : "¡Modelo de idioma instalado correctamente!";
-        
-        speakNaturally(message, true);
-        
-        // Reiniciar o serviço VOSK com o novo modelo
-        await voskService.cleanup();
-        await voskService.initialize().catch(console.error);
         
         // Fechar a janela após completar o download
         setTimeout(() => {
@@ -153,33 +221,64 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
     }
   };
 
+  const cancelDownload = () => {
+    if (downloadingModelId) {
+      voskModelsService.abortDownload(downloadingModelId);
+      setDownloadingModelId(null);
+      setDownloadProgress(0);
+      showToastOnly(
+        "Download cancelado",
+        "O download do modelo de idioma foi cancelado.",
+        "default"
+      );
+    }
+  };
+
   // Handle close with pending operations
   const handleClose = () => {
-    if (isProcessing || downloadingModelId) {
+    if (isProcessing) {
       toast({
         title: "Operação em andamento",
         description: "Por favor, aguarde a conclusão da operação atual.",
       });
       return;
     }
+    
+    if (downloadingModelId) {
+      toast({
+        title: "Download em andamento",
+        description: "Deseja cancelar o download antes de sair?",
+      });
+      return;
+    }
+    
     onClose();
   };
 
   return (
     <Drawer open={isOpen} onOpenChange={handleClose}>
       <DrawerContent className="max-h-[85vh]">
-        <DrawerHeader>
+        <DrawerHeader className="flex justify-between items-center">
           <DrawerTitle className="flex items-center gap-2">
             <Globe className="h-5 w-5" /> Selecionar Idioma
           </DrawerTitle>
+          <Button 
+            size="sm" 
+            onClick={handleSaveLanguage}
+            disabled={!hasChanges || isProcessing || !!downloadingModelId || !models.find(m => m.id === selectedModelId)?.installed}
+            className="mr-2"
+          >
+            <Save className="h-4 w-4 mr-2" />
+            Salvar
+          </Button>
         </DrawerHeader>
         
         <div className="p-4 space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Idioma Atual</label>
+            <label className="text-sm font-medium">Idioma Selecionado</label>
             <Select 
-              value={currentModelId} 
-              onValueChange={handleLanguageChange}
+              value={selectedModelId} 
+              onValueChange={handleLanguageSelection}
               disabled={!!downloadingModelId || isProcessing}
             >
               <SelectTrigger>
@@ -200,25 +299,41 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
                 ))}
               </SelectContent>
             </Select>
+            {hasChanges && !models.find(m => m.id === selectedModelId)?.installed && (
+              <p className="text-xs text-amber-500 mt-1">
+                Este modelo precisa ser baixado antes de ser usado.
+              </p>
+            )}
           </div>
 
           {downloadingModelId && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Baixando modelo...</span>
+                <span className="text-sm font-medium">
+                  Baixando {models.find(m => m.id === downloadingModelId)?.name}...
+                </span>
                 <span className="text-sm">{downloadProgress}%</span>
               </div>
-              <Progress value={downloadProgress} />
+              <Progress value={downloadProgress} className="h-2" />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={cancelDownload} 
+                className="mt-2 w-full"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Cancelar Download
+              </Button>
             </div>
           )}
 
           <div className="space-y-2">
             <h3 className="text-sm font-medium">Modelos Disponíveis</h3>
-            <div className="space-y-4 mt-2">
+            <div className="space-y-4 mt-2 max-h-[50vh] overflow-y-auto pr-1">
               {models.map(model => (
                 <div 
                   key={model.id} 
-                  className="flex items-center justify-between border rounded-md p-3"
+                  className={`flex items-center justify-between border rounded-md p-3 ${selectedModelId === model.id ? 'border-primary' : ''}`}
                 >
                   <div>
                     <p className="font-medium">{model.name}</p>
@@ -227,23 +342,23 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
                   
                   {downloadingModelId === model.id ? (
                     <Button variant="outline" size="sm" disabled>
-                      <Download className="h-4 w-4 mr-2 animate-pulse" />
-                      Baixando...
+                      <RotateCw className="h-4 w-4 mr-2 animate-spin" />
+                      {downloadProgress}%
                     </Button>
                   ) : model.installed ? (
                     <Button 
-                      variant="outline" 
+                      variant={currentModelId === model.id ? "default" : "outline"}
                       size="sm" 
-                      onClick={() => handleLanguageChange(model.id)}
-                      disabled={currentModelId === model.id || isProcessing}
+                      onClick={() => handleLanguageSelection(model.id)}
+                      disabled={isProcessing}
                     >
                       {currentModelId === model.id ? (
                         <>
-                          <Check className="h-4 w-4 mr-2 text-green-500" />
+                          <Check className="h-4 w-4 mr-2" />
                           Ativo
                         </>
                       ) : (
-                        "Ativar"
+                        "Selecionar"
                       )}
                     </Button>
                   ) : (
