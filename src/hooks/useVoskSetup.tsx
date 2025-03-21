@@ -15,11 +15,11 @@ export const useVoskSetup = () => {
     const checkModelChanges = () => {
       const modelChangedAt = localStorage.getItem('vosk_model_changed_at');
       if (modelChangedAt && modelChangedAt !== lastModelChange) {
+        console.log("Language model change detected in useVoskSetup:", modelChangedAt, "vs", lastModelChange);
         setLastModelChange(modelChangedAt);
         // Force reinitialization on model change
         setIsInitialized(false);
         setIsLoading(true);
-        console.log("Language model change detected in useVoskSetup");
       }
     };
     
@@ -88,6 +88,7 @@ export const useVoskSetup = () => {
     isInitialized,
     isLoading,
     error,
-    isVoskWorking: voskService.isVoskWorking()
+    isVoskWorking: voskService.isVoskWorking(),
+    lastModelChange
   };
 };

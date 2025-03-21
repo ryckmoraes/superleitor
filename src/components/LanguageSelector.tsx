@@ -44,15 +44,32 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [downloadStatus, setDownloadStatus] = useState<string>("");
+  const [forceShowDownload, setForceShowDownload] = useState(false);
+
+  // Make sure the download section is visible if a model is being downloaded
+  useEffect(() => {
+    if (downloadingModelId) {
+      setForceShowDownload(true);
+    }
+  }, [downloadingModelId]);
 
   // Refresh models when drawer opens
   useEffect(() => {
     if (isOpen) {
+      console.log("Language selector opened, refreshing models");
       setModels(voskModelsService.getAvailableModels());
       const currentModel = voskModelsService.getCurrentModel();
       setCurrentModelId(currentModel?.id || "pt-br-small");
       setSelectedModelId(currentModel?.id || "pt-br-small");
       setHasChanges(false);
+      
+      // Check for active downloads
+      const activeDownloads = models.filter(model => voskModelsService.isModelDownloading(model.id));
+      if (activeDownloads.length > 0) {
+        console.log("Active download detected for model:", activeDownloads[0].id);
+        setDownloadingModelId(activeDownloads[0].id);
+        setForceShowDownload(true);
+      }
     }
   }, [isOpen]);
 
@@ -62,6 +79,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
       models.forEach(model => {
         if (voskModelsService.isModelDownloading(model.id) && downloadingModelId !== model.id) {
           setDownloadingModelId(model.id);
+          setForceShowDownload(true);
           console.log("Active download detected for model:", model.id);
         }
       });
@@ -195,6 +213,9 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
     setDownloadedSize("0 KB");
     setTotalSize(model.size);
     setEstimatedTime("calculando...");
+    setForceShowDownload(true);
+    
+    console.log("Starting download for model:", model.name, "with ID:", modelId);
     
     showToastOnly(
       "Download iniciado",
@@ -311,6 +332,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
     } finally {
       setTimeout(() => {
         setDownloadingModelId(null);
+        setForceShowDownload(false);
       }, 1000);
     }
   };
@@ -324,6 +346,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         setDownloadingModelId(null);
         setDownloadProgress(0);
         setDownloadStatus("");
+        setForceShowDownload(false);
       }, 500);
       
       showToastOnly(
@@ -406,12 +429,12 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
             )}
           </div>
 
-          {downloadingModelId && (
+          {(downloadingModelId || forceShowDownload) && (
             <div className="space-y-4 border rounded-lg p-4 bg-muted/30">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">
-                    {downloadStatus || `Baixando ${models.find(m => m.id === downloadingModelId)?.name}...`}
+                    {downloadStatus || `Baixando ${models.find(m => m.id === downloadingModelId)?.name || "modelo"}...`}
                   </span>
                   <span className="text-sm">{downloadProgress}%</span>
                 </div>
@@ -428,7 +451,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
                     <span className="font-medium">Tempo restante:</span> {estimatedTime}
                   </div>
                   <div>
-                    <span className="font-medium">Modelo:</span> {models.find(m => m.id === downloadingModelId)?.name}
+                    <span className="font-medium">Modelo:</span> {models.find(m => m.id === downloadingModelId)?.name || "Desconhecido"}
                   </div>
                 </div>
                 
@@ -441,16 +464,18 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
                 </Alert>
               </div>
               
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={cancelDownload} 
-                className="w-full"
-                disabled={downloadProgress > 95}
-              >
-                <X className="h-4 w-4 mr-2" />
-                Cancelar Download
-              </Button>
+              {downloadingModelId && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={cancelDownload} 
+                  className="w-full"
+                  disabled={downloadProgress > 95}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Cancelar Download
+                </Button>
+              )}
             </div>
           )}
 

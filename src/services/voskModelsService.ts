@@ -140,7 +140,7 @@ class VoskModelsService {
 
   private async checkInstalledModels(): Promise<void> {
     try {
-      // Verificar modelos instalados no IndexedDB
+      // Verificar modelos instalados no localStorage
       const installedModels = JSON.parse(localStorage.getItem('vosk_installed_models') || '[]');
       
       // Atualizar o estado de instalação dos modelos
@@ -148,6 +148,8 @@ class VoskModelsService {
         ...model,
         installed: model.id === 'pt-br-small' || installedModels.includes(model.id)
       }));
+      
+      console.log("Installed models:", installedModels);
     } catch (error) {
       console.error('Erro ao verificar modelos instalados:', error);
     }
@@ -199,11 +201,12 @@ class VoskModelsService {
 
       try {
         const result = await downloadPromise;
+        console.log(`Download completed for model ${modelId}, result:`, result);
         return result;
       } finally {
         // Clean up when download completes or fails
         this.activeDownloads.delete(modelId);
-        console.log(`Download completed or failed for model ${modelId}`);
+        console.log(`Download completed or failed for model ${modelId}, removed from active downloads`);
       }
     } catch (error) {
       console.error('Erro ao baixar modelo:', error);
@@ -219,6 +222,12 @@ class VoskModelsService {
     try {
       console.log(`Iniciando download do modelo ${model.name} de ${model.url}`);
       
+      // For demo/test models with local URLs, we'll simulate a download
+      if (model.url.startsWith('/')) {
+        return await this.simulateDownload(model, signal, progressCallback);
+      }
+      
+      // Real download from remote URL
       // Fetch the file with progress reporting
       const response = await fetch(model.url, { signal });
       
@@ -227,6 +236,8 @@ class VoskModelsService {
       }
       
       const contentLength = Number(response.headers.get('Content-Length')) || this.estimateContentSize(model.size);
+      console.log(`Content length: ${contentLength} bytes`);
+      
       const reader = response.body?.getReader();
       
       if (!reader) {
@@ -238,9 +249,15 @@ class VoskModelsService {
       
       // Process the data chunks
       while (true) {
+        if (signal.aborted) {
+          console.log("Download aborted");
+          throw new Error("Download canceled");
+        }
+        
         const { done, value } = await reader.read();
         
         if (done) {
+          console.log("Download stream complete");
           break;
         }
         
@@ -249,6 +266,8 @@ class VoskModelsService {
         
         // Calculate and report progress
         let progress = contentLength ? Math.round((receivedLength / contentLength) * 100) : 0;
+        console.log(`Download progress: ${progress}%, received: ${receivedLength} bytes`);
+        
         if (progressCallback) {
           progressCallback(progress, receivedLength, contentLength);
         }
@@ -272,7 +291,7 @@ class VoskModelsService {
       console.log("Arquivo recebido:", blob.size, "bytes");
       
       // Simulate extraction process
-      await this.simulateExtraction(model);
+      await this.extractModel(model, blob);
       
       // Mark as installed
       this.markModelAsInstalled(model.id);
@@ -287,15 +306,58 @@ class VoskModelsService {
       throw error;
     }
   }
+  
+  private async simulateDownload(
+    model: VoskModel,
+    signal: AbortSignal,
+    progressCallback?: (progress: number, bytesReceived: number, totalBytes: number) => void
+  ): Promise<boolean> {
+    console.log(`Simulando download para o modelo local: ${model.name}`);
+    
+    const totalSize = this.estimateContentSize(model.size);
+    const totalSteps = 100;
+    const stepSize = totalSize / totalSteps;
+    
+    for (let step = 0; step <= totalSteps; step++) {
+      if (signal.aborted) {
+        console.log("Download simulation aborted");
+        return false;
+      }
+      
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      const progress = Math.min(Math.round((step / totalSteps) * 100), 100);
+      const bytesReceived = Math.min(step * stepSize, totalSize);
+      
+      if (progressCallback) {
+        progressCallback(progress, bytesReceived, totalSize);
+      }
+    }
+    
+    console.log(`Simulação de download concluída para ${model.name}`);
+    
+    // Simulate extraction
+    await this.extractModel(model, new Blob([]));
+    
+    // Mark as installed
+    this.markModelAsInstalled(model.id);
+    
+    return true;
+  }
 
-  private async simulateExtraction(model: VoskModel): Promise<void> {
+  private async extractModel(model: VoskModel, blob: Blob): Promise<void> {
     // In a real implementation, this would extract the ZIP file and store the model in IndexedDB
+    console.log(`Extraindo modelo ${model.name}...`);
+    
+    // Simulate extraction time based on model size
+    const extractionTime = model.size.includes('GB') ? 3000 : 1500;
+    
     return new Promise(resolve => {
-      console.log(`Extraindo modelo ${model.name}...`);
       setTimeout(() => {
         console.log(`Modelo ${model.name} extraído com sucesso`);
         resolve();
-      }, 1500);
+      }, extractionTime);
     });
   }
 
@@ -327,6 +389,7 @@ class VoskModelsService {
     if (!installedModels.includes(modelId)) {
       installedModels.push(modelId);
       localStorage.setItem('vosk_installed_models', JSON.stringify(installedModels));
+      console.log(`Model ${modelId} saved to localStorage as installed`);
     }
     
     console.log(`Model ${modelId} marked as installed`);
