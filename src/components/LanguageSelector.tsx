@@ -64,6 +64,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
       setSelectedModelId(currentModel?.id || "pt-br-small");
       setHasChanges(false);
       setAutoCloseAfterDownload(false);
+      setIsProcessing(false); // Reset processing state when drawer opens
       
       // Check for active downloads
       const activeDownloads = models.filter(model => voskModelsService.isModelDownloading(model.id));
@@ -105,7 +106,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
   };
 
   const handleSaveLanguage = async () => {
-    if (isProcessing || downloadingModelId) return;
+    if (downloadingModelId) return;
     if (!hasChanges) return;
     
     const model = models.find(m => m.id === selectedModelId);
@@ -133,6 +134,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         
         // Fechar a janela após completar a alteração
         setTimeout(() => {
+          setIsProcessing(false); // Make sure to reset before closing
           onClose();
         }, 1000);
       } else {
@@ -147,9 +149,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         description: "Ocorreu um erro ao alterar o idioma.",
         variant: "destructive",
       });
-    } finally {
-      setIsProcessing(false);
-      setHasChanges(false);
+      setIsProcessing(false); // Reset processing state on error
     }
   };
 
@@ -217,6 +217,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
     setTotalSize(model.size);
     setEstimatedTime("calculando...");
     setForceShowDownload(true);
+    setIsProcessing(true);
     
     console.log("Starting download for model:", model.name, "with ID:", modelId);
     
@@ -315,6 +316,10 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         // Fechar a janela após completar o download
         if (autoCloseAfterDownload) {
           setTimeout(() => {
+            console.log("Auto-closing after download completion");
+            setIsProcessing(false);
+            setDownloadingModelId(null);
+            setForceShowDownload(false);
             onClose();
           }, 2000);
         }
@@ -325,6 +330,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
           description: "Não foi possível baixar o modelo de idioma.",
           variant: "destructive",
         });
+        setIsProcessing(false);
       }
     } catch (error) {
       console.error("Erro no download:", error);
@@ -334,14 +340,16 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         description: "Ocorreu um erro ao baixar o modelo de idioma.",
         variant: "destructive",
       });
+      setIsProcessing(false);
     } finally {
-      setTimeout(() => {
-        setDownloadingModelId(null);
-        // Don't hide the progress bar when auto-closing
-        if (!autoCloseAfterDownload) {
+      // If not auto-closing, reset the download state
+      if (!autoCloseAfterDownload) {
+        setTimeout(() => {
+          setDownloadingModelId(null);
           setForceShowDownload(false);
-        }
-      }, 1000);
+          setIsProcessing(false);
+        }, 1000);
+      }
     }
   };
 
@@ -355,6 +363,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         setDownloadProgress(0);
         setDownloadStatus("");
         setForceShowDownload(false);
+        setIsProcessing(false);
       }, 500);
       
       showToastOnly(
@@ -367,7 +376,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
 
   // Handle close with pending operations
   const handleClose = () => {
-    if (isProcessing) {
+    if (isProcessing && !autoCloseAfterDownload) {
       toast({
         title: "Operação em andamento",
         description: "Por favor, aguarde a conclusão da operação atual.",
@@ -375,7 +384,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
       return;
     }
     
-    if (downloadingModelId) {
+    if (downloadingModelId && !autoCloseAfterDownload) {
       toast({
         title: "Download em andamento",
         description: "Deseja cancelar o download antes de sair?",
@@ -550,14 +559,15 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         </div>
         
         <DrawerFooter>
-          <Button 
-            variant="outline" 
-            onClick={handleClose}
-            disabled={isProcessing}
-          >
-            <X className="h-4 w-4 mr-2" />
-            Fechar
-          </Button>
+          <DrawerClose asChild>
+            <Button 
+              variant="outline" 
+              disabled={isProcessing && !autoCloseAfterDownload}
+            >
+              <X className="h-4 w-4 mr-2" />
+              Fechar
+            </Button>
+          </DrawerClose>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
