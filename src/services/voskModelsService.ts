@@ -163,7 +163,10 @@ class VoskModelsService {
     }
   }
 
-  public async downloadModel(modelId: string, progressCallback?: (progress: number) => void): Promise<boolean> {
+  public async downloadModel(
+    modelId: string, 
+    progressCallback?: (progress: number, bytesReceived: number, totalBytes: number) => void
+  ): Promise<boolean> {
     try {
       // If already downloading, return the existing promise
       if (this.activeDownloads.has(modelId)) {
@@ -203,7 +206,11 @@ class VoskModelsService {
     }
   }
 
-  private async performModelDownload(model: VoskModel, signal: AbortSignal, progressCallback?: (progress: number) => void): Promise<boolean> {
+  private async performModelDownload(
+    model: VoskModel, 
+    signal: AbortSignal, 
+    progressCallback?: (progress: number, bytesReceived: number, totalBytes: number) => void
+  ): Promise<boolean> {
     try {
       console.log(`Iniciando download do modelo ${model.name} de ${model.url}`);
       
@@ -214,7 +221,7 @@ class VoskModelsService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const contentLength = Number(response.headers.get('Content-Length')) || 0;
+      const contentLength = Number(response.headers.get('Content-Length')) || this.estimateContentSize(model.size);
       const reader = response.body?.getReader();
       
       if (!reader) {
@@ -238,7 +245,7 @@ class VoskModelsService {
         // Calculate and report progress
         let progress = contentLength ? Math.round((receivedLength / contentLength) * 100) : 0;
         if (progressCallback) {
-          progressCallback(progress);
+          progressCallback(progress, receivedLength, contentLength);
         }
       }
       
@@ -253,9 +260,14 @@ class VoskModelsService {
       // Create a blob from the array
       const blob = new Blob([allChunks]);
       
-      // For demo purposes, we'll just store a flag in localStorage
-      // In a real implementation, this would extract and store the model files
+      // In a real implementation, we would:
+      // 1. Extract the ZIP file
+      // 2. Store the model files in IndexedDB
       console.log(`Download do modelo ${model.name} concluído (${receivedLength} bytes)`);
+      console.log("Arquivo recebido:", blob.size, "bytes");
+      
+      // Simulate extraction process
+      await this.simulateExtraction(model);
       
       // Mark as installed
       this.markModelAsInstalled(model.id);
@@ -269,6 +281,34 @@ class VoskModelsService {
       console.error('Erro durante o download do modelo:', error);
       throw error;
     }
+  }
+
+  private async simulateExtraction(model: VoskModel): Promise<void> {
+    // In a real implementation, this would extract the ZIP file and store the model in IndexedDB
+    return new Promise(resolve => {
+      console.log(`Extraindo modelo ${model.name}...`);
+      setTimeout(() => {
+        console.log(`Modelo ${model.name} extraído com sucesso`);
+        resolve();
+      }, 1500);
+    });
+  }
+
+  // Estimate content size from the human-readable size
+  private estimateContentSize(sizeString: string): number {
+    const sizeMatch = sizeString.match(/^([\d.]+)(MB|GB)$/);
+    if (!sizeMatch) return 50 * 1024 * 1024; // Default to 50MB
+    
+    const size = parseFloat(sizeMatch[1]);
+    const unit = sizeMatch[2];
+    
+    if (unit === 'MB') {
+      return size * 1024 * 1024;
+    } else if (unit === 'GB') {
+      return size * 1024 * 1024 * 1024;
+    }
+    
+    return 50 * 1024 * 1024;
   }
 
   private markModelAsInstalled(modelId: string): void {

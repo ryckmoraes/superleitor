@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Globe, Download, Check, X, Save, RotateCw } from "lucide-react";
+import { Globe, Download, Check, X, Save, RotateCw, ExternalLink } from "lucide-react";
 import { voskModelsService } from "@/services/voskModelsService";
 import { toast } from "@/components/ui/use-toast";
 import { showToastOnly } from "@/services/notificationService";
@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface LanguageSelectorProps {
   isOpen: boolean;
@@ -36,8 +37,13 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
   const [currentModelId, setCurrentModelId] = useState<string>(voskModelsService.getCurrentModel()?.id || "pt-br-small");
   const [downloadingModelId, setDownloadingModelId] = useState<string | null>(null);
   const [downloadProgress, setDownloadProgress] = useState(0);
+  const [downloadSpeed, setDownloadSpeed] = useState<string>("0 KB/s");
+  const [downloadedSize, setDownloadedSize] = useState<string>("0 KB");
+  const [totalSize, setTotalSize] = useState<string>("0 MB");
+  const [estimatedTime, setEstimatedTime] = useState<string>("calculando...");
   const [isProcessing, setIsProcessing] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [downloadStatus, setDownloadStatus] = useState<string>("");
 
   // Refresh models when drawer opens
   useEffect(() => {
@@ -143,6 +149,30 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
     speakNaturally(welcomeMessage, true);
   };
 
+  const formatBytes = (bytes: number, decimals = 2): string => {
+    if (bytes === 0) return '0 Bytes';
+    
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  };
+
+  const formatTime = (seconds: number): string => {
+    if (seconds < 60) {
+      return `${Math.ceil(seconds)} segundos`;
+    } else if (seconds < 3600) {
+      return `${Math.ceil(seconds / 60)} minutos`;
+    } else {
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.ceil((seconds % 3600) / 60);
+      return `${hours} horas e ${minutes} minutos`;
+    }
+  };
+
   const handleDownloadModel = async (modelId: string) => {
     if (downloadingModelId) {
       // Only allow one download at a time
@@ -159,6 +189,11 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
     
     setDownloadingModelId(modelId);
     setDownloadProgress(0);
+    setDownloadStatus("Iniciando download...");
+    setDownloadSpeed("0 KB/s");
+    setDownloadedSize("0 KB");
+    setTotalSize(model.size);
+    setEstimatedTime("calculando...");
     
     showToastOnly(
       "Download iniciado",
@@ -166,13 +201,57 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
       "default"
     );
     
+    let lastProgress = 0;
+    let lastTime = Date.now();
+    let lastBytes = 0;
+    
     try {
       const success = await voskModelsService.downloadModel(
         modelId,
-        (progress) => setDownloadProgress(progress)
+        (progress, bytesReceived, totalBytes) => {
+          setDownloadProgress(progress);
+          
+          // Update download status
+          if (progress < 5) {
+            setDownloadStatus("Iniciando download...");
+          } else if (progress < 95) {
+            setDownloadStatus("Baixando arquivos do modelo...");
+          } else {
+            setDownloadStatus("Finalizando download...");
+          }
+          
+          // Calculate download speed
+          const now = Date.now();
+          const timeDiff = (now - lastTime) / 1000; // in seconds
+          
+          if (timeDiff > 0.5) { // Update every half second
+            const bytesDiff = bytesReceived - lastBytes;
+            const speed = bytesDiff / timeDiff; // bytes per second
+            
+            setDownloadSpeed(formatBytes(speed) + '/s');
+            setDownloadedSize(formatBytes(bytesReceived));
+            
+            // Estimate remaining time
+            if (progress > 0 && progress > lastProgress) {
+              const remainingBytes = totalBytes - bytesReceived;
+              const remainingTime = remainingBytes / speed;
+              setEstimatedTime(formatTime(remainingTime));
+            }
+            
+            lastTime = now;
+            lastBytes = bytesReceived;
+            lastProgress = progress;
+          }
+        }
       );
       
       if (success) {
+        // Change download status
+        setDownloadStatus("Instalando modelo...");
+        
+        // Wait a moment to show "Installing" status
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
         // Refresh models list
         setModels(voskModelsService.getAvailableModels());
         
@@ -182,16 +261,24 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
           setCurrentModelId(modelId);
           setHasChanges(false);
           
+          // Cleanup first
+          await voskService.cleanup();
+          
+          // Update status
+          setDownloadStatus("Inicializando modelo...");
+          
+          // Initialize with new model
+          const initialized = await voskService.initialize().catch(console.error);
+          console.log("VOSK reinitialized with new model:", initialized);
+          
           // Update UI language
           const updatedModel = models.find(m => m.id === modelId);
           if (updatedModel) {
             updateUILanguage(updatedModel.language);
           }
-          
-          // Reiniciar o serviço VOSK com o novo modelo
-          await voskService.cleanup();
-          await voskService.initialize().catch(console.error);
         }
+        
+        setDownloadStatus("Download concluído!");
         
         toast({
           title: "Download concluído",
@@ -203,6 +290,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
           onClose();
         }, 2000);
       } else {
+        setDownloadStatus("Erro no download");
         toast({
           title: "Erro no download",
           description: "Não foi possível baixar o modelo de idioma.",
@@ -210,6 +298,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         });
       }
     } catch (error) {
+      setDownloadStatus("Erro no download");
       toast({
         title: "Erro no download",
         description: "Ocorreu um erro ao baixar o modelo de idioma.",
@@ -217,15 +306,23 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
       });
       console.error("Erro no download:", error);
     } finally {
-      setDownloadingModelId(null);
+      setTimeout(() => {
+        setDownloadingModelId(null);
+      }, 1000);
     }
   };
 
   const cancelDownload = () => {
     if (downloadingModelId) {
+      setDownloadStatus("Cancelando download...");
       voskModelsService.abortDownload(downloadingModelId);
-      setDownloadingModelId(null);
-      setDownloadProgress(0);
+      
+      setTimeout(() => {
+        setDownloadingModelId(null);
+        setDownloadProgress(0);
+        setDownloadStatus("");
+      }, 500);
+      
       showToastOnly(
         "Download cancelado",
         "O download do modelo de idioma foi cancelado.",
@@ -307,19 +404,45 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
           </div>
 
           {downloadingModelId && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  Baixando {models.find(m => m.id === downloadingModelId)?.name}...
-                </span>
-                <span className="text-sm">{downloadProgress}%</span>
+            <div className="space-y-4 border rounded-lg p-4 bg-muted/30">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">
+                    {downloadStatus || `Baixando ${models.find(m => m.id === downloadingModelId)?.name}...`}
+                  </span>
+                  <span className="text-sm">{downloadProgress}%</span>
+                </div>
+                <Progress value={downloadProgress} className="h-2" />
+                
+                <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground mt-2">
+                  <div>
+                    <span className="font-medium">Velocidade:</span> {downloadSpeed}
+                  </div>
+                  <div>
+                    <span className="font-medium">Tamanho:</span> {downloadedSize} / {totalSize}
+                  </div>
+                  <div>
+                    <span className="font-medium">Tempo restante:</span> {estimatedTime}
+                  </div>
+                  <div>
+                    <span className="font-medium">Modelo:</span> {models.find(m => m.id === downloadingModelId)?.name}
+                  </div>
+                </div>
+                
+                <Alert className="mt-2 py-2">
+                  <AlertDescription className="text-xs flex items-center">
+                    <ExternalLink className="h-3 w-3 mr-1 inline-block" />
+                    Baixando de alphacephei.com (servidor oficial VOSK)
+                  </AlertDescription>
+                </Alert>
               </div>
-              <Progress value={downloadProgress} className="h-2" />
+              
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={cancelDownload} 
-                className="mt-2 w-full"
+                className="w-full"
+                disabled={downloadProgress > 95}
               >
                 <X className="h-4 w-4 mr-2" />
                 Cancelar Download

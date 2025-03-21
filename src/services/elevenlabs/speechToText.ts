@@ -22,6 +22,8 @@ export const speechToTextService = {
       ? voskModelsService.getCurrentLanguage() 
       : 'pt-BR';
     
+    console.log("Transcribing audio with language:", currentLanguage);
+    
     // Convert to two-letter code for ElevenLabs API
     const languageCode = currentLanguage.substring(0, 2);
     
