@@ -143,8 +143,8 @@ export const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => 
       showToastOnly(
         "Erro ao alterar idioma",
         "Ocorreu um erro ao alterar o idioma.",
-        "variant: "destructive"",
-      });
+        "destructive"
+      );
       setIsProcessing(false); // Reset processing state on error
     }
   };
