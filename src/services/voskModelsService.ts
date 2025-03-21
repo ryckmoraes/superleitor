@@ -167,26 +167,29 @@ class VoskModelsService {
         return true;
       }
 
-      // Simulação de download (em uma implementação real, seria feito o download do arquivo ZIP)
+      // Para o propósito de teste, vamos simular o download mas garantir que o modelo seja marcado como instalado
       console.log(`Iniciando download do modelo ${model.name} de ${model.url}`);
       
-      // Simulação do progresso do download
+      // Simulate download with faster progress
       let progress = 0;
-      const interval = setInterval(() => {
-        progress += 5;
-        if (progressCallback) progressCallback(progress);
-        
-        if (progress >= 100) {
-          clearInterval(interval);
+      
+      return new Promise((resolve) => {
+        const interval = setInterval(() => {
+          progress += 10; // More noticeable progress increments
+          if (progressCallback) progressCallback(progress);
           
-          // Marcar como instalado
-          this.markModelAsInstalled(modelId);
-          
-          console.log(`Download do modelo ${model.name} concluído`);
-        }
-      }, 200); // Acelerando o progresso para fins de demonstração
-
-      return true;
+          if (progress >= 100) {
+            clearInterval(interval);
+            
+            // Mark as installed immediately after "download" completes
+            this.markModelAsInstalled(modelId);
+            console.log(`Download do modelo ${model.name} concluído e instalado`);
+            
+            // Resolve the promise after a short delay to allow UI updates
+            setTimeout(() => resolve(true), 500);
+          }
+        }, 300); // Faster simulation for testing
+      });
     } catch (error) {
       console.error('Erro ao baixar modelo:', error);
       return false;

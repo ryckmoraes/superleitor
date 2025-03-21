@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Globe, Download, Check, X, Save } from "lucide-react";
 import { voskModelsService } from "@/services/voskModelsService";
@@ -72,7 +73,12 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         });
       } else {
         // Se não está instalado, inicie o download
-        await handleDownloadModel(modelId);
+        console.log("Starting download for model:", modelId);
+        const success = await handleDownloadModel(modelId);
+        if (success) {
+          setCurrentModelId(modelId);
+          setChangesSaved(false);
+        }
       }
     } catch (error) {
       console.error("Erro ao mudar idioma:", error);
@@ -88,13 +94,14 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
 
   const handleDownloadModel = async (modelId: string) => {
     const model = models.find(m => m.id === modelId);
-    if (!model) return;
+    if (!model) return false;
     
     console.log("Downloading model:", model.name);
     setDownloadingModelId(modelId);
     setDownloadProgress(0);
     
     try {
+      // Iniciar download com callback de progresso
       const success = await voskModelsService.downloadModel(
         modelId,
         (progress) => {
@@ -104,22 +111,23 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
       );
       
       if (success) {
-        // Atualizar a lista de modelos
+        // Atualizar a lista de modelos após o download bem-sucedido
         const updatedModels = voskModelsService.getAvailableModels();
         setModels(updatedModels);
-        setCurrentModelId(modelId);
-        setChangesSaved(false);
         
         toast({
           title: "Download concluído",
           description: `O modelo para ${model.name} foi instalado com sucesso! Clique em Salvar para confirmar.`,
         });
+        
+        return true;
       } else {
         toast({
           title: "Erro no download",
           description: "Não foi possível baixar o modelo de idioma.",
           variant: "destructive",
         });
+        return false;
       }
     } catch (error) {
       toast({
@@ -128,6 +136,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         variant: "destructive",
       });
       console.error("Erro no download:", error);
+      return false;
     } finally {
       setDownloadingModelId(null);
     }
