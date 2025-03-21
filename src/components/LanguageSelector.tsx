@@ -1,23 +1,71 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { voskModelsService } from "@/services/voskModelsService";
-import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { showToastOnly } from "@/services/notificationService";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "@/components/ui/use-toast";
-import { formatFileSize, formatTimeRemaining } from "@/utils/formatUtils";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { X, Globe, Check, Download, ArrowLeft, RotateCcw, Flag } from "lucide-react";
+import { X, Globe, Check, Download, RotateCcw, Flag } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
+// Helper functions for formatting
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return "0 Bytes";
+  
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+};
+
+const formatTimeRemaining = (seconds: number): string => {
+  if (!seconds || seconds <= 0) return "calculando...";
+  
+  if (seconds < 60) {
+    return `${Math.ceil(seconds)} segundos`;
+  } else if (seconds < 3600) {
+    return `${Math.ceil(seconds / 60)} minutos`;
+  } else {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.ceil((seconds % 3600) / 60);
+    return `${hours}h ${minutes}m`;
+  }
+};
+
 interface LanguageSelectorProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+interface DownloadProgress {
+  percentage: number;
+  downloaded: number;
+  total: number;
+  speed?: number;
+  eta?: number;
+}
+
+// Extend the VoskModelsService for TypeScript
+interface VoskModelServiceExt {
+  getAvailableModels: () => any[];
+  getCurrentModel: () => {id: string} | null;
+  isModelDownloading: (modelId: string) => boolean;
+  setCurrentModel: (modelId: string) => Promise<{success: boolean, error?: string}>;
+  isModelDownloaded?: (modelId: string) => boolean;
+  cancelModelDownload?: (modelId: string) => void;
+  updateModelDownloadProgress?: (modelId: string, progress: DownloadProgress) => void;
+  getModelDownloadProgress?: (modelId: string) => DownloadProgress | null;
+  completeModelDownload?: (modelId: string) => Promise<{success: boolean, error?: string}>;
+  deleteAllModels?: () => void;
+}
+
+// Type assertion for the service to work with our code
+const voskService = voskModelsService as unknown as VoskModelServiceExt;
 
 export const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
   const [models, setModels] = useState<any[]>([]);
@@ -38,8 +86,8 @@ export const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => 
   useEffect(() => {
     if (isOpen) {
       // Reset states when drawer opens
-      const availableModels = voskModelsService.getAvailableModels();
-      const currentModel = voskModelsService.getCurrentModel();
+      const availableModels = voskService.getAvailableModels();
+      const currentModel = voskService.getCurrentModel();
       
       setModels(availableModels);
       setSelectedModelId(currentModel?.id || "pt-br-small");
@@ -48,18 +96,20 @@ export const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => 
       setIsProcessing(false); // Reset processing state when drawer opens
       
       // Check for active downloads
-      const activeDownloads = models.filter(model => voskModelsService.isModelDownloading(model.id));
+      const activeDownloads = models.filter(model => voskService.isModelDownloading(model.id));
       if (activeDownloads.length > 0) {
         const downloadingModel = activeDownloads[0];
         setDownloadingModelId(downloadingModel.id);
         setForceShowDownload(true);
         
         // Get current progress
-        const progress = voskModelsService.getModelDownloadProgress(downloadingModel.id);
-        if (progress) {
-          setDownloadProgress(progress.percentage || 0);
-          setDownloadedSize(progress.downloaded || 0);
-          setTotalSize(progress.total || downloadingModel.size);
+        if (voskService.getModelDownloadProgress) {
+          const progress = voskService.getModelDownloadProgress(downloadingModel.id);
+          if (progress) {
+            setDownloadProgress(progress.percentage || 0);
+            setDownloadedSize(progress.downloaded || 0);
+            setTotalSize(progress.total || downloadingModel.size);
+          }
         }
       }
     }
@@ -68,8 +118,8 @@ export const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => 
   // Process model downloads in background
   useEffect(() => {
     const checkDownloadProgress = () => {
-      if (downloadingModelId) {
-        const progress = voskModelsService.getModelDownloadProgress(downloadingModelId);
+      if (downloadingModelId && voskService.getModelDownloadProgress) {
+        const progress = voskService.getModelDownloadProgress(downloadingModelId);
         if (progress) {
           setDownloadProgress(progress.percentage || 0);
           setDownloadedSize(progress.downloaded || 0);
@@ -105,7 +155,9 @@ export const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => 
     
     try {
       // Verificar se o modelo está disponível ou precisa ser baixado
-      const isModelDownloaded = voskModelsService.isModelDownloaded(model.id);
+      const isModelDownloaded = voskService.isModelDownloaded ? 
+        voskService.isModelDownloaded(model.id) : 
+        false;
       
       if (!isModelDownloaded) {
         setAutoCloseAfterDownload(true);
@@ -114,7 +166,7 @@ export const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => 
       }
       
       // Aplicar a mudança de idioma
-      const result = await voskModelsService.setCurrentModel(model.id);
+      const result = await voskService.setCurrentModel(model.id);
       
       if (result.success) {
         localStorage.setItem('vosk_model_changed_at', Date.now().toString());
@@ -168,7 +220,7 @@ export const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => 
     if (!model) return;
     
     // Já está baixado
-    if (voskModelsService.isModelDownloaded(modelId)) {
+    if (voskService.isModelDownloaded && voskService.isModelDownloaded(modelId)) {
       showToastOnly(
         "Modelo já disponível",
         `O modelo ${model.name} já está disponível no dispositivo.`,
@@ -212,7 +264,7 @@ export const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => 
       
       // Função para simular progresso de download (para fins de demonstração)
       const simulateDownload = (totalSize: number) => {
-        return new Promise<void>((resolve, reject) => {
+        return new Promise<void>((resolve) => {
           console.log("Simulating download for:", model.name);
           
           let downloadedBytes = 0;
@@ -228,13 +280,21 @@ export const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => 
             const percentage = Math.min(Math.floor((downloadedBytes / totalBytes) * 100), 100);
             
             // Atualizar progresso
-            voskModelsService.updateModelDownloadProgress(modelId, {
-              percentage,
-              downloaded: downloadedBytes,
-              total: totalBytes,
-              speed: downloadRate,
-              eta: (totalBytes - downloadedBytes) / downloadRate
-            });
+            if (voskService.updateModelDownloadProgress) {
+              voskService.updateModelDownloadProgress(modelId, {
+                percentage,
+                downloaded: downloadedBytes,
+                total: totalBytes,
+                speed: downloadRate,
+                eta: (totalBytes - downloadedBytes) / downloadRate
+              });
+            }
+            
+            // Update UI directly as well
+            setDownloadProgress(percentage);
+            setDownloadedSize(downloadedBytes);
+            setDownloadSpeed(formatFileSize(downloadRate) + "/s");
+            setEstimatedTime(formatTimeRemaining((totalBytes - downloadedBytes) / downloadRate));
             
             // Terminar quando concluído
             if (downloadedBytes >= totalBytes) {
@@ -299,13 +359,22 @@ export const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => 
             
             // Atualizar progresso
             const percentage = Math.floor((downloadedBytes / totalBytes) * 100);
-            voskModelsService.updateModelDownloadProgress(modelId, {
-              percentage,
-              downloaded: downloadedBytes,
-              total: totalBytes,
-              speed,
-              eta
-            });
+            
+            if (voskService.updateModelDownloadProgress) {
+              voskService.updateModelDownloadProgress(modelId, {
+                percentage,
+                downloaded: downloadedBytes,
+                total: totalBytes,
+                speed,
+                eta
+              });
+            }
+            
+            // Update UI directly as well
+            setDownloadProgress(percentage);
+            setDownloadedSize(downloadedBytes);
+            setDownloadSpeed(formatFileSize(speed) + "/s");
+            setEstimatedTime(formatTimeRemaining(eta));
             
             // Atualizar referências para o próximo cálculo
             lastTime = now;
@@ -314,13 +383,19 @@ export const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => 
         }
         
         // Finalizar com 100%
-        voskModelsService.updateModelDownloadProgress(modelId, {
-          percentage: 100,
-          downloaded: totalBytes,
-          total: totalBytes,
-          speed: 0,
-          eta: 0
-        });
+        if (voskService.updateModelDownloadProgress) {
+          voskService.updateModelDownloadProgress(modelId, {
+            percentage: 100,
+            downloaded: totalBytes,
+            total: totalBytes,
+            speed: 0,
+            eta: 0
+          });
+        }
+        
+        // Update UI directly for final state
+        setDownloadProgress(100);
+        setDownloadedSize(totalBytes);
       };
       
       setDownloadStatus("Iniciando download...");
@@ -336,12 +411,17 @@ export const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => 
       setDownloadStatus("Concluindo instalação...");
       
       // Marcar download como concluído
-      const result = await voskModelsService.completeModelDownload(modelId);
+      let downloadSuccess = true;
       
-      if (result.success) {
+      if (voskService.completeModelDownload) {
+        const result = await voskService.completeModelDownload(modelId);
+        downloadSuccess = result.success;
+      }
+      
+      if (downloadSuccess) {
         // Set as current model if it was auto-close download
         if (autoCloseAfterDownload) {
-          const setResult = await voskModelsService.setCurrentModel(modelId);
+          const setResult = await voskService.setCurrentModel(modelId);
           if (setResult.success) {
             localStorage.setItem('vosk_model_changed_at', Date.now().toString());
           }
@@ -400,7 +480,9 @@ export const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => 
 
   const handleCancelDownload = () => {
     if (downloadingModelId) {
-      voskModelsService.cancelModelDownload(downloadingModelId);
+      if (voskService.cancelModelDownload) {
+        voskService.cancelModelDownload(downloadingModelId);
+      }
       setDownloadingModelId(null);
       
       setTimeout(() => {
@@ -441,7 +523,7 @@ export const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => 
   
   // Check if model is available offline
   const isModelOfflineAvailable = (modelId: string) => {
-    return voskModelsService.isModelDownloaded(modelId);
+    return voskService.isModelDownloaded ? voskService.isModelDownloaded(modelId) : false;
   };
   
   return (
@@ -458,7 +540,6 @@ export const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => 
         </DrawerHeader>
         
         <div className="px-4 py-2 relative">
-          {/* Indicador de progresso centralizado quando em download */}
           {(downloadingModelId || forceShowDownload) && (
             <div className="fixed inset-0 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm z-50">
               <div className="w-4/5 max-w-md p-6 bg-card border rounded-lg shadow-lg">
@@ -569,8 +650,8 @@ export const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => 
             <Button
               variant="outline"
               onClick={() => {
-                if (voskModelsService.deleteAllModels) {
-                  voskModelsService.deleteAllModels();
+                if (voskService.deleteAllModels) {
+                  voskService.deleteAllModels();
                   toast({
                     title: "Pacotes removidos",
                     description: "Todos os pacotes de idioma foram removidos.",
