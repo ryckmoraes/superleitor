@@ -8,6 +8,7 @@ import Settings from "./Settings";
 import LanguageSelector from "./LanguageSelector";
 import PasswordDialog from "./PasswordDialog";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 
 interface HamburgerMenuProps {
   isDarkMode: boolean;
@@ -266,10 +267,12 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
         isDarkMode={isDarkMode}
       />
 
-      <LanguageSelector
-        isOpen={languageSelectorOpen}
-        onClose={() => setLanguageSelectorOpen(false)}
-      />
+      {/* Use Drawer component to wrap LanguageSelector instead of directly passing props */}
+      <Drawer open={languageSelectorOpen} onOpenChange={setLanguageSelectorOpen}>
+        <DrawerContent>
+          <LanguageSelector />
+        </DrawerContent>
+      </Drawer>
 
       <PasswordDialog
         isOpen={passwordDialogOpen}
