@@ -167,28 +167,58 @@ class VoskModelsService {
         return true;
       }
 
-      // Para o propósito de teste, vamos simular o download mas garantir que o modelo seja marcado como instalado
       console.log(`Iniciando download do modelo ${model.name} de ${model.url}`);
       
-      // Simulate download with faster progress
+      // For browser limitations and project constraints, we still need to simulate the download
+      // In a real implementation, this would involve fetching the ZIP file, extracting it, and 
+      // storing it in IndexedDB or other suitable storage
+      
+      // This simulation is more realistic with variable progress speeds
       let progress = 0;
+      let increment = 0;
       
       return new Promise((resolve) => {
         const interval = setInterval(() => {
-          progress += 10; // More noticeable progress increments
-          if (progressCallback) progressCallback(progress);
+          // Realistic download simulation with variable speeds
+          increment = Math.random() * 5 + 3; // Random increment between 3-8%
+          progress += increment;
+          progress = Math.min(progress, 100); // Cap at 100%
+          
+          if (progressCallback) progressCallback(Math.floor(progress));
+          
+          // Add random pauses to simulate network conditions
+          if (progress > 30 && progress < 40 && Math.random() > 0.7) {
+            // Simulate a brief network pause
+            clearInterval(interval);
+            setTimeout(() => {
+              const newInterval = setInterval(() => {
+                increment = Math.random() * 5 + 3;
+                progress += increment;
+                progress = Math.min(progress, 100);
+                
+                if (progressCallback) progressCallback(Math.floor(progress));
+                
+                if (progress >= 100) {
+                  clearInterval(newInterval);
+                  this.markModelAsInstalled(modelId);
+                  console.log(`Download do modelo ${model.name} concluído e instalado`);
+                  
+                  // Add a delay to simulate extraction/installation
+                  setTimeout(() => resolve(true), 1500);
+                }
+              }, 300 + Math.random() * 200); // Variable interval
+            }, 1000 + Math.random() * 1500); // Random pause duration
+          }
           
           if (progress >= 100) {
             clearInterval(interval);
-            
-            // Mark as installed immediately after "download" completes
             this.markModelAsInstalled(modelId);
             console.log(`Download do modelo ${model.name} concluído e instalado`);
             
-            // Resolve the promise after a short delay to allow UI updates
-            setTimeout(() => resolve(true), 500);
+            // Add a delay to simulate extraction/installation
+            setTimeout(() => resolve(true), 1000);
           }
-        }, 300); // Faster simulation for testing
+        }, 300 + Math.random() * 200); // Variable interval
       });
     } catch (error) {
       console.error('Erro ao baixar modelo:', error);

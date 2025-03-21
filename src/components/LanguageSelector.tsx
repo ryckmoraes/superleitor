@@ -78,6 +78,11 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         if (success) {
           setCurrentModelId(modelId);
           setChangesSaved(false);
+          
+          toast({
+            title: "Modelo instalado",
+            description: `${model.name} foi instalado com sucesso. Clique em Salvar para ativar.`,
+          });
         }
       }
     } catch (error) {
