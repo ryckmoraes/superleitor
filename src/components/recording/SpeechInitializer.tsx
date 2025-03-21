@@ -18,6 +18,7 @@ const SpeechInitializer = () => {
       if (modelChangedAt && modelChangedAt !== lastModelChange) {
         setLastModelChange(modelChangedAt);
         speechInitializedRef.current = false; // Force reinitialization
+        console.log("Language model change detected, forcing reinitialization");
       }
     };
     

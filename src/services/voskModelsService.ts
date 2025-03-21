@@ -134,6 +134,8 @@ class VoskModelsService {
     
     // Add a timestamp to force reinitialization
     localStorage.setItem('vosk_model_changed_at', Date.now().toString());
+    
+    console.log(`Model changed to ${modelId}, timestamp updated`);
   }
 
   private async checkInstalledModels(): Promise<void> {
@@ -160,6 +162,7 @@ class VoskModelsService {
     if (download) {
       download.controller.abort();
       this.activeDownloads.delete(modelId);
+      console.log(`Download aborted for model ${modelId}`);
     }
   }
 
@@ -192,6 +195,7 @@ class VoskModelsService {
       
       // Store the download in active downloads
       this.activeDownloads.set(modelId, { controller, promise: downloadPromise });
+      console.log(`Download started for model ${modelId}`);
 
       try {
         const result = await downloadPromise;
@@ -199,6 +203,7 @@ class VoskModelsService {
       } finally {
         // Clean up when download completes or fails
         this.activeDownloads.delete(modelId);
+        console.log(`Download completed or failed for model ${modelId}`);
       }
     } catch (error) {
       console.error('Erro ao baixar modelo:', error);
@@ -323,6 +328,8 @@ class VoskModelsService {
       installedModels.push(modelId);
       localStorage.setItem('vosk_installed_models', JSON.stringify(installedModels));
     }
+    
+    console.log(`Model ${modelId} marked as installed`);
   }
 }
 

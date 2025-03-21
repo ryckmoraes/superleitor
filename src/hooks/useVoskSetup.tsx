@@ -8,10 +8,35 @@ export const useVoskSetup = () => {
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastModelChange, setLastModelChange] = useState<string | null>(null);
   
-  // Initialize VOSK when component loads
+  // Watch for model changes
+  useEffect(() => {
+    const checkModelChanges = () => {
+      const modelChangedAt = localStorage.getItem('vosk_model_changed_at');
+      if (modelChangedAt && modelChangedAt !== lastModelChange) {
+        setLastModelChange(modelChangedAt);
+        // Force reinitialization on model change
+        setIsInitialized(false);
+        setIsLoading(true);
+        console.log("Language model change detected in useVoskSetup");
+      }
+    };
+    
+    // Initial check
+    checkModelChanges();
+    
+    // Setup interval to check for changes
+    const interval = setInterval(checkModelChanges, 1000);
+    
+    return () => clearInterval(interval);
+  }, [lastModelChange]);
+  
+  // Initialize VOSK when component loads or when model changes
   useEffect(() => {
     const setupVosk = async () => {
+      if (isInitialized && !lastModelChange) return;
+      
       try {
         setIsLoading(true);
         setError(null); // Clear any previous errors
@@ -57,7 +82,7 @@ export const useVoskSetup = () => {
       console.log("Limpando recursos do VOSK");
       voskService.cleanup();
     };
-  }, []);
+  }, [lastModelChange, isInitialized]);
   
   return {
     isInitialized,

@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface LanguageSelectorProps {
   isOpen: boolean;
@@ -62,6 +62,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
       models.forEach(model => {
         if (voskModelsService.isModelDownloading(model.id) && downloadingModelId !== model.id) {
           setDownloadingModelId(model.id);
+          console.log("Active download detected for model:", model.id);
         }
       });
     };
@@ -206,9 +207,11 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
     let lastBytes = 0;
     
     try {
+      console.log("Starting download for model:", modelId);
       const success = await voskModelsService.downloadModel(
         modelId,
         (progress, bytesReceived, totalBytes) => {
+          console.log(`Download progress: ${progress}% (${bytesReceived}/${totalBytes} bytes)`);
           setDownloadProgress(progress);
           
           // Update download status
@@ -298,13 +301,13 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         });
       }
     } catch (error) {
+      console.error("Erro no download:", error);
       setDownloadStatus("Erro no download");
       toast({
         title: "Erro no download",
         description: "Ocorreu um erro ao baixar o modelo de idioma.",
         variant: "destructive",
       });
-      console.error("Erro no download:", error);
     } finally {
       setTimeout(() => {
         setDownloadingModelId(null);
@@ -412,7 +415,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
                   </span>
                   <span className="text-sm">{downloadProgress}%</span>
                 </div>
-                <Progress value={downloadProgress} className="h-2" />
+                <Progress value={downloadProgress} className="h-3" />
                 
                 <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground mt-2">
                   <div>
@@ -429,7 +432,8 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
                   </div>
                 </div>
                 
-                <Alert className="mt-2 py-2">
+                <Alert variant="info" className="mt-2 py-2">
+                  <AlertTitle className="text-xs">Download em andamento</AlertTitle>
                   <AlertDescription className="text-xs flex items-center">
                     <ExternalLink className="h-3 w-3 mr-1 inline-block" />
                     Baixando de alphacephei.com (servidor oficial VOSK)
@@ -464,7 +468,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
                   </div>
                   
                   {downloadingModelId === model.id ? (
-                    <Button variant="outline" size="sm" disabled>
+                    <Button variant="outline" size="sm">
                       <RotateCw className="h-4 w-4 mr-2 animate-spin" />
                       {downloadProgress}%
                     </Button>
