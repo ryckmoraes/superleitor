@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Menu, X, Settings as SettingsIcon, LogOut, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +15,7 @@ interface HamburgerMenuProps {
 }
 
 const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
+  
   const [isOpen, setIsOpen] = useState(false);
   const [showTrigger, setShowTrigger] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -267,7 +267,7 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
         isDarkMode={isDarkMode}
       />
 
-      {/* Use Drawer component to wrap LanguageSelector instead of directly passing props */}
+      {/* Update this to properly use the Drawer component */}
       <Drawer open={languageSelectorOpen} onOpenChange={setLanguageSelectorOpen}>
         <DrawerContent>
           <LanguageSelector />
