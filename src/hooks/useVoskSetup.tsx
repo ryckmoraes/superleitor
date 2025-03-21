@@ -50,6 +50,13 @@ export const useVoskSetup = () => {
         // If initialization is successful, show feedback
         if (initialized) {
           console.log("VOSK está pronto para uso");
+          
+          // Show a toast notification for the user
+          showToastOnly(
+            "Reconhecimento de fala", 
+            "Reconhecimento offline está ativo e pronto para uso.",
+            "success"
+          );
         } else {
           console.warn("VOSK inicializado mas não está totalmente funcional");
           setError("VOSK inicializado parcialmente");

@@ -48,7 +48,8 @@ const SpeechInitializer = () => {
         console.log("Síntese de fala inicializada:", initialized);
         
         // Certifica-se que a lista de modelos está carregada
-        voskModelsService.getAvailableModels();
+        const models = voskModelsService.getAvailableModels();
+        console.log("Modelos VOSK disponíveis:", models.map(m => m.name).join(', '));
         
         // Inicializa o VOSK para reconhecimento de fala
         try {
@@ -70,7 +71,7 @@ const SpeechInitializer = () => {
               showToastOnly(
                 "Reconhecimento de fala", 
                 `Usando reconhecimento de fala em ${languageName}`,
-                "default"
+                "success"
               );
             }
           } else {
