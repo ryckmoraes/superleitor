@@ -2,13 +2,17 @@
 import { toast } from "@/components/ui/use-toast";
 
 // Only show toast, don't speak it
-export const showToastOnly = (title: string, description: string, variant: "default" | "destructive" = "default") => {
+export const showToastOnly = (
+  title: string, 
+  description: string, 
+  variant: "default" | "destructive" = "default"
+) => {
   toast({
     title,
     description,
     variant,
     duration: 8000, // Longer duration to ensure visibility
-    className: "toast-notification bottom-4 opacity-100 border border-primary shadow-lg fixed z-50", // Improved visibility
+    className: `toast-notification bottom-4 opacity-100 border border-primary shadow-lg fixed z-50 ${variant === "default" ? "success-toast" : ""}`, // Added success-toast class for styling
   });
 };
 
@@ -24,7 +28,7 @@ export const showToastWithDuration = (
     description,
     variant,
     duration,
-    className: "toast-notification bottom-4 opacity-100 border border-primary shadow-lg fixed z-50", // Improved visibility
+    className: `toast-notification bottom-4 opacity-100 border border-primary shadow-lg fixed z-50 ${variant === "default" ? "success-toast" : ""}`, // Added success-toast class for styling
   });
 };
 
@@ -40,6 +44,6 @@ export const showMobileNotification = (
     description,
     variant,
     duration: 10000, // Even longer for mobile
-    className: "mobile-notification toast-small bottom-4 opacity-100 border border-primary shadow-lg fixed z-50", // Improved visibility
+    className: `mobile-notification toast-small bottom-4 opacity-100 border border-primary shadow-lg fixed z-50 ${variant === "default" ? "success-toast" : ""}`, // Added success-toast class for styling
   });
 };

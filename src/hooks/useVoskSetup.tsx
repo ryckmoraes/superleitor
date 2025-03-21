@@ -55,7 +55,7 @@ export const useVoskSetup = () => {
           showToastOnly(
             "Reconhecimento de fala", 
             "Reconhecimento offline está ativo e pronto para uso.",
-            "success"
+            "default" // Changed from "success" to "default"
           );
         } else {
           console.warn("VOSK inicializado mas não está totalmente funcional");

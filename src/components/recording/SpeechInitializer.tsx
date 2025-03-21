@@ -71,7 +71,7 @@ const SpeechInitializer = () => {
               showToastOnly(
                 "Reconhecimento de fala", 
                 `Usando reconhecimento de fala em ${languageName}`,
-                "success"
+                "default" // Changed from "success" to "default"
               );
             }
           } else {
