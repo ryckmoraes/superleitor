@@ -65,30 +65,39 @@ const SpeechInitializer = () => {
                                 
             console.log(`VOSK está disponível para reconhecimento offline - Idioma: ${languageName}`);
             
-            // Notify user about the active language
-            showToastOnly(
-              "Reconhecimento de fala", 
-              `Usando reconhecimento de fala em ${languageName}`,
-              "default"
-            );
+            // Notify user about the active language quietly (only on significant changes)
+            if (!lastModelChange || (Date.now() - parseInt(lastModelChange)) > 5000) {
+              showToastOnly(
+                "Reconhecimento de fala", 
+                `Usando reconhecimento de fala em ${languageName}`,
+                "default"
+              );
+            }
           } else {
             console.warn("VOSK não está totalmente funcional, usando alternativas");
-            showToastOnly(
-              "Informação", 
-              "Reconhecimento offline não disponível. Usando serviços online.",
-              "default"
-            );
+            // Only show toast on first run, not on every model change
+            if (!localStorage.getItem('vosk_status_shown')) {
+              showToastOnly(
+                "Informação", 
+                "Reconhecimento offline não disponível. Usando serviços online.",
+                "default"
+              );
+              localStorage.setItem('vosk_status_shown', 'true');
+            }
           }
         } catch (error) {
           console.error("Erro ao inicializar VOSK:", error);
           setVoskInitialized(false);
           
           // Mostrar mensagem informativa apenas uma vez
-          showToastOnly(
-            "Informação", 
-            "Reconhecimento de fala offline não disponível. Usando alternativa online.",
-            "default"
-          );
+          if (!localStorage.getItem('vosk_error_shown')) {
+            showToastOnly(
+              "Informação", 
+              "Reconhecimento de fala offline não disponível. Usando alternativa online.",
+              "default"
+            );
+            localStorage.setItem('vosk_error_shown', 'true');
+          }
         }
       }
     };
