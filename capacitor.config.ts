@@ -1,4 +1,3 @@
-
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
@@ -15,10 +14,10 @@ const config: CapacitorConfig = {
     captureInput: true,
     webContentsDebuggingEnabled: true,
     buildOptions: {
-      keystorePath: null,
-      keystorePassword: null,
-      keystoreAlias: null,
-      keystoreAliasPassword: null,
+      keystorePath: 'superleitor.keystore',
+      keystorePassword: 'Tnb.2022',
+      keystoreAlias: 'Keystore alias',
+      keystoreAliasPassword: 'Tnb.2022',
       releaseType: 'APK'
     }
   },
@@ -27,6 +26,7 @@ const config: CapacitorConfig = {
       launchAutoHide: false,
       showSpinner: true
     }
+    // Add any other necessary SDK configurations here
   }
 };
 

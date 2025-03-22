@@ -1,31 +1,28 @@
-
-apply plugin: 'com.android.application'
-
-android {
-    namespace 'com.lovable.esferasonora'
-    compileSdkVersion 33
-    defaultConfig {
-        applicationId "com.lovable.esferasonora"
-        minSdkVersion 22
-        targetSdkVersion 33
-        versionCode 1
-        versionName "1.0"
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-    }
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-    }
-    aaptOptions {
-        cruncherEnabled false
-    }
+plugins {
+    id 'com.android.application'
 }
 
-dependencies {
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'androidx.core:core:1.9.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'androidx.webkit:webkit:1.6.1'
+android {
+    compileSdkVersion 33 // Ensure this is correctly set
+
+    defaultConfig {
+        namespace "com.lovable.esferasonora" // Specify the namespace
+        applicationId "com.lovable.esferasonora" // Replace with your application ID
+        minSdkVersion 21 // Set your minimum SDK version
+        targetSdkVersion 33 // Set your target SDK version
+        versionCode 2 // Set your version code
+        versionName "1.1" // Set your version name
+    }
+
+    buildTypes {
+        applicationVariants.all { variant ->
+            variant.outputs.all { output ->
+                output.outputFileName = "${variant.name}-${variant.versionName}.apk"
+            }
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
 }

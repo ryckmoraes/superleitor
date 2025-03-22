@@ -1,8 +1,7 @@
-
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { Button } from "../components/ui/button"; // Corrected import path
+import { useOnboarding } from "../contexts/OnboardingContext"; // Corrected import path
 import { ArrowRight } from "lucide-react";
 
 const WelcomeSplashScreen = () => {
@@ -11,7 +10,7 @@ const WelcomeSplashScreen = () => {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    // Adiciona animação após o componente ser montado
+    console.log("WelcomeSplashScreen mounted"); // Debugging log
     const timer = setTimeout(() => {
       setLoaded(true);
     }, 100);
@@ -19,14 +18,11 @@ const WelcomeSplashScreen = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Check if this is the user's first time or if they've already completed setup
   useEffect(() => {
-    // If setup was never completed and we're not in a "just exited" state,
-    // redirect to the setup screen
+    console.log("Onboarding data:", onboardingData); // Debugging log
     if (!onboardingData.setupCompleted && !localStorage.getItem("app_exited")) {
       navigate("/setup");
     }
-    // Clear the exited flag if it exists
     localStorage.removeItem("app_exited");
   }, [onboardingData.setupCompleted, navigate]);
 
