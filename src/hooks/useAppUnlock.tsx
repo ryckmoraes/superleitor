@@ -98,11 +98,32 @@ export const useAppUnlock = () => {
     setRemainingTime(0);
   }, []);
 
+  // Adding the unlockApp function that's missing
+  const unlockApp = useCallback((minutes: number) => {
+    // Calculate expiry time based on minutes
+    const expiryTime = Date.now() + (minutes * 60 * 1000);
+    
+    // Store the expiry time in localStorage
+    localStorage.setItem('appUnlockExpiryTime', expiryTime.toString());
+    
+    // Update state to reflect unlocked status
+    setIsUnlocked(true);
+    setRemainingTime(minutes);
+    
+    // Set flag to indicate app was unlocked
+    localStorage.setItem('wasUnlocked', 'true');
+    
+    console.log(`App unlocked for ${minutes} minutes until ${new Date(expiryTime).toLocaleTimeString()}`);
+    
+    return true;
+  }, []);
+
   return {
     isUnlocked,
     remainingTime,
     checkUnlockStatus,
-    resetUnlock
+    resetUnlock,
+    unlockApp // Add the unlockApp function to the returned object
   };
 };
 
