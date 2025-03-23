@@ -15,7 +15,7 @@ export function formatFileSize(bytes: number, decimals: number = 1): string {
 }
 
 /**
- * Formats seconds into a human-readable time remaining string
+ * Formats seconds into a human-readable time remaining string in Portuguese
  */
 export function formatTimeRemaining(seconds: number): string {
   if (seconds < 60) {

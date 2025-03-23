@@ -33,7 +33,7 @@ const RecordingScreen = () => {
   const { isInitialized, isLoading, error } = useVoskSetup();
   
   // Get app unlock status
-  const { isUnlocked, remainingTime, checkUnlockStatus } = useAppUnlock();
+  const { isUnlocked, remainingTime, checkUnlockStatus, unlockApp } = useAppUnlock();
   
   // Theme management
   const { isDarkMode, toggleTheme } = ThemeManager();
@@ -98,6 +98,25 @@ const RecordingScreen = () => {
     }
   };
   
+  // Function to handle story completion and app unlock
+  const handleUnlockApp = () => {
+    // Calculate earned time based on recording duration
+    const minutes = Math.ceil((recordingTime || 0) / 30) * 5;
+    unlockApp(minutes);
+    
+    // Show confirmation
+    showToastOnly(
+      "App Desbloqueado",
+      `O app foi desbloqueado por ${minutes} minutos!`,
+      "default"
+    );
+    
+    // Reset story states
+    setStoryTranscript("");
+    setInterimTranscript("");
+    setIsProcessing(false);
+  };
+  
   // Get recording methods and data
   const recordingManager = RecordingManager({
     isRecording,
@@ -116,7 +135,8 @@ const RecordingScreen = () => {
     recordingTime, 
     audioData, 
     audioBlob,
-    hasStartedRecording
+    hasStartedRecording,
+    processingComplete
   } = recordingManager;
 
   return (
@@ -159,6 +179,7 @@ const RecordingScreen = () => {
         storyTranscript={storyTranscript}
         interimTranscript={interimTranscript}
         recognitionStatus={recognitionStatus}
+        processingComplete={processingComplete}
       />
       
       {/* Show unlock status if available */}

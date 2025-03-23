@@ -16,6 +16,7 @@ interface RecordingMainViewProps {
   storyTranscript: string;
   interimTranscript: string;
   recognitionStatus?: string;
+  processingComplete?: boolean;
 }
 
 const RecordingMainView = ({
@@ -28,7 +29,8 @@ const RecordingMainView = ({
   audioData,
   storyTranscript,
   interimTranscript,
-  recognitionStatus
+  recognitionStatus,
+  processingComplete
 }: RecordingMainViewProps) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-primary/5 to-background overflow-hidden">
@@ -54,6 +56,12 @@ const RecordingMainView = ({
             isProcessing={isProcessing}
             isInterim={false}
             recognitionStatus={recognitionStatus}
+            recordingTime={recordingTime}
+            processingComplete={processingComplete}
+            onExit={() => {
+              console.log("Exit button clicked");
+              // Qualquer lógica de saída pode ser adicionada aqui
+            }}
           />
           
           {/* Interim Transcript (shown while speaking) */}

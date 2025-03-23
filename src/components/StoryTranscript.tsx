@@ -14,6 +14,7 @@ interface StoryTranscriptProps {
   onExit?: () => void;
   onUnlock?: () => void;
   analysisResult?: string;
+  processingComplete?: boolean;
 }
 
 const StoryTranscript = ({ 
@@ -25,21 +26,24 @@ const StoryTranscript = ({
   onContinue,
   onExit,
   onUnlock,
-  analysisResult
+  analysisResult,
+  processingComplete = false
 }: StoryTranscriptProps) => {
   const [showSummary, setShowSummary] = useState(false);
   
   // Show summary when recording stops and there's a transcript
   useEffect(() => {
-    if (!isProcessing && !isInterim && storyTranscript && recordingTime && recordingTime > 3) {
+    if ((!isProcessing && !isInterim && storyTranscript && recordingTime && recordingTime > 3) || 
+        processingComplete) {
       // Show summary after a short delay to allow for final speech to complete
       const timer = setTimeout(() => {
+        console.log("Showing story summary");
         setShowSummary(true);
-      }, 2000);
+      }, 1000);
       
       return () => clearTimeout(timer);
     }
-  }, [isProcessing, isInterim, storyTranscript, recordingTime]);
+  }, [isProcessing, isInterim, storyTranscript, recordingTime, processingComplete]);
   
   if (!storyTranscript && !isProcessing && !recognitionStatus && !showSummary) return null;
   
@@ -62,7 +66,7 @@ const StoryTranscript = ({
           </h3>
           
           <ScrollArea className="h-48 mb-6 rounded border p-4 bg-muted/20">
-            <p className="text-sm">{storyTranscript}</p>
+            <p className="text-sm">{storyTranscript || "Sua história foi registrada com sucesso!"}</p>
           </ScrollArea>
           
           {analysisResult && (

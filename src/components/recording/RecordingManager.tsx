@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import useAudioAnalyzer from "@/hooks/useAudioAnalyzer";
 import { speakNaturally } from "@/services/audioProcessor";
 import { showToastOnly } from "@/services/notificationService";
@@ -39,10 +39,23 @@ const RecordingManager = ({
   
   // Track when initial welcome message has been spoken
   const welcomeSpokenRef = useRef(false);
+  const [processingComplete, setProcessingComplete] = useState(false);
+
+  // Adiciona um efeito para resetar o estado quando necessário
+  useEffect(() => {
+    if (processingComplete) {
+      const timer = setTimeout(() => {
+        setProcessingComplete(false);
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [processingComplete]);
 
   // Toggle recording with improved audio feedback
   const toggleRecording = () => {
     if (isRecording) {
+      console.log("Stopping recording session");
       stopRecording();
       
       // Stop speech recognition
@@ -64,6 +77,13 @@ const RecordingManager = ({
         
         // Process the story
         setIsProcessing(true);
+        
+        // Set a timeout to automatically finish processing after a delay
+        // This prevents the app from getting stuck in processing state
+        setTimeout(() => {
+          setIsProcessing(false);
+          setProcessingComplete(true);
+        }, 5000);
       } else {
         // If no actual recording happened
         showToastOnly(
@@ -86,6 +106,8 @@ const RecordingManager = ({
         requestMicrophonePermission();
         return;
       }
+      
+      console.log("Starting new recording session");
       
       // Clear previous state
       setStoryTranscript("");
@@ -123,7 +145,8 @@ const RecordingManager = ({
     recordingTime: hasStartedRecording ? recordingTime : 0, // Only show time if audio detected
     audioData,
     audioBlob,
-    hasStartedRecording
+    hasStartedRecording,
+    processingComplete
   };
 };
 
