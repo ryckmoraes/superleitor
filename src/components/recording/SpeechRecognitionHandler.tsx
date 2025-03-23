@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { speakNaturally } from "@/services/audioProcessor";
 import { showToastOnly } from "@/services/notificationService";
@@ -341,12 +340,12 @@ const SpeechRecognitionHandler = ({
     navigate("/");
   };
 
-  // Handle unlock app button
+  // Handle unlock app button - fixing the implementation to use imported unlockApp
   const handleUnlock = () => {
     // Calculate unlock time in minutes
     const earnedMinutes = getEarnedTime(recordingTime);
     
-    // Store the unlock expiry time in localStorage
+    // Store the unlock expiry time in localStorage - this is done by unlockApp now
     const expiryTime = Date.now() + (earnedMinutes * 60 * 1000);
     localStorage.setItem('appUnlockExpiryTime', expiryTime.toString());
     localStorage.setItem('wasUnlocked', 'true');

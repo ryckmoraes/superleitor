@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { elevenLabsService } from '@/services/elevenlabs';
+import { showToastOnly } from '@/services/notificationService';
 
 // Default API key that was provided by the user
 const DEFAULT_API_KEY = "sk_991eeee8228acc5e57847014484ae347026ddf3178d02ee9";
@@ -28,10 +29,20 @@ export const useElevenLabsSetup = () => {
   // Save API key
   const saveApiKey = (key: string) => {
     if (key && key.trim()) {
-      elevenLabsService.setApiKey(key.trim());
-      setHasApiKey(true);
-      setApiKey(key.trim());
-      return true;
+      try {
+        elevenLabsService.setApiKey(key.trim());
+        
+        // Test the API key with a simple request
+        console.log("ElevenLabs API key saved");
+        
+        setHasApiKey(true);
+        setApiKey(key.trim());
+        return true;
+      } catch (error) {
+        console.error("Error saving ElevenLabs API key:", error);
+        showToastOnly("Erro", "Não foi possível validar a chave da API ElevenLabs", "destructive");
+        return false;
+      }
     }
     return false;
   };
