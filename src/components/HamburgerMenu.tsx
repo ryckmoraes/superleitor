@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Menu, X, Settings as SettingsIcon, LogOut, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,7 @@ interface HamburgerMenuProps {
 
 const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [showTrigger, setShowTrigger] = useState(false);
+  const [showTrigger, setShowTrigger] = useState(true); // Start with trigger visible
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [languageSelectorOpen, setLanguageSelectorOpen] = useState(false);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
@@ -25,6 +24,19 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
   const triggerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
   const { resetOnboarding } = useOnboarding();
+
+  // Force show trigger on component mount
+  useEffect(() => {
+    setShowTrigger(true);
+    console.log("HamburgerMenu mounted, showing trigger");
+    
+    // Clean up on unmount
+    return () => {
+      if (triggerTimeoutRef.current) {
+        clearTimeout(triggerTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Mostra o gatilho do menu quando o mouse entra na área de gatilho
   const handleTriggerAreaEnter = () => {
@@ -167,12 +179,12 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
     <>
       {/* Área de gatilho invisível */}
       <div 
-        className="menu-hover-area"
+        className="fixed top-0 left-0 w-20 h-20 z-40"
         onMouseEnter={handleTriggerAreaEnter}
         onMouseLeave={handleTriggerAreaLeave}
       />
 
-      {/* Botão de gatilho do menu */}
+      {/* Botão de gatilho do menu - Always visible */}
       <div 
         className={`fixed top-6 left-6 z-50 transition-all duration-300 ${
           showTrigger || isOpen ? "opacity-100" : "opacity-0"

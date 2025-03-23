@@ -55,6 +55,8 @@ const SpeechInitializer = () => {
           const currentModel = voskModelsService.getCurrentModel();
           console.log("Inicializando VOSK com modelo:", currentModel?.name);
           
+          // Completely reinitialize VOSK
+          await voskService.cleanup();
           const initialized = await voskService.initialize();
           console.log("VOSK inicializado:", initialized);
           setVoskInitialized(initialized);

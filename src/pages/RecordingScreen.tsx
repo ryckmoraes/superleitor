@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import { useVoskSetup } from "@/hooks/useVoskSetup";
@@ -26,14 +25,31 @@ const RecordingScreen = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
+  // Track language changes to force UI updates
+  const [languageChanged, setLanguageChanged] = useState<string | null>(null);
+  
   // Create a ref for the PatternDetector
   const patternDetectorRef = useRef<PatternDetectorRef>(null);
   
   // Setup the VOSK recognition
-  const { isInitialized, isLoading, error } = useVoskSetup();
+  const { isInitialized, isLoading, error, lastModelChange } = useVoskSetup();
   
-  // Get app unlock status
-  const { isUnlocked, remainingTime, checkUnlockStatus, unlockApp } = useAppUnlock();
+  // Monitor model changes from useVoskSetup to update UI
+  useEffect(() => {
+    if (lastModelChange && lastModelChange !== languageChanged) {
+      console.log("Language changed detected in RecordingScreen, refreshing UI");
+      setLanguageChanged(lastModelChange);
+      
+      // Reset any active recording or processing when language changes
+      if (isRecording) {
+        setIsRecording(false);
+      }
+      
+      if (isProcessing) {
+        setIsProcessing(false);
+      }
+    }
+  }, [lastModelChange, languageChanged, isRecording, isProcessing]);
   
   // Theme management
   const { isDarkMode, toggleTheme } = ThemeManager();
@@ -189,8 +205,12 @@ const RecordingScreen = () => {
         </div>
       )}
       
-      {/* Hamburger menu with theme toggle */}
-      <HamburgerMenu isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
+      {/* Hamburger menu with theme toggle - Set key to force rerender when language changes */}
+      <HamburgerMenu 
+        key={`hamburger-${languageChanged || 'default'}`} 
+        isDarkMode={isDarkMode} 
+        toggleTheme={toggleTheme} 
+      />
     </>
   );
 };

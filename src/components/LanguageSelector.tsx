@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Globe, Download, Check, X, Save, RotateCw, ExternalLink } from "lucide-react";
 import { voskModelsService } from "@/services/voskModelsService";
@@ -64,6 +63,9 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
       setTimeout(() => {
         onClose();
         setCloseAttempted(false);
+        
+        // Force reload the app to apply language changes
+        window.location.reload();
       }, 500);
     }
   }, [closeAttempted, isProcessing, downloadingModelId, onClose]);
@@ -148,8 +150,8 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         // Update UI language based on selection
         updateUILanguage(model.language);
         
-        // Flag for closing the drawer
-        console.log("Setting close attempted to true");
+        // Flag for closing the drawer and force reload
+        console.log("Setting close attempted to true to trigger full app reload");
         setTimeout(() => {
           setCloseAttempted(true);
         }, 500);
