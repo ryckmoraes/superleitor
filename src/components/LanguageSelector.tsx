@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Globe, Download, Check, X, Save, RotateCw, ExternalLink } from "lucide-react";
 import { voskModelsService } from "@/services/voskModelsService";
 import { toast } from "@/components/ui/use-toast";
@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { formatFileSize, formatTimeRemaining } from "@/utils/formatUtils";
 
 interface LanguageSelectorProps {
   isOpen: boolean;
@@ -47,6 +48,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
   const [forceShowDownload, setForceShowDownload] = useState(false);
   const [autoCloseAfterDownload, setAutoCloseAfterDownload] = useState(false);
   const [closeAttempted, setCloseAttempted] = useState(false);
+  const drawerCloseRef = useRef<HTMLButtonElement>(null);
 
   // Make sure the download section is visible if a model is being downloaded
   useEffect(() => {
@@ -115,6 +117,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
     
     setSelectedModelId(modelId);
     setHasChanges(modelId !== currentModelId);
+    console.log("Language selected:", modelId, "Current:", currentModelId, "Has changes:", modelId !== currentModelId);
   };
 
   const handleSaveLanguage = async () => {
@@ -125,6 +128,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
     if (!model) return;
     
     setIsProcessing(true);
+    console.log("Saving language change to:", model.name);
     
     try {
       if (model.installed) {
@@ -145,14 +149,15 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         updateUILanguage(model.language);
         
         // Flag for closing the drawer
-        setCloseAttempted(true);
+        console.log("Setting close attempted to true");
         setTimeout(() => {
-          setIsProcessing(false);
+          setCloseAttempted(true);
         }, 500);
       } else {
         // Se não está instalado, inicie o download
+        console.log("Model not installed, starting download");
         setAutoCloseAfterDownload(true); // Set to auto-close after download is complete
-        handleDownloadModel(selectedModelId);
+        await handleDownloadModel(selectedModelId);
       }
     } catch (error) {
       console.error("Erro ao mudar idioma:", error);
@@ -161,8 +166,14 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         description: "Ocorreu um erro ao alterar o idioma.",
         variant: "destructive",
       });
-      setIsProcessing(false);
     } finally {
+      setTimeout(() => {
+        setIsProcessing(false);
+        // If we're not downloading, force close
+        if (!downloadingModelId) {
+          setCloseAttempted(true);
+        }
+      }, 1000);
       setHasChanges(false);
     }
   };
@@ -183,30 +194,6 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
     
     // Speak the confirmation in the selected language
     speakNaturally(welcomeMessage, true);
-  };
-
-  const formatBytes = (bytes: number, decimals = 2): string => {
-    if (bytes === 0) return '0 Bytes';
-    
-    const k = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-  };
-
-  const formatTime = (seconds: number): string => {
-    if (seconds < 60) {
-      return `${Math.ceil(seconds)} segundos`;
-    } else if (seconds < 3600) {
-      return `${Math.ceil(seconds / 60)} minutos`;
-    } else {
-      const hours = Math.floor(seconds / 3600);
-      const minutes = Math.ceil((seconds % 3600) / 60);
-      return `${hours} horas e ${minutes} minutos`;
-    }
   };
 
   const handleDownloadModel = async (modelId: string) => {
@@ -231,6 +218,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
     setTotalSize(model.size);
     setEstimatedTime("calculando...");
     setForceShowDownload(true);
+    setIsProcessing(true);
     
     console.log("Starting download for model:", model.name, "with ID:", modelId);
     
@@ -269,14 +257,14 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
             const bytesDiff = bytesReceived - lastBytes;
             const speed = bytesDiff / timeDiff; // bytes per second
             
-            setDownloadSpeed(formatBytes(speed) + '/s');
-            setDownloadedSize(formatBytes(bytesReceived));
+            setDownloadSpeed(formatFileSize(speed) + '/s');
+            setDownloadedSize(formatFileSize(bytesReceived));
             
             // Estimate remaining time
             if (progress > 0 && progress > lastProgress) {
               const remainingBytes = totalBytes - bytesReceived;
               const remainingTime = remainingBytes / speed;
-              setEstimatedTime(formatTime(remainingTime));
+              setEstimatedTime(formatTimeRemaining(remainingTime));
             }
             
             lastTime = now;
@@ -328,15 +316,9 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         
         // Fechar a janela após completar o download
         if (autoCloseAfterDownload) {
-          setCloseAttempted(true);
+          console.log("Auto-closing after download completed");
           setTimeout(() => {
-            setDownloadingModelId(null);
-            setIsProcessing(false);
-          }, 1000);
-        } else {
-          setTimeout(() => {
-            setDownloadingModelId(null);
-            setIsProcessing(false);
+            setCloseAttempted(true);
           }, 1000);
         }
       } else {
@@ -346,8 +328,6 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
           description: "Não foi possível baixar o modelo de idioma.",
           variant: "destructive",
         });
-        setDownloadingModelId(null);
-        setIsProcessing(false);
       }
     } catch (error) {
       console.error("Erro no download:", error);
@@ -357,8 +337,17 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         description: "Ocorreu um erro ao baixar o modelo de idioma.",
         variant: "destructive",
       });
-      setDownloadingModelId(null);
-      setIsProcessing(false);
+    } finally {
+      setTimeout(() => {
+        setDownloadingModelId(null);
+        setIsProcessing(false);
+        
+        // If auto-close was requested, try to close now
+        if (autoCloseAfterDownload) {
+          console.log("Setting close attempted from finally block");
+          setCloseAttempted(true);
+        }
+      }, 1500);
     }
   };
 
@@ -401,6 +390,18 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
       return;
     }
     
+    // Ensure hasChanges is reset
+    setHasChanges(false);
+    onClose();
+  };
+
+  // Manual close function that bypasses checks
+  const forceClose = () => {
+    console.log("Force closing drawer");
+    setHasChanges(false);
+    setIsProcessing(false);
+    setDownloadingModelId(null);
+    setForceShowDownload(false);
     onClose();
   };
 
@@ -558,20 +559,29 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
           </div>
         </div>
         
-        <DrawerFooter>
+        <DrawerFooter className="flex flex-col gap-2">
           <Button 
-            variant="outline" 
-            onClick={() => {
-              if (!isProcessing && !downloadingModelId) {
-                onClose();
-              } else {
-                setCloseAttempted(true);
-              }
-            }}
+            variant="default"
+            onClick={forceClose}
+            className="w-full"
           >
             <X className="h-4 w-4 mr-2" />
-            Fechar
+            Voltar para o aplicativo
           </Button>
+          
+          <DrawerClose asChild ref={drawerCloseRef}>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setHasChanges(false);
+                setIsProcessing(false);
+              }}
+              className="w-full"
+            >
+              <X className="h-4 w-4 mr-2" />
+              Fechar
+            </Button>
+          </DrawerClose>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
