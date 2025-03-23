@@ -28,3 +28,17 @@ export function formatTimeRemaining(seconds: number): string {
     return `${hours} hora${hours > 1 ? 's' : ''} e ${minutes} minuto${minutes > 1 ? 's' : ''}`;
   }
 }
+
+/**
+ * Calculates earned app time based on recording duration
+ */
+export function calculateEarnedTime(recordingSeconds: number): number {
+  // Precisão melhorada: para cada 20 segundos de história, concede 5 minutos de tempo
+  // Com um mínimo de 5 minutos para histórias curtas
+  if (recordingSeconds < 3) return 0; // Histórias muito curtas não ganham tempo
+  
+  const baseMinutes = 5; // Tempo mínimo para histórias válidas
+  const bonusMinutes = Math.floor(recordingSeconds / 20) * 5; // 5 minutos a cada 20 segundos
+  
+  return Math.max(baseMinutes, bonusMinutes);
+}

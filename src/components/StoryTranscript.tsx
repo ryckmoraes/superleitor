@@ -1,8 +1,11 @@
 
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Clock, LockOpen, BookOpen } from "lucide-react";
+import { Loader2, Clock, LockOpen, BookOpen, ExternalLink, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
+import { calculateEarnedTime } from "@/utils/formatUtils";
+import { useNavigate } from "react-router-dom";
+import { exitApp } from "@/utils/androidHelper";
 
 interface StoryTranscriptProps {
   storyTranscript: string;
@@ -30,6 +33,8 @@ const StoryTranscript = ({
   processingComplete = false
 }: StoryTranscriptProps) => {
   const [showSummary, setShowSummary] = useState(false);
+  const [showExitOptions, setShowExitOptions] = useState(false);
+  const navigate = useNavigate();
   
   // Show summary when recording stops and there's a transcript
   useEffect(() => {
@@ -47,10 +52,24 @@ const StoryTranscript = ({
   
   if (!storyTranscript && !isProcessing && !recognitionStatus && !showSummary) return null;
   
-  // Calculate earned time based on recording duration
+  // Calculate earned time based on recording duration using the utility function
   const getEarnedTime = (seconds: number): number => {
-    // For every 30 seconds of story, grant 5 minutes of app time (adjust as needed)
-    return Math.ceil(seconds / 30) * 5;
+    return calculateEarnedTime(seconds);
+  };
+  
+  // Handle exit button with options
+  const handleExitClick = () => {
+    setShowExitOptions(true);
+  };
+  
+  // Close app completely
+  const handleCloseApp = () => {
+    exitApp();
+  };
+  
+  // Navigate to home screen
+  const handleGoHome = () => {
+    navigate("/");
   };
   
   // Show recording summary with time and controls
@@ -85,40 +104,72 @@ const StoryTranscript = ({
             </p>
           </div>
           
-          <div className="grid grid-cols-1 gap-4">
-            {onUnlock && (
+          {!showExitOptions ? (
+            <div className="grid grid-cols-1 gap-4">
+              {onUnlock && (
+                <Button 
+                  onClick={onUnlock} 
+                  className="w-full bg-primary hover:bg-primary/90 text-base flex items-center justify-center gap-2"
+                  size="lg"
+                >
+                  <LockOpen className="w-5 h-5" />
+                  Desbloquear App por {earnedMinutes} minutos
+                </Button>
+              )}
+              
+              {onContinue && (
+                <Button 
+                  onClick={onContinue} 
+                  variant="outline" 
+                  className="w-full text-base flex items-center justify-center gap-2"
+                  size="lg"
+                >
+                  <BookOpen className="w-5 h-5" />
+                  Continuar a História para Ganhar Mais Tempo
+                </Button>
+              )}
+              
+              {onExit && (
+                <Button 
+                  onClick={handleExitClick} 
+                  variant="ghost" 
+                  className="w-full mt-2"
+                >
+                  Finalizar
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-sm text-center mb-2">O que você deseja fazer agora?</p>
+              
               <Button 
-                onClick={onUnlock} 
-                className="w-full bg-primary hover:bg-primary/90 text-base flex items-center justify-center gap-2"
-                size="lg"
+                onClick={handleGoHome} 
+                className="w-full flex items-center justify-center gap-2"
+                variant="outline"
               >
-                <LockOpen className="w-5 h-5" />
-                Desbloquear App por {earnedMinutes} minutos
+                <Home className="w-4 h-4" />
+                Ir para a Tela Inicial
               </Button>
-            )}
-            
-            {onContinue && (
+              
               <Button 
-                onClick={onContinue} 
-                variant="outline" 
-                className="w-full text-base flex items-center justify-center gap-2"
-                size="lg"
+                onClick={handleCloseApp} 
+                className="w-full flex items-center justify-center gap-2"
+                variant="outline"
               >
-                <BookOpen className="w-5 h-5" />
-                Continuar a História
+                <ExternalLink className="w-4 h-4" />
+                Sair do Aplicativo
               </Button>
-            )}
-            
-            {onExit && (
+              
               <Button 
-                onClick={onExit} 
+                onClick={() => setShowExitOptions(false)} 
                 variant="ghost" 
-                className="w-full mt-2"
+                className="w-full"
               >
-                Finalizar
+                Voltar
               </Button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     );

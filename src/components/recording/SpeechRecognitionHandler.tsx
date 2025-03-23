@@ -6,6 +6,7 @@ import { elevenLabsService } from "@/services/elevenlabs";
 import { voskService } from "@/services/voskService";
 import StoryTranscript from "@/components/StoryTranscript";
 import { useNavigate } from "react-router-dom";
+import { calculateEarnedTime } from "@/utils/formatUtils";
 
 interface SpeechRecognitionHandlerProps {
   isRecording: boolean;
@@ -243,8 +244,7 @@ const SpeechRecognitionHandler = ({
 
   // Calculate earned time based on recording duration
   const getEarnedTime = (seconds: number): number => {
-    // For every 30 seconds of story, grant 5 minutes of app time
-    return Math.ceil(seconds / 30) * 5;
+    return calculateEarnedTime(seconds);
   };
 
   // Generate story analysis based on transcript
@@ -342,7 +342,7 @@ const SpeechRecognitionHandler = ({
 
   // Handle unlock app button - fixing the implementation to use imported unlockApp
   const handleUnlock = () => {
-    // Calculate unlock time in minutes
+    // Calculate unlock time in minutes usando a função melhorada
     const earnedMinutes = getEarnedTime(recordingTime);
     
     // Store the unlock expiry time in localStorage - this is done by unlockApp now

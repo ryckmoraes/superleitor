@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { showToastOnly } from '@/services/notificationService';
 import { speakNaturally } from '@/services/audioProcessor';
+import { calculateEarnedTime } from '@/utils/formatUtils';
 
 export const useAppUnlock = () => {
   const [isUnlocked, setIsUnlocked] = useState<boolean>(false);
@@ -98,24 +99,27 @@ export const useAppUnlock = () => {
     setRemainingTime(0);
   }, []);
 
-  // Adding the unlockApp function that's missing
-  const unlockApp = useCallback((minutes: number) => {
+  // Adding the unlockApp function with improved time calculation
+  const unlockApp = useCallback((recordingSeconds: number) => {
+    // Calculate earned minutes using the improved function
+    const earnedMinutes = calculateEarnedTime(recordingSeconds);
+    
     // Calculate expiry time based on minutes
-    const expiryTime = Date.now() + (minutes * 60 * 1000);
+    const expiryTime = Date.now() + (earnedMinutes * 60 * 1000);
     
     // Store the expiry time in localStorage
     localStorage.setItem('appUnlockExpiryTime', expiryTime.toString());
     
     // Update state to reflect unlocked status
     setIsUnlocked(true);
-    setRemainingTime(minutes);
+    setRemainingTime(earnedMinutes);
     
     // Set flag to indicate app was unlocked
     localStorage.setItem('wasUnlocked', 'true');
     
-    console.log(`App unlocked for ${minutes} minutes until ${new Date(expiryTime).toLocaleTimeString()}`);
+    console.log(`App unlocked for ${earnedMinutes} minutes until ${new Date(expiryTime).toLocaleTimeString()}`);
     
-    return true;
+    return earnedMinutes;
   }, []);
 
   return {
@@ -123,7 +127,7 @@ export const useAppUnlock = () => {
     remainingTime,
     checkUnlockStatus,
     resetUnlock,
-    unlockApp // Add the unlockApp function to the returned object
+    unlockApp
   };
 };
 
