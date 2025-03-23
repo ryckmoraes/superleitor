@@ -6,6 +6,7 @@ import { toast } from "@/components/ui/use-toast";
 import { showToastOnly } from "@/services/notificationService";
 import { speakNaturally } from "@/services/audioProcessor";
 import { voskService } from "@/services/voskService";
+import { Progress } from "@/components/ui/progress";
 
 import {
   Drawer,
@@ -16,7 +17,6 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -46,6 +46,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
   const [downloadStatus, setDownloadStatus] = useState<string>("");
   const [forceShowDownload, setForceShowDownload] = useState(false);
   const [autoCloseAfterDownload, setAutoCloseAfterDownload] = useState(false);
+  const [closeAttempted, setCloseAttempted] = useState(false);
 
   // Make sure the download section is visible if a model is being downloaded
   useEffect(() => {
@@ -53,6 +54,17 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
       setForceShowDownload(true);
     }
   }, [downloadingModelId]);
+
+  // Force close check - ensures we return to main screen
+  useEffect(() => {
+    if (closeAttempted && !isProcessing && !downloadingModelId) {
+      console.log("Force closing language selector");
+      setTimeout(() => {
+        onClose();
+        setCloseAttempted(false);
+      }, 500);
+    }
+  }, [closeAttempted, isProcessing, downloadingModelId, onClose]);
 
   // Refresh models when drawer opens
   useEffect(() => {
@@ -64,6 +76,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
       setSelectedModelId(currentModel?.id || "pt-br-small");
       setHasChanges(false);
       setAutoCloseAfterDownload(false);
+      setCloseAttempted(false);
       
       // Check for active downloads
       const activeDownloads = models.filter(model => voskModelsService.isModelDownloading(model.id));
@@ -73,7 +86,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         setForceShowDownload(true);
       }
     }
-  }, [isOpen]);
+  }, [isOpen, models]);
 
   // Check for active downloads
   useEffect(() => {
@@ -131,10 +144,11 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         // Update UI language based on selection
         updateUILanguage(model.language);
         
-        // Fechar a janela após completar a alteração
+        // Flag for closing the drawer
+        setCloseAttempted(true);
         setTimeout(() => {
-          onClose();
-        }, 1000);
+          setIsProcessing(false);
+        }, 500);
       } else {
         // Se não está instalado, inicie o download
         setAutoCloseAfterDownload(true); // Set to auto-close after download is complete
@@ -147,8 +161,8 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         description: "Ocorreu um erro ao alterar o idioma.",
         variant: "destructive",
       });
-    } finally {
       setIsProcessing(false);
+    } finally {
       setHasChanges(false);
     }
   };
@@ -314,9 +328,16 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         
         // Fechar a janela após completar o download
         if (autoCloseAfterDownload) {
+          setCloseAttempted(true);
           setTimeout(() => {
-            onClose();
-          }, 2000);
+            setDownloadingModelId(null);
+            setIsProcessing(false);
+          }, 1000);
+        } else {
+          setTimeout(() => {
+            setDownloadingModelId(null);
+            setIsProcessing(false);
+          }, 1000);
         }
       } else {
         setDownloadStatus("Erro no download");
@@ -325,6 +346,8 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
           description: "Não foi possível baixar o modelo de idioma.",
           variant: "destructive",
         });
+        setDownloadingModelId(null);
+        setIsProcessing(false);
       }
     } catch (error) {
       console.error("Erro no download:", error);
@@ -334,14 +357,8 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         description: "Ocorreu um erro ao baixar o modelo de idioma.",
         variant: "destructive",
       });
-    } finally {
-      setTimeout(() => {
-        setDownloadingModelId(null);
-        // Don't hide the progress bar when auto-closing
-        if (!autoCloseAfterDownload) {
-          setForceShowDownload(false);
-        }
-      }, 1000);
+      setDownloadingModelId(null);
+      setIsProcessing(false);
     }
   };
 
@@ -355,6 +372,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         setDownloadProgress(0);
         setDownloadStatus("");
         setForceShowDownload(false);
+        setIsProcessing(false);
       }, 500);
       
       showToastOnly(
@@ -367,7 +385,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
 
   // Handle close with pending operations
   const handleClose = () => {
-    if (isProcessing) {
+    if (isProcessing && !autoCloseAfterDownload) {
       toast({
         title: "Operação em andamento",
         description: "Por favor, aguarde a conclusão da operação atual.",
@@ -375,7 +393,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
       return;
     }
     
-    if (downloadingModelId) {
+    if (downloadingModelId && !autoCloseAfterDownload) {
       toast({
         title: "Download em andamento",
         description: "Deseja cancelar o download antes de sair?",
@@ -445,53 +463,44 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
             )}
           </div>
 
-          {/* Centered download progress section */}
+          {/* Floating download progress section */}
           {(downloadingModelId || forceShowDownload) && (
-            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-              <div className="bg-background rounded-lg p-6 max-w-md w-full mx-4 shadow-lg border border-border">
-                <h3 className="text-lg font-semibold mb-4">
-                  {downloadStatus || `Baixando ${models.find(m => m.id === downloadingModelId)?.name || "modelo"}`}
+            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60">
+              <div className="bg-card border rounded-lg p-4 w-[90%] max-w-md shadow-lg">
+                <h3 className="font-semibold mb-2 text-center">
+                  {downloadStatus || "Baixando modelo de idioma..."}
                 </h3>
                 
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium">{downloadProgress}%</span>
-                    <span className="text-sm">{downloadedSize} / {totalSize}</span>
-                  </div>
-                  
-                  <Progress value={downloadProgress} className="h-3 w-full" />
-                  
-                  <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground mt-2">
-                    <div>
-                      <span className="font-medium">Velocidade:</span> {downloadSpeed}
-                    </div>
-                    <div>
-                      <span className="font-medium">Tempo restante:</span> {estimatedTime}
-                    </div>
-                    <div className="col-span-2">
-                      <span className="font-medium">Modelo:</span> {models.find(m => m.id === downloadingModelId)?.name || "Desconhecido"}
-                    </div>
-                  </div>
-                  
-                  <Alert variant="default" className="mt-4 py-2">
-                    <AlertTitle className="text-sm">Download em andamento</AlertTitle>
-                    <AlertDescription className="text-xs flex items-center">
-                      <ExternalLink className="h-3 w-3 mr-1 inline-block" />
-                      Baixando de alphacephei.com (servidor oficial VOSK)
-                    </AlertDescription>
-                  </Alert>
-                  
-                  {downloadingModelId && downloadProgress < 95 && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={cancelDownload} 
-                      className="w-full mt-4"
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Cancelar Download
-                    </Button>
-                  )}
+                <Progress value={downloadProgress} className="h-3 mb-2" />
+                
+                <div className="flex justify-between text-sm mb-4">
+                  <span>{downloadProgress}%</span>
+                  <span>{downloadedSize} / {totalSize}</span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-1 text-sm text-muted-foreground">
+                  <div><span className="font-medium">Velocidade:</span> {downloadSpeed}</div>
+                  <div><span className="font-medium">Tempo estimado:</span> {estimatedTime}</div>
+                </div>
+                
+                <Alert variant="default" className="mt-4 py-2">
+                  <AlertTitle className="text-sm">Download em andamento</AlertTitle>
+                  <AlertDescription className="text-xs flex items-center">
+                    <ExternalLink className="h-3 w-3 mr-1 inline-block" />
+                    Baixando de alphacephei.com (servidor oficial VOSK)
+                  </AlertDescription>
+                </Alert>
+                
+                <div className="flex justify-center mt-4">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={cancelDownload} 
+                    disabled={downloadProgress >= 95}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Cancelar Download
+                  </Button>
                 </div>
               </div>
             </div>
@@ -552,8 +561,13 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         <DrawerFooter>
           <Button 
             variant="outline" 
-            onClick={handleClose}
-            disabled={isProcessing}
+            onClick={() => {
+              if (!isProcessing && !downloadingModelId) {
+                onClose();
+              } else {
+                setCloseAttempted(true);
+              }
+            }}
           >
             <X className="h-4 w-4 mr-2" />
             Fechar
