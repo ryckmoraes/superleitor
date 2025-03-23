@@ -84,10 +84,6 @@ const StoryTranscript = ({
             História Concluída!
           </h3>
           
-          <ScrollArea className="h-48 mb-6 rounded border p-4 bg-muted/20">
-            <p className="text-sm">{storyTranscript || "Sua história foi registrada com sucesso!"}</p>
-          </ScrollArea>
-          
           {analysisResult && (
             <div className="mb-4 p-3 bg-muted/30 rounded-lg">
               <h4 className="text-sm font-medium mb-1">Análise da História:</h4>
@@ -187,14 +183,9 @@ const StoryTranscript = ({
         ) : (
           <div>
             <p className={`text-sm ${isInterim ? 'opacity-80' : 'font-medium'}`}>
-              {storyTranscript}
+              {isInterim ? storyTranscript : recognitionStatus || ""}
               {isInterim && <span className="animate-pulse">...</span>}
             </p>
-            {recognitionStatus && (
-              <p className="text-xs text-muted-foreground mt-1 italic">
-                {recognitionStatus}
-              </p>
-            )}
           </div>
         )}
       </ScrollArea>

@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import { speakNaturally } from "@/services/audioProcessor";
 import { showToastOnly } from "@/services/notificationService";
@@ -7,6 +8,7 @@ import { voskService } from "@/services/voskService";
 import StoryTranscript from "@/components/StoryTranscript";
 import { useNavigate } from "react-router-dom";
 import { calculateEarnedTime } from "@/utils/formatUtils";
+import useAppUnlock from "@/hooks/useAppUnlock";
 
 interface SpeechRecognitionHandlerProps {
   isRecording: boolean;
@@ -38,6 +40,7 @@ const SpeechRecognitionHandler = ({
   const [usingVosk, setUsingVosk] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<string>("");
   const navigate = useNavigate();
+  const { unlockApp } = useAppUnlock();
 
   // Verifica se o VOSK está disponível
   useEffect(() => {
@@ -242,11 +245,6 @@ const SpeechRecognitionHandler = ({
     };
   }, []);
 
-  // Calculate earned time based on recording duration
-  const getEarnedTime = (seconds: number): number => {
-    return calculateEarnedTime(seconds);
-  };
-
   // Generate story analysis based on transcript
   const generateStoryAnalysis = (transcript: string): string => {
     if (!transcript || transcript.length < 5) {
@@ -323,7 +321,6 @@ const SpeechRecognitionHandler = ({
   // Handle continue button
   const handleContinue = () => {
     setShowSummary(false);
-    setStoryTranscript("");
     setInterimTranscript("");
     setAnalysisResult("");
     
@@ -340,15 +337,10 @@ const SpeechRecognitionHandler = ({
     navigate("/");
   };
 
-  // Handle unlock app button - fixing the implementation to use imported unlockApp
+  // Handle unlock app button
   const handleUnlock = () => {
-    // Calculate unlock time in minutes usando a função melhorada
-    const earnedMinutes = getEarnedTime(recordingTime);
-    
-    // Store the unlock expiry time in localStorage - this is done by unlockApp now
-    const expiryTime = Date.now() + (earnedMinutes * 60 * 1000);
-    localStorage.setItem('appUnlockExpiryTime', expiryTime.toString());
-    localStorage.setItem('wasUnlocked', 'true');
+    // Use the unlockApp function from the hook
+    const earnedMinutes = unlockApp(recordingTime);
     
     // Show success message
     showToastOnly(
@@ -370,7 +362,7 @@ const SpeechRecognitionHandler = ({
   if (showSummary && !isRecording && !isProcessing) {
     return (
       <StoryTranscript
-        storyTranscript={lastTranscriptRef.current}
+        storyTranscript=""
         isProcessing={false}
         recordingTime={recordingTime}
         onContinue={handleContinue}
