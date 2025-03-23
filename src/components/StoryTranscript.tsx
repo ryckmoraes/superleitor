@@ -1,6 +1,6 @@
 
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Clock, LockOpen, BookOpen, ExternalLink, Home } from "lucide-react";
+import { Loader2, Clock, LockOpen, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { calculateEarnedTime } from "@/utils/formatUtils";
@@ -33,7 +33,6 @@ const StoryTranscript = ({
   processingComplete = false
 }: StoryTranscriptProps) => {
   const [showSummary, setShowSummary] = useState(false);
-  const [showExitOptions, setShowExitOptions] = useState(false);
   const navigate = useNavigate();
   
   // Show summary when recording stops and there's a transcript
@@ -57,18 +56,7 @@ const StoryTranscript = ({
     return calculateEarnedTime(seconds);
   };
   
-  // Handle exit button with options - now directly exits the app
-  const handleExitClick = () => {
-    // Close the app completely using the Android helper
-    exitApp();
-  };
-  
-  // Close app completely
-  const handleCloseApp = () => {
-    exitApp();
-  };
-  
-  // Navigate to home screen
+  // Handle go home navigation
   const handleGoHome = () => {
     navigate("/");
   };
@@ -109,7 +97,7 @@ const StoryTranscript = ({
                 size="lg"
               >
                 <BookOpen className="w-5 h-5" />
-                Continuar a História para Ganhar Mais Tempo
+                <span className="truncate">Continuar a História</span>
               </Button>
             )}
             
@@ -121,18 +109,9 @@ const StoryTranscript = ({
                 size="lg"
               >
                 <LockOpen className="w-5 h-5" />
-                Desbloquear App e Finalizar
+                <span className="truncate">Desbloquear App e Finalizar</span>
               </Button>
             )}
-            
-            <Button 
-              onClick={handleExitClick} 
-              variant="ghost" 
-              className="w-full mt-2 flex items-center justify-center gap-2"
-            >
-              <ExternalLink className="w-4 h-4" />
-              Encerrar Aplicativo
-            </Button>
           </div>
         </div>
       </div>

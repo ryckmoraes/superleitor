@@ -144,7 +144,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
           description: `O idioma foi alterado para ${model.name}`,
         });
         
-        // Reiniciar o serviço VOSK com o novo modelo
+        // Reinitialize VOSK service with the new model
         await voskService.cleanup();
         await voskService.initialize().catch(console.error);
         
@@ -157,7 +157,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
           setCloseAttempted(true);
         }, 500);
       } else {
-        // Se não está instalado, inicie o download
+        // If not installed, start download
         console.log("Model not installed, starting download");
         setAutoCloseAfterDownload(true); // Set to auto-close after download is complete
         await handleDownloadModel(selectedModelId);
