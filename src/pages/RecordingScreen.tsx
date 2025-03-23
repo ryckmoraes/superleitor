@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import { useVoskSetup } from "@/hooks/useVoskSetup";
@@ -33,6 +34,9 @@ const RecordingScreen = () => {
   
   // Setup the VOSK recognition
   const { isInitialized, isLoading, error, lastModelChange } = useVoskSetup();
+  
+  // Get the unlock status and functions from the hook
+  const { isUnlocked, remainingTime, checkUnlockStatus, unlockApp } = useAppUnlock();
   
   // Monitor model changes from useVoskSetup to update UI
   useEffect(() => {
@@ -117,13 +121,13 @@ const RecordingScreen = () => {
   // Function to handle story completion and app unlock
   const handleUnlockApp = () => {
     // Calculate earned time based on recording duration
-    const minutes = Math.ceil((recordingTime || 0) / 30) * 5;
-    unlockApp(minutes);
+    const earnedMinutes = Math.ceil((recordingTime || 0) / 30) * 5;
+    unlockApp(recordingTime || 0);
     
     // Show confirmation
     showToastOnly(
       "App Desbloqueado",
-      `O app foi desbloqueado por ${minutes} minutos!`,
+      `O app foi desbloqueado por ${earnedMinutes} minutos!`,
       "default"
     );
     
