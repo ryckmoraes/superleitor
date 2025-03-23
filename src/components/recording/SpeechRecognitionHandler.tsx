@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { speakNaturally } from "@/services/audioProcessor";
 import { showToastOnly } from "@/services/notificationService";
@@ -20,6 +19,7 @@ interface SpeechRecognitionHandlerProps {
   audioBlob: Blob | null;
   recordingTime: number;
   hasStartedRecording: boolean;
+  onAnalysisResult?: (result: string) => void;
 }
 
 const SpeechRecognitionHandler = ({
@@ -31,7 +31,8 @@ const SpeechRecognitionHandler = ({
   setRecognitionStatus,
   audioBlob,
   recordingTime,
-  hasStartedRecording
+  hasStartedRecording,
+  onAnalysisResult
 }: SpeechRecognitionHandlerProps) => {
   const lastTranscriptRef = useRef("");
   const processingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -121,6 +122,11 @@ const SpeechRecognitionHandler = ({
             const analysisResponse = generateStoryAnalysis(lastTranscriptRef.current);
             setAnalysisResult(analysisResponse);
             
+            // Pass analysis result to parent component if callback exists
+            if (onAnalysisResult) {
+              onAnalysisResult(analysisResponse);
+            }
+            
             showToastOnly("Análise completa!", "Sua história foi analisada com sucesso.");
             speakNaturally(analysisResponse, true);
           }
@@ -141,6 +147,11 @@ const SpeechRecognitionHandler = ({
               // Set the analysis result for display in summary
               setAnalysisResult(response);
               
+              // Pass analysis result to parent component if callback exists
+              if (onAnalysisResult) {
+                onAnalysisResult(response);
+              }
+              
               // Display as toast
               showToastOnly("Análise completa!", "Sua história foi analisada com sucesso.");
               
@@ -155,6 +166,11 @@ const SpeechRecognitionHandler = ({
             const analysisResponse = generateStoryAnalysis(lastTranscriptRef.current);
             setAnalysisResult(analysisResponse);
             
+            // Pass analysis result to parent component if callback exists
+            if (onAnalysisResult) {
+              onAnalysisResult(analysisResponse);
+            }
+            
             // In case of error, still show some response
             showToastOnly("Análise da história", "Sua história foi analisada localmente.");
             speakNaturally(analysisResponse, true);
@@ -168,13 +184,6 @@ const SpeechRecognitionHandler = ({
               clearTimeout(processingTimeoutRef.current);
               processingTimeoutRef.current = null;
             }
-            
-            // Show summary after processing completes
-            if (recordingTime > 3) {
-              setTimeout(() => {
-                setShowSummary(true);
-              }, 4000);
-            }
           });
       } else {
         // Finalize processing after a time if no audio blob or API key
@@ -184,18 +193,16 @@ const SpeechRecognitionHandler = ({
           const analysisResponse = generateStoryAnalysis(lastTranscriptRef.current);
           setAnalysisResult(analysisResponse);
           
+          // Pass analysis result to parent component if callback exists
+          if (onAnalysisResult) {
+            onAnalysisResult(analysisResponse);
+          }
+          
           setIsProcessing(false);
           isProcessingRef.current = false;
           
           showToastOnly("Análise da história", "Sua história foi analisada com sucesso.");
           speakNaturally(analysisResponse, true);
-          
-          // Show summary after processing completes
-          if (recordingTime > 3) {
-            setTimeout(() => {
-              setShowSummary(true);
-            }, 5000);
-          }
         }, 2000);
       }
     } else {
@@ -318,62 +325,7 @@ const SpeechRecognitionHandler = ({
     return analysis;
   };
 
-  // Handle continue button
-  const handleContinue = () => {
-    setShowSummary(false);
-    setInterimTranscript("");
-    setAnalysisResult("");
-    
-    // Restart recording
-    setTimeout(() => {
-      const startMessage = "Vamos continuar a história! Estou ouvindo...";
-      speakNaturally(startMessage, true);
-    }, 500);
-  };
-  
-  // Handle exit button
-  const handleExit = () => {
-    setShowSummary(false);
-    navigate("/");
-  };
-
-  // Handle unlock app button
-  const handleUnlock = () => {
-    // Use the unlockApp function from the hook
-    const earnedMinutes = unlockApp(recordingTime);
-    
-    // Show success message
-    showToastOnly(
-      "App Desbloqueado!", 
-      `Você ganhou ${earnedMinutes} minutos de uso! Aproveite!`,
-      "default"
-    );
-    
-    // Speak the success message
-    speakNaturally(`Parabéns! Você desbloqueou o SuperLeitor por ${earnedMinutes} minutos. Aproveite!`, true);
-    
-    // Navigate to home screen
-    setTimeout(() => {
-      navigate("/");
-    }, 3000);
-  };
-
-  // Render the summary component if needed
-  if (showSummary && !isRecording && !isProcessing) {
-    return (
-      <StoryTranscript
-        storyTranscript=""
-        isProcessing={false}
-        recordingTime={recordingTime}
-        onContinue={handleContinue}
-        onExit={handleExit}
-        onUnlock={handleUnlock}
-        analysisResult={analysisResult}
-      />
-    );
-  }
-
-  return null; // This is normally a behavior component, not a visual one
+  return null;
 };
 
 export default SpeechRecognitionHandler;

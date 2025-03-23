@@ -64,7 +64,8 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         onClose();
         setCloseAttempted(false);
         
-        // Force reload the app to apply language changes
+        // Force hard reload the app to apply language changes
+        console.log("Forcing full page reload to apply language changes");
         window.location.reload();
       }, 500);
     }
@@ -395,6 +396,12 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
     // Ensure hasChanges is reset
     setHasChanges(false);
     onClose();
+    
+    // Force reload the app if language was changed
+    if (currentModelId !== selectedModelId) {
+      console.log("Language changed, reloading app");
+      window.location.reload();
+    }
   };
 
   // Manual close function that bypasses checks
@@ -405,6 +412,12 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
     setDownloadingModelId(null);
     setForceShowDownload(false);
     onClose();
+    
+    // Force reload the app if needed
+    if (currentModelId !== voskModelsService.getCurrentModel()?.id) {
+      console.log("Language model changed, forcing reload");
+      window.location.reload();
+    }
   };
 
   return (

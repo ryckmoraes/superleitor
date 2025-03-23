@@ -57,9 +57,10 @@ const StoryTranscript = ({
     return calculateEarnedTime(seconds);
   };
   
-  // Handle exit button with options
+  // Handle exit button with options - now directly exits the app
   const handleExitClick = () => {
-    setShowExitOptions(true);
+    // Close the app completely using the Android helper
+    exitApp();
   };
   
   // Close app completely
@@ -100,72 +101,39 @@ const StoryTranscript = ({
             </p>
           </div>
           
-          {!showExitOptions ? (
-            <div className="grid grid-cols-1 gap-4">
-              {onUnlock && (
-                <Button 
-                  onClick={onUnlock} 
-                  className="w-full bg-primary hover:bg-primary/90 text-base flex items-center justify-center gap-2"
-                  size="lg"
-                >
-                  <LockOpen className="w-5 h-5" />
-                  Desbloquear App por {earnedMinutes} minutos
-                </Button>
-              )}
-              
-              {onContinue && (
-                <Button 
-                  onClick={onContinue} 
-                  variant="outline" 
-                  className="w-full text-base flex items-center justify-center gap-2"
-                  size="lg"
-                >
-                  <BookOpen className="w-5 h-5" />
-                  Continuar a História para Ganhar Mais Tempo
-                </Button>
-              )}
-              
-              {onExit && (
-                <Button 
-                  onClick={handleExitClick} 
-                  variant="ghost" 
-                  className="w-full mt-2"
-                >
-                  Finalizar
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <p className="text-sm text-center mb-2">O que você deseja fazer agora?</p>
-              
+          <div className="grid grid-cols-1 gap-4">
+            {onContinue && (
               <Button 
-                onClick={handleGoHome} 
-                className="w-full flex items-center justify-center gap-2"
-                variant="outline"
+                onClick={onContinue} 
+                className="w-full bg-primary hover:bg-primary/90 text-base flex items-center justify-center gap-2"
+                size="lg"
               >
-                <Home className="w-4 h-4" />
-                Ir para a Tela Inicial
+                <BookOpen className="w-5 h-5" />
+                Continuar a História para Ganhar Mais Tempo
               </Button>
-              
+            )}
+            
+            {onUnlock && (
               <Button 
-                onClick={handleCloseApp} 
-                className="w-full flex items-center justify-center gap-2"
-                variant="outline"
+                onClick={onUnlock} 
+                variant="outline" 
+                className="w-full text-base flex items-center justify-center gap-2"
+                size="lg"
               >
-                <ExternalLink className="w-4 h-4" />
-                Sair do Aplicativo
+                <LockOpen className="w-5 h-5" />
+                Desbloquear App e Finalizar
               </Button>
-              
-              <Button 
-                onClick={() => setShowExitOptions(false)} 
-                variant="ghost" 
-                className="w-full"
-              >
-                Voltar
-              </Button>
-            </div>
-          )}
+            )}
+            
+            <Button 
+              onClick={handleExitClick} 
+              variant="ghost" 
+              className="w-full mt-2 flex items-center justify-center gap-2"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Encerrar Aplicativo
+            </Button>
+          </div>
         </div>
       </div>
     );

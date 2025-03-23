@@ -1,10 +1,10 @@
-
 import { useState, useEffect, useRef } from "react";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import { useVoskSetup } from "@/hooks/useVoskSetup";
 import { showToastOnly } from "@/services/notificationService";
 import { speakNaturally } from "@/services/audioProcessor";
 import { useAppUnlock } from "@/hooks/useAppUnlock";
+import { exitApp } from "@/utils/androidHelper";
 
 // Import refactored components
 import RecordingMainView from "@/components/recording/RecordingMainView";
@@ -25,6 +25,7 @@ const RecordingScreen = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<string>("");
   
   // Track language changes to force UI updates
   const [languageChanged, setLanguageChanged] = useState<string | null>(null);
@@ -135,6 +136,26 @@ const RecordingScreen = () => {
     setStoryTranscript("");
     setInterimTranscript("");
     setIsProcessing(false);
+    
+    // Close the app after a short delay
+    setTimeout(() => {
+      exitApp();
+    }, 2000);
+  };
+  
+  // Function to handle continuing the story
+  const handleContinueStory = () => {
+    // Reset states but keep accumulated time
+    setStoryTranscript("");
+    setInterimTranscript("");
+    setIsProcessing(false);
+    setAnalysisResult("");
+    
+    // Start recording again after a brief delay
+    setTimeout(() => {
+      speakNaturally("Conte mais da sua história! Estou ouvindo...", true);
+      toggleRecording();
+    }, 500);
   };
   
   // Get recording methods and data
@@ -158,6 +179,11 @@ const RecordingScreen = () => {
     hasStartedRecording,
     processingComplete
   } = recordingManager;
+  
+  // Function to receive analysis results from SpeechRecognitionHandler
+  const handleAnalysisResult = (result: string) => {
+    setAnalysisResult(result);
+  };
 
   return (
     <>
@@ -185,6 +211,7 @@ const RecordingScreen = () => {
         audioBlob={audioBlob}
         recordingTime={recordingTime}
         hasStartedRecording={hasStartedRecording}
+        onAnalysisResult={handleAnalysisResult}
       />
       
       {/* Main UI */}
@@ -200,6 +227,9 @@ const RecordingScreen = () => {
         interimTranscript={interimTranscript}
         recognitionStatus={recognitionStatus}
         processingComplete={processingComplete}
+        onContinue={handleContinueStory}
+        onUnlock={handleUnlockApp}
+        analysisResult={analysisResult}
       />
       
       {/* Show unlock status if available */}
