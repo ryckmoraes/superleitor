@@ -4,6 +4,7 @@ import { DEFAULT_VOICE_ID, AGENT_ID } from './config';
 import { keyManagement } from './keyManagement';
 import { textToSpeechService } from './textToSpeech';
 import { audioAnalysisService } from './audioAnalysis';
+import { speechToTextService } from './speechToText';
 
 /**
  * Main ElevenLabs service for text-to-speech functionality
@@ -26,6 +27,9 @@ export const elevenLabsService = {
   
   // Audio analysis
   analyzeAudio: audioAnalysisService.analyzeAudio,
+  
+  // Speech to text
+  transcribeAudio: speechToTextService.transcribeAudio,
   
   // Speak text directly (convert and play)
   async speak(text: string, priority: boolean = false): Promise<void> {

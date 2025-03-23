@@ -25,10 +25,5 @@ export const keyManagement = {
   // Clear the API key
   clearApiKey: (): void => {
     sessionStorage.removeItem('elevenlabs_api_key');
-  },
-
-  // Get the agent ID (this is separate from the API key)
-  getAgentId: (): string => {
-    return "eNwyboGu8S4QiAWXpwUM"; // Hardcoded agent ID
   }
 };
