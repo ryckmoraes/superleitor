@@ -19,9 +19,6 @@ const SpeechInitializer = () => {
         setLastModelChange(modelChangedAt);
         speechInitializedRef.current = false; // Force reinitialization
         console.log("Language model change detected, forcing reinitialization");
-        
-        // Force reload the app when language changes to avoid UI freezing
-        window.location.reload();
       }
     };
     
@@ -34,26 +31,26 @@ const SpeechInitializer = () => {
     return () => clearInterval(interval);
   }, [lastModelChange]);
   
-  // Initialize speech synthesis and VOSK
+  // Inicializa a síntese de fala e VOSK
   useEffect(() => {
     const initializeSpeech = async () => {
       if (!speechInitializedRef.current) {
         console.log("Iniciando inicialização de serviços de fala...");
         
-        // Cancel any previous browser speech
+        // Cancela qualquer fala anterior do navegador
         if ('speechSynthesis' in window) {
           window.speechSynthesis.cancel();
         }
         
-        // Initialize browser speech synthesis
+        // Inicializa a síntese de fala do navegador
         const initialized = await initVoices();
         speechInitializedRef.current = initialized;
         console.log("Síntese de fala inicializada:", initialized);
         
-        // Make sure model list is loaded
+        // Certifica-se que a lista de modelos está carregada
         voskModelsService.getAvailableModels();
         
-        // Initialize VOSK for speech recognition
+        // Inicializa o VOSK para reconhecimento de fala
         try {
           const currentModel = voskModelsService.getCurrentModel();
           console.log("Inicializando VOSK com modelo:", currentModel?.name);
@@ -88,7 +85,7 @@ const SpeechInitializer = () => {
           console.error("Erro ao inicializar VOSK:", error);
           setVoskInitialized(false);
           
-          // Show informative message only once
+          // Mostrar mensagem informativa apenas uma vez
           showToastOnly(
             "Informação", 
             "Reconhecimento de fala offline não disponível. Usando alternativa online.",
@@ -117,7 +114,7 @@ const SpeechInitializer = () => {
     }
   };
 
-  return null; // This is a configuration component, not visual
+  return null; // Este é um componente de configuração, não visual
 };
 
 export default SpeechInitializer;
