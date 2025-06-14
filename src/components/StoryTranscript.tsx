@@ -109,14 +109,6 @@ const StoryTranscript = ({
                 Desbloquear App e Finalizar
               </Button>
             )}
-            <Button 
-              onClick={handleExitClick} 
-              variant="ghost" 
-              className="w-full mt-2 flex items-center justify-center gap-2"
-            >
-              <ExternalLink className="w-4 h-4" />
-              Encerrar Aplicativo
-            </Button>
           </div>
         </div>
       </div>
