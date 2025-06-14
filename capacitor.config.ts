@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   appName: 'Superleitor',
   webDir: 'dist',
   server: {
-    url: "https://61c9c85a-521b-4753-a60e-0cdb64c7b0cc.lovableproject.com?forceHideBadge=true",
+    url: "", // Deixe vazio para funcionar no app instalado sem depender do servidor externo
     cleartext: true,
     androidScheme: "https"
   },
@@ -42,3 +42,4 @@ const config: CapacitorConfig = {
 };
 
 export default config;
+
