@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/use-toast";
 import { Key, LockKeyhole, Sun, Moon, Settings as SettingsIcon } from "lucide-react";
 import PasswordDialog from "./PasswordDialog";
+import { useTranslations } from "@/hooks/useTranslations";
 
 interface SettingsProps {
   isOpen: boolean;
@@ -20,6 +20,7 @@ const Settings = ({ isOpen, onClose, toggleTheme, isDarkMode }: SettingsProps) =
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [passwordMode, setPasswordMode] = useState<"create" | "change" | "verify">("create");
   const [hasPassword, setHasPassword] = useState(false);
+  const { t } = useTranslations();
 
   useEffect(() => {
     // Verificar se já existe uma senha configurada
@@ -53,17 +54,16 @@ const Settings = ({ isOpen, onClose, toggleTheme, isDarkMode }: SettingsProps) =
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <SettingsIcon className="h-5 w-5" /> Configurações
+              <SettingsIcon className="h-5 w-5" /> {t("settings.title")}
             </DialogTitle>
           </DialogHeader>
-          
           <div className="space-y-6 py-4">
             <div className="space-y-4">
-              <h3 className="text-sm font-medium">Aparência</h3>
+              <h3 className="text-sm font-medium">{t("settings.appearance")}</h3>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   {isDarkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-                  <Label htmlFor="theme-mode">Modo {isDarkMode ? "Noturno" : "Dia"}</Label>
+                  <Label htmlFor="theme-mode">{t("settings.themeModeLabel", { mode: isDarkMode ? t("settings.night") : t("settings.day") })}</Label>
                 </div>
                 <Switch
                   id="theme-mode"
@@ -72,11 +72,9 @@ const Settings = ({ isOpen, onClose, toggleTheme, isDarkMode }: SettingsProps) =
                 />
               </div>
             </div>
-            
             <Separator />
-            
             <div className="space-y-4">
-              <h3 className="text-sm font-medium">Segurança</h3>
+              <h3 className="text-sm font-medium">{t("settings.security")}</h3>
               <div className="space-y-4">
                 {!hasPassword ? (
                   <Button
@@ -85,7 +83,7 @@ const Settings = ({ isOpen, onClose, toggleTheme, isDarkMode }: SettingsProps) =
                     onClick={handleCreatePassword}
                   >
                     <Key className="mr-2 h-4 w-4" />
-                    Criar Senha
+                    {t("settings.createPassword")}
                   </Button>
                 ) : (
                   <Button
@@ -94,12 +92,12 @@ const Settings = ({ isOpen, onClose, toggleTheme, isDarkMode }: SettingsProps) =
                     onClick={handleChangePassword}
                   >
                     <LockKeyhole className="mr-2 h-4 w-4" />
-                    Alterar Senha
+                    {t("settings.changePassword")}
                   </Button>
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                A senha protege o acesso às configurações e a saída do aplicativo.
+                {t("settings.passwordInfo")}
               </p>
             </div>
           </div>

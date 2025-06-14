@@ -7,6 +7,7 @@ import Settings from "./Settings";
 import LanguageSelector from "./LanguageSelector";
 import PasswordDialog from "./PasswordDialog";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useTranslations } from "@/hooks/useTranslations";
 
 interface HamburgerMenuProps {
   isDarkMode: boolean;
@@ -24,6 +25,7 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
   const triggerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
   const { resetOnboarding } = useOnboarding();
+  const { t } = useTranslations();
 
   // Force show trigger on component mount
   useEffect(() => {
@@ -153,14 +155,14 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
       
       navigate("/");
       toast({
-        title: "Saindo do aplicativo",
-        description: "Obrigado por usar o Esfera Sonora!",
+        title: t("menu.exitTitle"),
+        description: t("menu.exitDescription"),
       });
     } catch (error) {
       console.error("Erro ao sair:", error);
       toast({
-        title: "Erro ao sair",
-        description: "Não foi possível sair corretamente do aplicativo.",
+        title: t("menu.exitErrorTitle"),
+        description: t("menu.exitErrorDescription"),
         variant: "destructive",
       });
     }
@@ -170,8 +172,8 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
     resetOnboarding();
     navigate("/");
     toast({
-      title: "Logout realizado",
-      description: "Você saiu da sua conta. Configuração inicial será necessária.",
+      title: t("menu.logoutTitle"),
+      description: t("menu.logoutDescription"),
     });
   };
 
@@ -199,7 +201,7 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
               : "bg-black/5 hover:bg-black/10 border border-black/10"
           }`}
           onClick={toggleMenu}
-          aria-label={isOpen ? "Fechar menu" : "Abrir menu"}
+          aria-label={isOpen ? t("menu.closeMenu") : t("menu.openMenu")}
         >
           {isOpen ? (
             <X className={`h-5 w-5 ${isDarkMode ? "text-white" : "text-black"}`} />
@@ -217,13 +219,13 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
       >
         <div className="flex flex-col h-full p-6">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-lg font-medium">Menu</h2>
+            <h2 className="text-lg font-medium">{t("menu.title")}</h2>
             <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8 rounded-full"
               onClick={toggleMenu}
-              aria-label="Fechar menu"
+              aria-label={t("menu.closeMenu")}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -236,7 +238,7 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
               onClick={handleSettingsClick}
             >
               <SettingsIcon className="mr-2 h-4 w-4" />
-              Configurações
+              {t("menu.settings")}
             </Button>
 
             <Button
@@ -245,7 +247,7 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
               onClick={handleLanguageClick}
             >
               <Globe className="mr-2 h-4 w-4" />
-              Idiomas
+              {t("menu.languages")}
             </Button>
 
             <Button
@@ -254,7 +256,7 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
               onClick={handleLogoutClick}
             >
               <LogOut className="mr-2 h-4 w-4" />
-              Reiniciar Configuração
+              {t("menu.resetOnboarding")}
             </Button>
           </div>
           
@@ -265,7 +267,7 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
               onClick={handleExitClick}
             >
               <X className="mr-2 h-4 w-4" />
-              Sair do Aplicativo
+              {t("menu.exitApp")}
             </Button>
           </div>
         </div>
@@ -290,12 +292,12 @@ const HamburgerMenu = ({ isDarkMode, toggleTheme }: HamburgerMenuProps) => {
         mode="verify"
         title={
           passwordAction === "settings" 
-            ? "Acessar Configurações" 
+            ? t("menu.accessSettings")
             : passwordAction === "language"
-            ? "Acessar Idiomas"
+            ? t("menu.accessLanguages")
             : passwordAction === "logout"
-            ? "Reiniciar Configuração"
-            : "Sair do Aplicativo"
+            ? t("menu.resetOnboarding")
+            : t("menu.exitApp")
         }
       />
     </>

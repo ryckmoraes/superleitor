@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import { useVoskSetup } from "@/hooks/useVoskSetup";
@@ -91,7 +90,7 @@ const RecordingScreen = () => {
   const handleUnlockApp = () => {
     const earnedMinutes = Math.ceil((recordingTime || 0) / 30) * 5;
     unlockApp(recordingTime || 0);
-    
+
     showToastOnly(
       t('recordingScreen.appUnlocked'),
       t('recordingScreen.earnedTime', { time: earnedMinutes }),
@@ -101,12 +100,12 @@ const RecordingScreen = () => {
     setStoryTranscript("");
     setInterimTranscript("");
     setIsProcessing(false);
-    
+
     setTimeout(() => {
       exitApp();
     }, 2000);
   };
-  
+
   const handleContinueStory = () => {
     setStoryTranscript("");
     setInterimTranscript("");
@@ -214,6 +213,7 @@ const RecordingScreen = () => {
         onContinue={handleContinueStory}
         onUnlock={handleUnlockApp}
         analysisResult={analysisResult}
+        t={t}
       />
       
       {isUnlocked && remainingTime > 0 && (

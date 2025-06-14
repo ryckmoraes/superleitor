@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Mic, Square, Loader2 } from "lucide-react";
 import AudioSphere from "@/components/AudioSphere";
@@ -20,6 +19,7 @@ interface RecordingMainViewProps {
   onContinue?: () => void;
   onUnlock?: () => void;
   analysisResult?: string;
+  t?: (key: string, values?: Record<string, string | number>) => string;
 }
 
 const RecordingMainView = ({
@@ -36,7 +36,8 @@ const RecordingMainView = ({
   processingComplete,
   onContinue,
   onUnlock,
-  analysisResult
+  analysisResult,
+  t,
 }: RecordingMainViewProps) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-primary/5 to-background overflow-hidden">
@@ -54,6 +55,7 @@ const RecordingMainView = ({
             recordingTime={recordingTime} 
             toggleRecording={toggleRecording}
             recognitionStatus={recognitionStatus}
+            t={t}
           />
           
           {/* Story Transcript */}
