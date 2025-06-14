@@ -1,4 +1,3 @@
-
 // Serviço VOSK para reconhecimento de fala offline
 import { voskModelsService } from './voskModelsService';
 
@@ -27,6 +26,7 @@ class VoskService {
       // Check if we need to reinitialize due to language change
       const modelChangedAt = localStorage.getItem('vosk_model_changed_at');
       if (this.isInitialized && modelChangedAt === this.lastModelChangeTimestamp) {
+        console.log("[voskService] Já inicializado e timestamp de modelo não mudou. Modelo ativo:", voskModelsService.getCurrentModel()?.name);
         return true;
       }
       
@@ -38,6 +38,17 @@ class VoskService {
       // Store current timestamp to track model changes
       this.lastModelChangeTimestamp = modelChangedAt;
       
+      // Log de idioma/modelo
+      const currentModel = voskModelsService.getCurrentModel();
+      const modelPath = currentModel ? currentModel.url : '/models/vosk-model-pt-br-small';
+      console.log("[voskService] Inicializando VOSK com modelo:", {
+        id: currentModel?.id,
+        name: currentModel?.name,
+        lang: currentModel?.language,
+        path: modelPath,
+        localStorageVal: localStorage.getItem('vosk_current_model'),
+      });
+
       // Importação dinâmica do VOSK
       console.log("Importando módulo VOSK...");
       const voskModule = await import('vosk-browser');
