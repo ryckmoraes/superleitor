@@ -1,13 +1,14 @@
-
 import { useEffect, useRef } from "react";
 import { initVoices } from "@/services/audioProcessor";
 import { voskService } from "@/services/voskService";
 import { voskModelsService } from "@/services/voskModelsService";
 import { showToastOnly } from "@/services/notificationService";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useTranslations } from "@/hooks/useTranslations";
 
 const SpeechInitializer = () => {
   const { modelId, language } = useLanguage();
+  const { t } = useTranslations();
   const initializedModelIdRef = useRef<string | null>(null);
   
   // Initialize speech synthesis and show toast for VOSK status
@@ -37,21 +38,21 @@ const SpeechInitializer = () => {
       if (isVoskReady && currentModel && currentModel.id === modelId) {
         const languageName = getLanguageName(language);
         showToastOnly(
-          "Reconhecimento de fala", 
-          `Pronto para ouvir em ${languageName}`,
+          t('speechInitializer.title'), 
+          t('speechInitializer.ready', { languageName }),
           "default"
         );
       } else if (!isVoskReady) {
         showToastOnly(
-          "Informação", 
-          "Reconhecimento offline não disponível. Usando alternativa online.",
+          t('speechInitializer.info'), 
+          t('speechInitializer.offlineNotAvailable'),
           "default"
         );
       }
     };
     
     initializeSpeech();
-  }, [modelId, language]);
+  }, [modelId, language, t]);
 
   // Helper function to get language name
   const getLanguageName = (language: string): string => {
