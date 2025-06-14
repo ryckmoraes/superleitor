@@ -121,21 +121,40 @@ class VoskModelsService {
   public getCurrentModel(): VoskModel | undefined {
     const currentModelId = localStorage.getItem('vosk_current_model') || 'pt-br-small';
     const found = this.models.find(model => model.id === currentModelId);
-    console.log(`[voskModelsService:getCurrentModel] currentModelId in localStorage=`, currentModelId, 'Found=', found?.name);
+    console.log(`[voskModelsService:getCurrentModel] currentModelId in localStorage=`, currentModelId, 'Found=', found?.name, 'Language=', found?.language);
     return found;
   }
 
   public getCurrentLanguage(): string {
     const currentModel = this.getCurrentModel();
-    return currentModel ? currentModel.language : 'pt-BR';
+    const language = currentModel ? currentModel.language : 'pt-BR';
+    console.log(`[voskModelsService:getCurrentLanguage] Returning language: ${language} for model: ${currentModel?.name}`);
+    return language;
   }
 
   public setCurrentModel(modelId: string): void {
+    const previousModel = this.getCurrentModel();
+    console.log(`[voskModelsService:setCurrentModel] Mudando de "${previousModel?.id}" (${previousModel?.language}) para "${modelId}"`);
+    
     // Marcar no localStorage
     localStorage.setItem('vosk_current_model', modelId);
     // Timestamp para sinalizar mudança global
-    localStorage.setItem('vosk_model_changed_at', Date.now().toString());
-    console.log(`[voskModelsService:setCurrentModel] Atualizado para "${modelId}", localStorage.vosk_current_model=`, localStorage.getItem('vosk_current_model'));
+    const timestamp = Date.now().toString();
+    localStorage.setItem('vosk_model_changed_at', timestamp);
+    
+    const newModel = this.models.find(m => m.id === modelId);
+    console.log(`[voskModelsService:setCurrentModel] Modelo atualizado para "${modelId}" (${newModel?.language}), timestamp: ${timestamp}`);
+    
+    // Forçar uma pequena mudança no DOM para que os componentes detectem
+    window.dispatchEvent(new CustomEvent('voskModelChanged', { 
+      detail: { 
+        previousModelId: previousModel?.id,
+        newModelId: modelId,
+        previousLanguage: previousModel?.language,
+        newLanguage: newModel?.language,
+        timestamp 
+      } 
+    }));
   }
 
   private async checkInstalledModels(): Promise<void> {

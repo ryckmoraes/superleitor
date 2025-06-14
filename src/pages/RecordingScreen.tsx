@@ -1,8 +1,9 @@
+
 import { useState, useEffect, useRef } from "react";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import { useVoskSetup } from "@/hooks/useVoskSetup";
 import { showToastOnly } from "@/services/notificationService";
-import { speakNaturally } from "@/services/audioProcessor";
+import { speakNaturally, getLocalizedGreeting } from "@/services/audioProcessor";
 import { useAppUnlock } from "@/hooks/useAppUnlock";
 import { exitApp } from "@/utils/androidHelper";
 
@@ -34,16 +35,16 @@ const RecordingScreen = () => {
   const patternDetectorRef = useRef<PatternDetectorRef>(null);
   
   // Setup the VOSK recognition
-  const { isInitialized, isLoading, error, lastModelChange } = useVoskSetup();
+  const { isInitialized, isLoading, error, currentModelId } = useVoskSetup();
   
   // Get the unlock status and functions from the hook
   const { isUnlocked, remainingTime, checkUnlockStatus, unlockApp } = useAppUnlock();
   
   // Monitor model changes from useVoskSetup to update UI
   useEffect(() => {
-    if (lastModelChange && lastModelChange !== languageChanged) {
+    if (currentModelId && currentModelId !== languageChanged) {
       console.log("Language changed detected in RecordingScreen, refreshing UI");
-      setLanguageChanged(lastModelChange);
+      setLanguageChanged(currentModelId);
       
       // Reset any active recording or processing when language changes
       if (isRecording) {
@@ -54,7 +55,7 @@ const RecordingScreen = () => {
         setIsProcessing(false);
       }
     }
-  }, [lastModelChange, languageChanged, isRecording, isProcessing]);
+  }, [currentModelId, languageChanged, isRecording, isProcessing]);
   
   // Theme management
   const { isDarkMode, toggleTheme } = ThemeManager();
@@ -86,13 +87,15 @@ const RecordingScreen = () => {
             "default"
           );
           
-          // Welcome back message if unlocked
-          speakNaturally("Bem-vindo ao SuperLeitor! Você pode contar mais histórias ou continuar usando o app.", true);
+          // Welcome back message if unlocked - use localized greeting
+          const localizedMessage = getLocalizedGreeting().replace("to unlock SuperReader", "You can continue using the app");
+          speakNaturally(localizedMessage, true);
         }, 1000);
       } else {
-        // If not unlocked, prompt user to tell a story
+        // If not unlocked, prompt user to tell a story - use localized greeting
         setTimeout(() => {
-          speakNaturally("Olá! Conte-me uma história para desbloquear o SuperLeitor.", true);
+          const greeting = getLocalizedGreeting();
+          speakNaturally(greeting, true);
         }, 1000);
       }
     }

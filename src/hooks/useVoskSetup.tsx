@@ -8,20 +8,20 @@ export const useVoskSetup = () => {
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [lastModelId, setLastModelId] = useState<string | null>(null);
+  const [currentModelId, setCurrentModelId] = useState<string | null>(null);
   
   // Watch for model changes
   useEffect(() => {
     const checkModelChanges = () => {
       const currentModel = voskModelsService.getCurrentModel();
-      const currentModelId = currentModel?.id;
+      const modelId = currentModel?.id;
       
-      if (currentModelId && currentModelId !== lastModelId) {
+      if (modelId && modelId !== currentModelId) {
         console.log("[useVoskSetup] Mudança de modelo detectada:", {
-          anterior: lastModelId,
-          atual: currentModelId
+          anterior: currentModelId,
+          atual: modelId
         });
-        setLastModelId(currentModelId);
+        setCurrentModelId(modelId);
         // Force reinitialization on model change
         setIsInitialized(false);
         setIsLoading(true);
@@ -35,12 +35,12 @@ export const useVoskSetup = () => {
     const interval = setInterval(checkModelChanges, 3000);
     
     return () => clearInterval(interval);
-  }, [lastModelId]);
+  }, [currentModelId]);
   
   // Initialize VOSK when component loads or when model changes
   useEffect(() => {
     const setupVosk = async () => {
-      if (isInitialized && lastModelId === voskService.getCurrentModelId()) {
+      if (isInitialized && currentModelId === voskService.getCurrentModelId()) {
         return; // Already initialized with current model
       }
       
@@ -91,13 +91,13 @@ export const useVoskSetup = () => {
       console.log("[useVoskSetup] Limpando recursos do VOSK");
       // Don't cleanup on unmount, let the service manage its lifecycle
     };
-  }, [lastModelId, isInitialized]);
+  }, [currentModelId, isInitialized]);
   
   return {
     isInitialized,
     isLoading,
     error,
     isVoskWorking: voskService.isVoskWorking(),
-    currentModelId: lastModelId
+    currentModelId
   };
 };
