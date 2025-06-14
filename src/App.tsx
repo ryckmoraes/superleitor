@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound";
 import { OnboardingProvider } from "./contexts/OnboardingContext";
 import WelcomeSplashScreen from "./pages/WelcomeSplashScreen";
 import { elevenLabsService } from "./services/elevenlabs";
+import { LanguageProvider } from "./contexts/LanguageContext"; // ✅ import
 
 const queryClient = new QueryClient();
 
@@ -133,15 +134,17 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <OnboardingProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AnimatedRoutes />
-          </BrowserRouter>
-        </OnboardingProvider>
-      </TooltipProvider>
+      <LanguageProvider>
+        <TooltipProvider>
+          <OnboardingProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AnimatedRoutes />
+            </BrowserRouter>
+          </OnboardingProvider>
+        </TooltipProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 };
