@@ -1,21 +1,27 @@
 
 import { useState, useEffect } from 'react';
 import { voskService } from '@/services/voskService';
+import { voskModelsService } from '@/services/voskModelsService';
 import { showToastOnly } from '@/services/notificationService';
 
 export const useVoskSetup = () => {
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [lastModelChange, setLastModelChange] = useState<string | null>(null);
+  const [lastModelId, setLastModelId] = useState<string | null>(null);
   
   // Watch for model changes
   useEffect(() => {
     const checkModelChanges = () => {
-      const modelChangedAt = localStorage.getItem('vosk_model_changed_at');
-      if (modelChangedAt && modelChangedAt !== lastModelChange) {
-        console.log("Language model change detected in useVoskSetup:", modelChangedAt, "vs", lastModelChange);
-        setLastModelChange(modelChangedAt);
+      const currentModel = voskModelsService.getCurrentModel();
+      const currentModelId = currentModel?.id;
+      
+      if (currentModelId && currentModelId !== lastModelId) {
+        console.log("[useVoskSetup] Mudança de modelo detectada:", {
+          anterior: lastModelId,
+          atual: currentModelId
+        });
+        setLastModelId(currentModelId);
         // Force reinitialization on model change
         setIsInitialized(false);
         setIsLoading(true);
@@ -25,53 +31,53 @@ export const useVoskSetup = () => {
     // Initial check
     checkModelChanges();
     
-    // Setup interval to check for changes
-    const interval = setInterval(checkModelChanges, 1000);
+    // Setup interval to check for changes less frequently to avoid conflicts
+    const interval = setInterval(checkModelChanges, 3000);
     
     return () => clearInterval(interval);
-  }, [lastModelChange]);
+  }, [lastModelId]);
   
   // Initialize VOSK when component loads or when model changes
   useEffect(() => {
     const setupVosk = async () => {
-      if (isInitialized && !lastModelChange) return;
+      if (isInitialized && lastModelId === voskService.getCurrentModelId()) {
+        return; // Already initialized with current model
+      }
       
       try {
         setIsLoading(true);
-        setError(null); // Clear any previous errors
+        setError(null);
         
-        console.log("Iniciando configuração do serviço VOSK...");
-        const initialized = await voskService.initialize();
+        console.log("[useVoskSetup] Iniciando configuração do serviço VOSK...");
+        const initialized = await voskService.forceReinitialize();
         
-        console.log("VOSK inicializado com sucesso:", initialized);
+        console.log("[useVoskSetup] VOSK inicializado com sucesso:", initialized);
         setIsInitialized(initialized);
         
-        // If initialization is successful, show feedback
         if (initialized) {
-          console.log("VOSK está pronto para uso");
-          showToastOnly(
-            "Reconhecimento de fala", 
-            "Reconhecimento offline está pronto para uso",
-            "default"
-          );
+          console.log("[useVoskSetup] VOSK está pronto para uso");
+          const currentModel = voskModelsService.getCurrentModel();
+          if (currentModel) {
+            showToastOnly(
+              "Modelo atualizado", 
+              `Reconhecimento configurado para ${currentModel.name}`,
+              "default"
+            );
+          }
         } else {
-          console.warn("VOSK inicializado mas não está totalmente funcional");
+          console.warn("[useVoskSetup] VOSK inicializado mas não está totalmente funcional");
           setError("VOSK inicializado parcialmente");
         }
       } catch (err) {
-        console.error("Erro ao inicializar VOSK:", err);
+        console.error("[useVoskSetup] Erro ao inicializar VOSK:", err);
         setError(err instanceof Error ? err.message : String(err));
         
-        // Only notify user if this is the first time starting the app
-        // to avoid annoying the user with repeated notifications
         if (!localStorage.getItem('voskErrorShown')) {
           showToastOnly(
             "Reconhecimento offline", 
             "Usando serviços online para reconhecimento de fala.",
             "default"
           );
-          
-          // Set a flag to avoid showing this message again
           localStorage.setItem('voskErrorShown', 'true');
         }
       } finally {
@@ -81,18 +87,17 @@ export const useVoskSetup = () => {
     
     setupVosk();
     
-    // Clean up resources when unmounting
     return () => {
-      console.log("Limpando recursos do VOSK");
-      voskService.cleanup();
+      console.log("[useVoskSetup] Limpando recursos do VOSK");
+      // Don't cleanup on unmount, let the service manage its lifecycle
     };
-  }, [lastModelChange, isInitialized]);
+  }, [lastModelId, isInitialized]);
   
   return {
     isInitialized,
     isLoading,
     error,
     isVoskWorking: voskService.isVoskWorking(),
-    lastModelChange
+    currentModelId: lastModelId
   };
 };

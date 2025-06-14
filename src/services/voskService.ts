@@ -9,6 +9,7 @@ class VoskService {
   private model: any = null;
   private recognizer: any = null;
   private lastModelChangeTimestamp: string | null = null;
+  private currentModelId: string | null = null;
   
   constructor() {
     this.initialize = this.initialize.bind(this);
@@ -22,22 +23,40 @@ class VoskService {
     try {
       // Check if we need to reinitialize due to language change
       const modelChangedAt = localStorage.getItem('vosk_model_changed_at');
-      if (this.isInitialized && modelChangedAt === this.lastModelChangeTimestamp) {
-        console.log("[voskService] Já inicializado e timestamp de modelo não mudou. Modelo ativo:", voskModelsService.getCurrentModel()?.name);
+      const currentModel = voskModelsService.getCurrentModel();
+      const newModelId = currentModel?.id;
+      
+      // Force reinitialize if model ID changed or timestamp changed
+      const needsReinit = (
+        !this.isInitialized || 
+        modelChangedAt !== this.lastModelChangeTimestamp ||
+        newModelId !== this.currentModelId
+      );
+      
+      if (!needsReinit) {
+        console.log("[voskService] Já inicializado com modelo atual:", currentModel?.name);
         return true;
       }
+      
+      console.log("[voskService] Reinicializando VOSK devido a mudança de modelo:", {
+        previousModel: this.currentModelId,
+        newModel: newModelId,
+        previousTimestamp: this.lastModelChangeTimestamp,
+        newTimestamp: modelChangedAt
+      });
       
       // Clean up previous resources if we're reinitializing
       if (this.isInitialized) {
         this.cleanup();
       }
       
-      // Store current timestamp to track model changes
+      // Store current timestamp and model ID to track changes
       this.lastModelChangeTimestamp = modelChangedAt;
+      this.currentModelId = newModelId;
 
       // Pega modelo e caminho utilizando o helper
-      const { currentModel, modelPath } = getCurrentModelAndPath();
-      logModelInitialization(currentModel, modelPath);
+      const { currentModel: model, modelPath } = getCurrentModelAndPath();
+      logModelInitialization(model, modelPath);
 
       // Importação dinâmica do VOSK
       console.log("Importando módulo VOSK...");
@@ -47,7 +66,7 @@ class VoskService {
       const vosk = voskModule.default || voskModule;
       console.log("Métodos disponíveis em vosk:", Object.keys(vosk));
       console.log(`Carregando modelo VOSK: ${modelPath}`);
-      console.log(`Idioma selecionado: ${currentModel?.language || 'pt-BR'}`);
+      console.log(`Idioma selecionado: ${model?.language || 'pt-BR'}`);
       
       try {
         if (typeof vosk.createModel !== 'function') {
@@ -79,6 +98,7 @@ class VoskService {
           console.log("Métodos no reconhecedor:", this.recognizer ? Object.keys(this.recognizer) : "Nenhum");
           
           this.isInitialized = true;
+          console.log("[voskService] Inicialização completa para modelo:", model?.name);
           return true;
         } else {
           throw new Error("Falha ao carregar modelo VOSK");
@@ -140,6 +160,7 @@ class VoskService {
   }
   
   public cleanup(): void {
+    console.log("[voskService] Limpando recursos VOSK...");
     if (this.recognizer) {
       this.recognizer.free();
       this.recognizer = null;
@@ -149,6 +170,8 @@ class VoskService {
       this.model = null;
     }
     this.isInitialized = false;
+    this.currentModelId = null;
+    console.log("[voskService] Recursos VOSK limpos");
   }
   
   public isVoskWorking(): boolean {
@@ -158,6 +181,19 @@ class VoskService {
   public getCurrentLanguage(): string {
     const currentModel = voskModelsService.getCurrentModel();
     return currentModel ? currentModel.language : 'pt-BR';
+  }
+  
+  public getCurrentModelId(): string | null {
+    return this.currentModelId;
+  }
+  
+  // Force reinitialize method for external calls
+  public async forceReinitialize(): Promise<boolean> {
+    console.log("[voskService] Forçando reinicialização...");
+    this.isInitialized = false;
+    this.currentModelId = null;
+    this.lastModelChangeTimestamp = null;
+    return this.initialize();
   }
 }
 

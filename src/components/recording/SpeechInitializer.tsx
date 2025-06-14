@@ -8,17 +8,21 @@ import { showToastOnly } from "@/services/notificationService";
 const SpeechInitializer = () => {
   const speechInitializedRef = useRef(false);
   const [voskInitialized, setVoskInitialized] = useState(false);
-  const [lastModelChange, setLastModelChange] = useState<string | null>(null);
+  const [lastModelId, setLastModelId] = useState<string | null>(null);
   
   // Monitor for model changes
   useEffect(() => {
-    // Check for model changes
     const checkModelChanges = () => {
-      const modelChangedAt = localStorage.getItem('vosk_model_changed_at');
-      if (modelChangedAt && modelChangedAt !== lastModelChange) {
-        setLastModelChange(modelChangedAt);
+      const currentModel = voskModelsService.getCurrentModel();
+      const currentModelId = currentModel?.id;
+      
+      if (currentModelId && currentModelId !== lastModelId) {
+        console.log("[SpeechInitializer] Mudança de modelo detectada:", {
+          anterior: lastModelId,
+          atual: currentModelId
+        });
+        setLastModelId(currentModelId);
         speechInitializedRef.current = false; // Force reinitialization
-        console.log("Language model change detected, forcing reinitialization");
       }
     };
     
@@ -26,16 +30,16 @@ const SpeechInitializer = () => {
     checkModelChanges();
     
     // Setup interval to check for changes
-    const interval = setInterval(checkModelChanges, 1000);
+    const interval = setInterval(checkModelChanges, 2000);
     
     return () => clearInterval(interval);
-  }, [lastModelChange]);
+  }, [lastModelId]);
   
   // Inicializa a síntese de fala e VOSK
   useEffect(() => {
     const initializeSpeech = async () => {
       if (!speechInitializedRef.current) {
-        console.log("Iniciando inicialização de serviços de fala...");
+        console.log("[SpeechInitializer] Iniciando inicialização de serviços de fala...");
         
         // Cancela qualquer fala anterior do navegador
         if ('speechSynthesis' in window) {
@@ -45,7 +49,7 @@ const SpeechInitializer = () => {
         // Inicializa a síntese de fala do navegador
         const initialized = await initVoices();
         speechInitializedRef.current = initialized;
-        console.log("Síntese de fala inicializada:", initialized);
+        console.log("[SpeechInitializer] Síntese de fala inicializada:", initialized);
         
         // Certifica-se que a lista de modelos está carregada
         voskModelsService.getAvailableModels();
@@ -53,19 +57,18 @@ const SpeechInitializer = () => {
         // Inicializa o VOSK para reconhecimento de fala
         try {
           const currentModel = voskModelsService.getCurrentModel();
-          console.log("Inicializando VOSK com modelo:", currentModel?.name);
+          console.log("[SpeechInitializer] Inicializando VOSK com modelo:", currentModel?.name);
           
-          // Completely reinitialize VOSK
-          await voskService.cleanup();
-          const initialized = await voskService.initialize();
-          console.log("VOSK inicializado:", initialized);
+          // Force complete reinitialization
+          const initialized = await voskService.forceReinitialize();
+          console.log("[SpeechInitializer] VOSK inicializado:", initialized);
           setVoskInitialized(initialized);
           
           if (initialized) {
             const language = currentModel?.language || 'pt-BR';
             const languageName = getLanguageName(language);
                                 
-            console.log(`VOSK está disponível para reconhecimento offline - Idioma: ${languageName}`);
+            console.log(`[SpeechInitializer] VOSK está disponível para reconhecimento offline - Idioma: ${languageName}`);
             
             // Notify user about the active language
             showToastOnly(
@@ -74,7 +77,7 @@ const SpeechInitializer = () => {
               "default"
             );
           } else {
-            console.warn("VOSK não está totalmente funcional, usando alternativas");
+            console.warn("[SpeechInitializer] VOSK não está totalmente funcional, usando alternativas");
             showToastOnly(
               "Informação", 
               "Reconhecimento offline não disponível. Usando serviços online.",
@@ -82,7 +85,7 @@ const SpeechInitializer = () => {
             );
           }
         } catch (error) {
-          console.error("Erro ao inicializar VOSK:", error);
+          console.error("[SpeechInitializer] Erro ao inicializar VOSK:", error);
           setVoskInitialized(false);
           
           // Mostrar mensagem informativa apenas uma vez
@@ -96,7 +99,7 @@ const SpeechInitializer = () => {
     };
     
     initializeSpeech();
-  }, [lastModelChange]);
+  }, [lastModelId]);
 
   // Helper function to get language name
   const getLanguageName = (language: string): string => {
