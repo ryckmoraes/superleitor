@@ -80,7 +80,16 @@ export const translations = {
       ready: "Pronto para ouvir em {languageName}",
       info: "Informação",
       offlineNotAvailable: "Reconhecimento offline não disponível. Usando alternativa online."
-    }
+    },
+    welcomeSplash: {
+      heading: "Bem-vindo ao",
+      appName: "Superleitor",
+      description: "O assistente de leitura que transforma sua aprendizagem com recursos interativos e imersivos",
+      startReading: "Iniciar Leitura",
+      configure: "Configurar",
+      greetingWithName: "Olá {name}! Pronto para melhorar sua leitura hoje?",
+      readerPlaceholder: "Leitor",
+    },
   },
   en: {
     greetings: {
@@ -163,7 +172,16 @@ export const translations = {
       ready: "Ready to listen in {languageName}",
       info: "Information",
       offlineNotAvailable: "Offline recognition not available. Using online alternative."
-    }
+    },
+    welcomeSplash: {
+      heading: "Welcome to",
+      appName: "Superreader",
+      description: "The reading assistant that transforms your learning with interactive and immersive features",
+      startReading: "Start Reading",
+      configure: "Set Up",
+      greetingWithName: "Hello {name}! Ready to improve your reading today?",
+      readerPlaceholder: "Reader",
+    },
   },
   es: {
     greetings: {
@@ -246,7 +264,16 @@ export const translations = {
       ready: "Listo para escuchar en {languageName}",
       info: "Información",
       offlineNotAvailable: "Reconocimiento sin conexión no disponible. Usando alternativa en línea."
-    }
+    },
+    welcomeSplash: {
+      heading: "Bienvenido a",
+      appName: "Superlector",
+      description: "El asistente de lectura que transforma tu aprendizaje con funciones interactivas e inmersivas",
+      startReading: "Comenzar Lectura",
+      configure: "Configurar",
+      greetingWithName: "¡Hola {name}! ¿Listo para mejorar tu lectura hoy?",
+      readerPlaceholder: "Lector",
+    },
   },
   fr: {
     greetings: {
@@ -329,7 +356,16 @@ export const translations = {
       ready: "Prêt à écouter en {languageName}",
       info: "Information",
       offlineNotAvailable: "Reconnaissance hors ligne non disponible. Utilisation de l'alternative en ligne."
-    }
+    },
+    welcomeSplash: {
+      heading: "Bienvenue sur",
+      appName: "Superlecteur",
+      description: "L'assistant de lecture qui transforme votre apprentissage avec des fonctionnalités interactives et immersives",
+      startReading: "Commencer la Lecture",
+      configure: "Configurer",
+      greetingWithName: "Bonjour {name} ! Prêt à améliorer votre lecture aujourd'hui ?",
+      readerPlaceholder: "Lecteur",
+    },
   },
   de: {
     greetings: {
@@ -412,7 +448,16 @@ export const translations = {
       ready: "Bereit zum Zuhören in {languageName}",
       info: "Information",
       offlineNotAvailable: "Offline-Erkennung nicht verfügbar. Online-Alternative wird verwendet."
-    }
+    },
+    welcomeSplash: {
+      heading: "Willkommen bei",
+      appName: "Superleser",
+      description: "Der Leseassistent, der Ihr Lernen mit interaktiven und immersiven Funktionen verwandelt",
+      startReading: "Lesen starten",
+      configure: "Einrichten",
+      greetingWithName: "Hallo {name}! Bereit, Ihr Lesen heute zu verbessern?",
+      readerPlaceholder: "Leser",
+    },
   },
 };
 

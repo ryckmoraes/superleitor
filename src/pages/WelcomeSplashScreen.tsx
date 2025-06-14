@@ -1,15 +1,18 @@
+
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { ArrowRight, Headphones, Volume2, BookOpen } from "lucide-react";
 import { useElevenLabsSetup } from "@/hooks/useElevenLabsSetup";
+import { useTranslations } from "@/hooks/useTranslations";
 
 const WelcomeSplashScreen = () => {
   const navigate = useNavigate();
   const { onboardingData } = useOnboarding();
   const [loaded, setLoaded] = useState(false);
   const { hasApiKey } = useElevenLabsSetup();
+  const { t } = useTranslations();
   
   useEffect(() => {
     // Add animation after component is mounted
@@ -68,14 +71,14 @@ const WelcomeSplashScreen = () => {
         </div>
         
         <h1 className="text-4xl font-bold tracking-tight mb-3 text-primary">
-          Bem-vindo ao
+          {t('welcomeSplash.heading')}
         </h1>
         <h2 className="text-5xl font-extrabold tracking-tight mb-6 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-          Superleitor
+          {t('welcomeSplash.appName')}
         </h2>
         
         <p className="text-muted-foreground max-w-md mb-8 text-lg">
-          O assistente de leitura que transforma sua aprendizagem com recursos interativos e imersivos
+          {t('welcomeSplash.description')}
         </p>
         
         <div className="space-y-4">
@@ -86,7 +89,7 @@ const WelcomeSplashScreen = () => {
             style={{ animationDuration: "4s" }}
           >
             <span className="relative z-10 flex items-center gap-2 font-medium text-lg">
-              {onboardingData.setupCompleted ? "Iniciar Leitura" : "Configurar"}
+              {onboardingData.setupCompleted ? t('welcomeSplash.startReading') : t('welcomeSplash.configure')}
               <ArrowRight className="w-5 h-5 transition-transform duration-300 ease-out group-hover:translate-x-1" />
             </span>
             <div className="absolute inset-0 bg-gradient-to-r from-primary-foreground/5 to-transparent opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
@@ -94,7 +97,7 @@ const WelcomeSplashScreen = () => {
           
           {onboardingData.setupCompleted && (
             <p className="text-sm text-muted-foreground/80">
-              Olá {onboardingData.superReaderName || "Leitor"}! Pronto para melhorar sua leitura hoje?
+              {t('welcomeSplash.greetingWithName', { name: onboardingData.superReaderName || t('welcomeSplash.readerPlaceholder') })}
             </p>
           )}
         </div>
@@ -109,3 +112,4 @@ const WelcomeSplashScreen = () => {
 };
 
 export default WelcomeSplashScreen;
+
