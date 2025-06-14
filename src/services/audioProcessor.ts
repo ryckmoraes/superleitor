@@ -1,202 +1,110 @@
-
-import { voskService } from './voskService';
-import { elevenLabsService } from './elevenlabs';
+import { showToastOnly } from './notificationService';
+import { voskModelsService } from './voskModelsService';
 
 /**
- * Initializes available voices for speech synthesis.
- * @returns {Promise<boolean>} - Resolves with true if voices are initialized, false otherwise.
+ * Inicializa as vozes para a síntese de fala do navegador.
+ * @returns {Promise<boolean>} - Retorna true se as vozes foram inicializadas com sucesso, false caso contrário.
  */
-export const initVoices = async (): Promise<boolean> => {
+export const initVoices = (): Promise<boolean> => {
   return new Promise((resolve) => {
     let voices = window.speechSynthesis.getVoices();
 
     if (voices.length) {
+      console.log("Vozes já carregadas:", voices);
       resolve(true);
       return;
     }
 
     window.speechSynthesis.onvoiceschanged = () => {
       voices = window.speechSynthesis.getVoices();
-      resolve(true);
+      if (voices.length) {
+        console.log("Vozes carregadas após o evento:", voices);
+        resolve(true);
+      } else {
+        console.warn("Nenhuma voz disponível após o evento onvoiceschanged.");
+        resolve(false);
+      }
     };
+
+    // Timeout de segurança caso as vozes não carreguem
+    setTimeout(() => {
+      if (!voices.length) {
+        console.warn("Timeout: Nenhuma voz carregada.");
+        resolve(false);
+      }
+    }, 5000);
   });
 };
 
 /**
- * Processes the recognition result to clean up the transcript.
- * @param {string} transcript - The transcript to process.
- * @returns {string} - The cleaned transcript.
+ * Função para sintetizar fala usando SpeechSynthesis do navegador,
+ * agora levando em conta o idioma selecionado no modelo VOSK.
  */
-export const processRecognitionResult = (transcript: string): string => {
-  // Trim whitespace
-  return transcript.trim();
-};
+export function speakNaturally(
+  text: string, 
+  priority: boolean = false,
+  lang?: string // Novo opcional
+) {
+  if (!text) return;
 
-// Keeps track of active speech instances to prevent overlap
-let activeAudioElements: HTMLAudioElement[] = [];
-let activeSpeechSynthesisUtterance: SpeechSynthesisUtterance | null = null;
+  // Se fornecido, usa o idioma; senão, pega do modelo atual:
+  const currentLang = lang || voskModelsService.getCurrentLanguage();
 
-/**
- * Get the localized greeting for the selected language
- */
-export const getLocalizedGreeting = (language: string): string => {
-  switch (language.substring(0, 2)) {
-    case 'pt':
-      return "Olá! Como posso ajudar?";
-    case 'en':
-      return "Hello! How can I help you?";
-    case 'es':
-      return "¡Hola! ¿Cómo puedo ayudarte?";
-    case 'fr':
-      return "Bonjour! Comment puis-je vous aider?";
-    case 'de':
-      return "Hallo! Wie kann ich Ihnen helfen?";
-    case 'it':
-      return "Ciao! Come posso aiutarti?";
-    case 'ru':
-      return "Привет! Чем я могу помочь?";
-    case 'zh':
-      return "你好！我能帮你什么忙？";
-    case 'ja':
-      return "こんにちは！どのようにお手伝いできますか？";
-    default:
-      return "Hello! How can I help you?";
+  if ('speechSynthesis' in window) {
+    if (priority && window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = currentLang;
+    utterance.rate = 1.0;
+
+    // Busca uma voz apropriada para o idioma selecionado
+    const voices = window.speechSynthesis.getVoices();
+    const match = voices.find(voice => voice.lang.includes(currentLang));
+    if (match) {
+      utterance.voice = match;
+    }
+    window.speechSynthesis.speak(utterance);
   }
+}
+
+/**
+ * Reproduz um feedback sonoro simples.
+ */
+export const playFeedbackSound = (): void => {
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // Tom de 440Hz
+  gainNode.gain.setValueAtTime(0.1, audioContext.currentTime); // Volume baixo
+
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+
+  oscillator.start();
+  oscillator.stop(audioContext.currentTime + 0.1); // Dura 0.1 segundos
 };
 
 /**
- * Speaks text using ElevenLabs or Web Speech API with enhanced naturalness
+ * Tenta obter permissão para usar o microfone.
+ * @returns {Promise<boolean>} - Retorna true se a permissão for concedida, false caso contrário.
  */
-export const speakNaturally = async (text: string, priority: boolean = false): Promise<void> => {
+export const requestMicrophonePermission = async (): Promise<boolean> => {
   try {
-    // Cancel any current speech if this is priority
-    if (priority) {
-      // Cancel any active audio elements
-      activeAudioElements.forEach(audio => {
-        audio.pause();
-        audio.remove();
-      });
-      activeAudioElements = [];
-      
-      // Cancel any active speech synthesis
-      if (window.speechSynthesis.speaking) {
-        window.speechSynthesis.cancel();
-      }
-      
-      if (activeSpeechSynthesisUtterance) {
-        activeSpeechSynthesisUtterance = null;
-      }
-    } else if (window.speechSynthesis.speaking || activeAudioElements.length > 0) {
-      // Skip non-priority speech if already speaking
-      console.log("Already speaking, skipping non-priority speech");
-      return;
-    }
-    
-    // First try to use ElevenLabs for more natural speech if available
-    if (elevenLabsService.hasApiKey()) {
-      try {
-        const audioBlob = await elevenLabsService.textToSpeech(text, elevenLabsService.getAgentId());
-        
-        // Create an audio element to play the response
-        const audioElement = new Audio();
-        const audioUrl = URL.createObjectURL(audioBlob);
-        
-        audioElement.src = audioUrl;
-        
-        // Add to active elements
-        activeAudioElements.push(audioElement);
-        
-        // Play the audio
-        await new Promise<void>((resolve, reject) => {
-          audioElement.onended = () => {
-            // Clean up resources
-            URL.revokeObjectURL(audioUrl);
-            const index = activeAudioElements.indexOf(audioElement);
-            if (index !== -1) {
-              activeAudioElements.splice(index, 1);
-            }
-            audioElement.remove();
-            resolve();
-          };
-          
-          audioElement.onerror = (error) => {
-            URL.revokeObjectURL(audioUrl);
-            const index = activeAudioElements.indexOf(audioElement);
-            if (index !== -1) {
-              activeAudioElements.splice(index, 1);
-            }
-            audioElement.remove();
-            reject(error);
-          };
-          
-          // Small delay before playing to prevent audio overlap
-          setTimeout(() => {
-            audioElement.play().catch(reject);
-          }, 150);
-        });
-        
-        return;
-      } catch (error) {
-        console.log("ElevenLabs fallback to native TTS:", error);
-        // Fall back to native TTS if ElevenLabs fails
-      }
-    }
-    
-    // Use native TTS with enhanced settings for more natural speech
-    if ('speechSynthesis' in window) {
-      // Create utterance with enhanced settings
-      const utterance = new SpeechSynthesisUtterance(text);
-      
-      // Get the current language from VOSK service or default to Portuguese
-      const currentLanguage = voskService.isVoskWorking() 
-        ? voskService.getCurrentLanguage() 
-        : 'pt-BR';
-      
-      utterance.lang = currentLanguage;
-      
-      // Adjust pitch and rate for more natural speech
-      utterance.pitch = 1.0;
-      utterance.rate = 0.92; // Slightly slower for more natural pacing
-      utterance.volume = 1.0;
-      
-      // Try to find a good voice
-      const voices = window.speechSynthesis.getVoices();
-      
-      // Find the best voice for the current language
-      const primaryVoice = voices.find(voice => 
-        voice.lang.includes(currentLanguage) && (voice.name.includes('female') || voice.localService === true)
-      );
-      
-      // Fallback to any voice for the language
-      const fallbackVoice = voices.find(voice => 
-        voice.lang.includes(currentLanguage.substring(0, 2))
-      );
-      
-      if (primaryVoice) {
-        utterance.voice = primaryVoice;
-      } else if (fallbackVoice) {
-        utterance.voice = fallbackVoice;
-      }
-      
-      // Set up tracking for the current utterance
-      activeSpeechSynthesisUtterance = utterance;
-      
-      // Clear tracking when speech finishes
-      utterance.onend = () => {
-        if (activeSpeechSynthesisUtterance === utterance) {
-          activeSpeechSynthesisUtterance = null;
-        }
-      };
-      
-      // Add a slight pause before speaking for more natural rhythm
-      setTimeout(() => {
-        if (priority) {
-          window.speechSynthesis.cancel(); // Ensure no other speech is happening
-        }
-        window.speechSynthesis.speak(utterance);
-      }, 200);
-    }
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    console.log("Permissão de microfone concedida.");
+    stream.getTracks().forEach(track => track.stop()); // Encerra a stream imediatamente
+    return true;
   } catch (error) {
-    console.error("Erro ao usar TTS:", error);
+    console.error("Permissão de microfone negada:", error);
+    showToastOnly(
+      "Erro de microfone",
+      "Permissão de acesso ao microfone foi negada.",
+      "destructive"
+    );
+    return false;
   }
 };

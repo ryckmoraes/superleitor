@@ -1,10 +1,10 @@
-
 // Main ElevenLabs service
 import { DEFAULT_VOICE_ID, AGENT_ID } from './config';
 import { keyManagement } from './keyManagement';
 import { textToSpeechService } from './textToSpeech';
 import { audioAnalysisService } from './audioAnalysis';
 import { speechToTextService } from './speechToText';
+import { voskModelsService } from '../voskModelsService';
 
 /**
  * Main ElevenLabs service for text-to-speech functionality
@@ -39,12 +39,11 @@ export const elevenLabsService = {
         return;
       }
 
-      // Cancel any current speech if this is a priority message
+      // Cancel current if priority required
       if (priority && window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
       }
       
-      // Verifica se temos uma chave API válida
       if (!this.hasApiKey()) {
         console.error("ElevenLabs API key não definida, usando fallback");
         throw new Error("No API key");
@@ -54,24 +53,21 @@ export const elevenLabsService = {
       const audioBlob = await this.textToSpeech(text, DEFAULT_VOICE_ID);
       return await this.playAudio(audioBlob);
     } catch (error) {
-      console.error("Erro ao falar com ElevenLabs:", error);
       // Fallback para síntese de fala nativa
       if ('speechSynthesis' in window) {
         if (priority && window.speechSynthesis.speaking) {
           window.speechSynthesis.cancel();
         }
-        
+        // NOVO: idioma do modelo VOSK atual
+        const lang = voskModelsService.getCurrentLanguage() || 'pt-BR';
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'pt-BR';
+        utterance.lang = lang;
         utterance.rate = 1.0;
-        
-        // Procura por vozes em português
         const voices = window.speechSynthesis.getVoices();
-        const brazilianVoice = voices.find(voice => voice.lang.includes('pt-BR'));
-        if (brazilianVoice) {
-          utterance.voice = brazilianVoice;
+        const match = voices.find(voice => voice.lang.includes(lang));
+        if (match) {
+          utterance.voice = match;
         }
-        
         window.speechSynthesis.speak(utterance);
       }
     }
