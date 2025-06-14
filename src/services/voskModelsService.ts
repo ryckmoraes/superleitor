@@ -1,4 +1,3 @@
-
 // Serviço para gerenciar modelos do VOSK
 
 interface VoskModel {
@@ -413,9 +412,13 @@ class VoskModelsService {
     if (!installedModels.includes(modelId)) {
       installedModels.push(modelId);
       localStorage.setItem('vosk_installed_models', JSON.stringify(installedModels));
-      console.log(`Model ${modelId} saved to localStorage as installed`);
+      console.log(`[🟩 voskModelsService] Model ${modelId} saved to localStorage as installed`);
     }
-    
+
+    // Log detalhado:
+    console.log(`[🟩 voskModelsService] markModelAsInstalled chamado para: ${modelId}`);
+    console.log(`[🟩 voskModelsService] Modelos instalados agora:`, JSON.parse(localStorage.getItem('vosk_installed_models') || '[]'));
+
     console.log(`Model ${modelId} marked as installed`);
   }
 }

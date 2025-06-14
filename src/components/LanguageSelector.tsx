@@ -71,10 +71,10 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
     }
   }, [closeAttempted, isProcessing, downloadingModelId, onClose]);
 
-  // Refresh models when drawer opens
+  // Adicionar log ao abrir o seletor
   useEffect(() => {
     if (isOpen) {
-      console.log("Language selector opened, refreshing models");
+      console.log("[🟦 LanguageSelector] Drawer OPEN");
       setModels(voskModelsService.getAvailableModels());
       const currentModel = voskModelsService.getCurrentModel();
       setCurrentModelId(currentModel?.id || "pt-br-small");
@@ -201,7 +201,6 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
 
   const handleDownloadModel = async (modelId: string) => {
     if (downloadingModelId) {
-      // Only allow one download at a time
       showToastOnly(
         "Download em andamento",
         "Aguarde o download atual terminar antes de iniciar outro.",
@@ -209,10 +208,9 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
       );
       return;
     }
-    
     const model = models.find(m => m.id === modelId);
     if (!model) return;
-    
+
     setDownloadingModelId(modelId);
     setDownloadProgress(0);
     setDownloadStatus("Iniciando download...");
@@ -222,21 +220,20 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
     setEstimatedTime("calculando...");
     setForceShowDownload(true);
     setIsProcessing(true);
-    
-    console.log("Starting download for model:", model.name, "with ID:", modelId);
-    
+
+    console.log(`[🟦 LanguageSelector] Iniciando download: ${model.name}, ID: ${modelId}`);
+
     showToastOnly(
       "Download iniciado",
       `Baixando modelo para ${model.name}. Tamanho: ${model.size}`,
       "default"
     );
-    
+
     let lastProgress = 0;
     let lastTime = Date.now();
     let lastBytes = 0;
-    
+
     try {
-      console.log("Starting download for model:", modelId);
       const success = await voskModelsService.downloadModel(
         modelId,
         (progress, bytesReceived, totalBytes) => {
@@ -276,54 +273,44 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
           }
         }
       );
-      
+      console.log(`[🟦 LanguageSelector] Download resultado: ${success} para modelo ${modelId}`);
+
       if (success) {
-        // Change download status
         setDownloadStatus("Instalando modelo...");
-        
-        // Wait a moment to show "Installing" status
         await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Refresh models list
+
         setModels(voskModelsService.getAvailableModels());
-        
-        // Apply the language if it was selected
+
         if (selectedModelId === modelId) {
           voskModelsService.setCurrentModel(modelId);
           setCurrentModelId(modelId);
           setHasChanges(false);
-          
-          // Cleanup first
+
           await voskService.cleanup();
-          
-          // Update status
           setDownloadStatus("Inicializando modelo...");
-          
-          // Initialize with new model
           const initialized = await voskService.initialize().catch(console.error);
-          console.log("VOSK reinitialized with new model:", initialized);
-          
-          // Update UI language
+          console.log(`[🟦 LanguageSelector] VOSK reinitialized with new model: ${initialized}`);
+
           const updatedModel = models.find(m => m.id === modelId);
           if (updatedModel) {
             updateUILanguage(updatedModel.language);
           }
         }
-        
+
         setDownloadStatus("Download concluído!");
-        
-        toast({
-          title: "Download concluído",
-          description: `O modelo para ${model.name} foi instalado com sucesso!`,
-        });
-        
-        // Fechar a janela após completar o download
-        if (autoCloseAfterDownload) {
-          console.log("Auto-closing after download completed");
-          setTimeout(() => {
-            setCloseAttempted(true);
-          }, 1000);
-        }
+
+        showToastOnly(
+          "Sucesso!",
+          "Novo idioma disponível! O aplicativo será recarregado para aplicar as mudanças.",
+          "default"
+        );
+
+        // [‼️] Garantir reload após download bem-sucedido
+        setTimeout(() => {
+          console.log("[🟩 LanguageSelector] Reloading page após download e instalação.");
+          window.location.reload();
+        }, 1200);
+
       } else {
         setDownloadStatus("Erro no download");
         toast({
@@ -344,10 +331,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
       setTimeout(() => {
         setDownloadingModelId(null);
         setIsProcessing(false);
-        
-        // If auto-close was requested, try to close now
         if (autoCloseAfterDownload) {
-          console.log("Setting close attempted from finally block");
           setCloseAttempted(true);
         }
       }, 1500);
