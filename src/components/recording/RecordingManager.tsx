@@ -15,6 +15,7 @@ interface RecordingManagerProps {
   hasMicrophonePermission: boolean;
   requestMicrophonePermission: () => Promise<void>;
   resetDetection: () => void;
+  language: string; // Add language prop
 }
 
 const RecordingManager = ({
@@ -26,7 +27,8 @@ const RecordingManager = ({
   setInterimTranscript,
   hasMicrophonePermission,
   requestMicrophonePermission,
-  resetDetection
+  resetDetection,
+  language
 }: RecordingManagerProps) => {
   const { 
     startRecording, 
@@ -72,7 +74,7 @@ const RecordingManager = ({
       // Ensure the message is spoken only if we actually recorded something
       if (hasStartedRecording) {
         setTimeout(() => {
-          speakNaturally(stopMessage, true);
+          speakNaturally(stopMessage, language, true);
         }, 300);
         
         // Process the story
@@ -92,7 +94,7 @@ const RecordingManager = ({
         );
         
         setTimeout(() => {
-          speakNaturally("Não consegui ouvir sua história. Vamos tentar novamente?", true);
+          speakNaturally("Não consegui ouvir sua história. Vamos tentar novamente?", language, true);
         }, 300);
         
         // Don't process anything
@@ -132,7 +134,7 @@ const RecordingManager = ({
         
         // Ensure the message is spoken
         setTimeout(() => {
-          speakNaturally(startMessage, true);
+          speakNaturally(startMessage, language, true);
         }, 300);
       }
       

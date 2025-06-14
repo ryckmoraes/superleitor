@@ -16,25 +16,28 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     localStorage.getItem("vosk_current_model") ||
     voskModelsService.getCurrentModel()?.id ||
     "pt-br-small";
-  const getCurrentLanguage = () => voskModelsService.getCurrentLanguage();
-
+  
   const [modelId, setModelId] = useState<string>(getCurrentModelId());
-  const [language, setLanguage] = useState<string>(getCurrentLanguage());
+  
+  // Initialize language based on modelId
+  const [language, setLanguage] = useState<string>(
+    voskModelsService.getLanguageForModel(modelId)
+  );
 
   // Listener for explicit storage events (multi-tab syncing)
   useEffect(() => {
     const handleModelChanged = (event: Event) => {
       if ((event as CustomEvent)?.detail?.newModelId) {
         const newId = (event as CustomEvent).detail.newModelId;
+        console.log('[LanguageContext] Received voskModelChanged event with new modelId:', newId);
         setModelId(newId);
-        setLanguage(voskModelsService.getLanguageForModel(newId));
       }
     };
     window.addEventListener("voskModelChanged", handleModelChanged);
     return () => window.removeEventListener("voskModelChanged", handleModelChanged);
   }, []);
 
-  // Listen for raw changes (fallback)
+  // Listen for raw storage changes (e.g., from other tabs)
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
       if (
@@ -42,28 +45,35 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
         e.newValue &&
         e.newValue !== modelId
       ) {
+        console.log('[LanguageContext] Received storage event for vosk_current_model:', e.newValue);
         setModelId(e.newValue);
-        setLanguage(voskModelsService.getLanguageForModel(e.newValue));
       }
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
-    // eslint-disable-next-line
   }, [modelId]);
 
-  // Update react state if localstorage changed imperatively
+  // Update react state if localStorage was changed imperatively
   const refreshFromStorage = () => {
     const curId = getCurrentModelId();
-    setModelId(curId);
-    setLanguage(voskModelsService.getLanguageForModel(curId));
+    if (curId !== modelId) {
+        console.log('[LanguageContext] Refreshing from storage. New modelId:', curId);
+        setModelId(curId);
+    }
   };
 
-  // Change helper
+  // Helper function to change the language model
   const setLanguageModel = (id: string) => {
-    voskModelsService.setCurrentModel(id); // will update localStorage & fire event
-    setModelId(id);
-    setLanguage(voskModelsService.getLanguageForModel(id));
+    console.log('[LanguageContext] Setting language model to:', id);
+    voskModelsService.setCurrentModel(id); // This will update localStorage & fire the 'voskModelChanged' event
+    // The event listener will handle updating the state
   };
+  
+  // Effect to update language when modelId changes
+  useEffect(() => {
+    setLanguage(voskModelsService.getLanguageForModel(modelId));
+  }, [modelId]);
+
 
   return (
     <LanguageContext.Provider

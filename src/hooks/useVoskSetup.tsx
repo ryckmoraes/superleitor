@@ -3,61 +3,44 @@ import { useState, useEffect } from 'react';
 import { voskService } from '@/services/voskService';
 import { voskModelsService } from '@/services/voskModelsService';
 import { showToastOnly } from '@/services/notificationService';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export const useVoskSetup = () => {
+  const { modelId } = useLanguage();
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentModelId, setCurrentModelId] = useState<string | null>(null);
-  
-  // Watch for model changes
-  useEffect(() => {
-    const checkModelChanges = () => {
-      const currentModel = voskModelsService.getCurrentModel();
-      const modelId = currentModel?.id;
-      
-      if (modelId && modelId !== currentModelId) {
-        console.log("[useVoskSetup] Mudança de modelo detectada:", {
-          anterior: currentModelId,
-          atual: modelId
-        });
-        setCurrentModelId(modelId);
-        // Force reinitialization on model change
-        setIsInitialized(false);
-        setIsLoading(true);
-      }
-    };
-    
-    // Initial check
-    checkModelChanges();
-    
-    // Setup interval to check for changes less frequently to avoid conflicts
-    const interval = setInterval(checkModelChanges, 3000);
-    
-    return () => clearInterval(interval);
-  }, [currentModelId]);
   
   // Initialize VOSK when component loads or when model changes
   useEffect(() => {
     const setupVosk = async () => {
-      if (isInitialized && currentModelId === voskService.getCurrentModelId()) {
-        return; // Already initialized with current model
+      if (!modelId) {
+        console.log("[useVoskSetup] No modelId provided yet, skipping setup.");
+        return;
+      }
+
+      // Check if already initialized with the correct model to avoid unnecessary re-initialization
+      if (isInitialized && modelId === voskService.getCurrentModelId()) {
+        console.log("[useVoskSetup] Already initialized with current model.");
+        return;
       }
       
       try {
         setIsLoading(true);
         setError(null);
         
-        console.log("[useVoskSetup] Iniciando configuração do serviço VOSK...");
+        console.log(`[useVoskSetup] Initializing VOSK service for model: ${modelId}`);
+        // forceReinitialize will use the model from localStorage, which is set by LanguageContext
         const initialized = await voskService.forceReinitialize();
         
-        console.log("[useVoskSetup] VOSK inicializado com sucesso:", initialized);
+        console.log("[useVoskSetup] VOSK initialized:", initialized);
         setIsInitialized(initialized);
         
         if (initialized) {
-          console.log("[useVoskSetup] VOSK está pronto para uso");
+          console.log("[useVoskSetup] VOSK is ready.");
           const currentModel = voskModelsService.getCurrentModel();
-          if (currentModel) {
+          // Verify that the initialized model is the one we want
+          if (currentModel && currentModel.id === modelId) {
             showToastOnly(
               "Modelo atualizado", 
               `Reconhecimento configurado para ${currentModel.name}`,
@@ -65,11 +48,11 @@ export const useVoskSetup = () => {
             );
           }
         } else {
-          console.warn("[useVoskSetup] VOSK inicializado mas não está totalmente funcional");
-          setError("VOSK inicializado parcialmente");
+          console.warn("[useVoskSetup] VOSK initialized but is not fully functional.");
+          setError("VOSK not fully functional");
         }
       } catch (err) {
-        console.error("[useVoskSetup] Erro ao inicializar VOSK:", err);
+        console.error("[useVoskSetup] Error initializing VOSK:", err);
         setError(err instanceof Error ? err.message : String(err));
         
         if (!localStorage.getItem('voskErrorShown')) {
@@ -87,17 +70,13 @@ export const useVoskSetup = () => {
     
     setupVosk();
     
-    return () => {
-      console.log("[useVoskSetup] Limpando recursos do VOSK");
-      // Don't cleanup on unmount, let the service manage its lifecycle
-    };
-  }, [currentModelId, isInitialized]);
+  }, [modelId, isInitialized]);
   
   return {
     isInitialized,
     isLoading,
     error,
     isVoskWorking: voskService.isVoskWorking(),
-    currentModelId
+    currentModelId: modelId
   };
 };

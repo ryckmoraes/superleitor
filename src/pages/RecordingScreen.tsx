@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import { useVoskSetup } from "@/hooks/useVoskSetup";
@@ -31,22 +32,20 @@ const RecordingScreen = () => {
   // Create a ref for the PatternDetector
   const patternDetectorRef = useRef<PatternDetectorRef>(null);
   
+  // Get language context
+  const { language } = useLanguage();
+  
   // Setup the VOSK recognition
-  const { isInitialized, isLoading, error } = useVoskSetup();
+  const { error: voskError } = useVoskSetup();
   
   // Get the unlock status and functions from the hook
   const { isUnlocked, remainingTime, checkUnlockStatus, unlockApp } = useAppUnlock();
-  
-  const { modelId, language } = useLanguage();
   
   // Theme management
   const { isDarkMode, toggleTheme } = ThemeManager();
   
   // Microphone permission
   const { hasMicrophonePermission, requestMicrophonePermission } = MicrophonePermissionHandler();
-  
-  // Initialize speech synthesis
-  const SpeechInit = SpeechInitializer();
   
   // Set loaded state
   useEffect(() => {
@@ -59,7 +58,7 @@ const RecordingScreen = () => {
 
   // Show unlock status message when screen loads
   useEffect(() => {
-    if (loaded) {
+    if (loaded && language) {
       // Check if app is already unlocked
       if (checkUnlockStatus() && isUnlocked && remainingTime > 0) {
         setTimeout(() => {
@@ -69,19 +68,20 @@ const RecordingScreen = () => {
             "default"
           );
           
-          // Welcome back message if unlocked - use localized greeting
-          const localizedMessage = getLocalizedGreeting().replace("to unlock SuperReader", "You can continue using the app");
-          speakNaturally(localizedMessage, true);
+          const greeting = getLocalizedGreeting(language);
+          const unlockPart = language === 'pt-BR' ? "para desbloquear o SuperLeitor" : "to unlock SuperReader";
+          const welcomeBackMessage = greeting.replace(unlockPart, "Você pode continuar usando o app");
+          speakNaturally(welcomeBackMessage, language, true);
         }, 1000);
       } else {
         // If not unlocked, prompt user to tell a story - use localized greeting
         setTimeout(() => {
-          const greeting = getLocalizedGreeting();
-          speakNaturally(greeting, true);
+          const greeting = getLocalizedGreeting(language);
+          speakNaturally(greeting, language, true);
         }, 1000);
       }
     }
-  }, [loaded, isUnlocked, remainingTime, checkUnlockStatus]);
+  }, [loaded, isUnlocked, remainingTime, checkUnlockStatus, language]);
 
   // Show error messages
   useEffect(() => {
@@ -92,10 +92,10 @@ const RecordingScreen = () => {
   
   // Show VOSK initialization error
   useEffect(() => {
-    if (error) {
-      setErrorMessage(`Erro ao inicializar VOSK: ${error}`);
+    if (voskError) {
+      setErrorMessage(`Erro ao inicializar VOSK: ${voskError}`);
     }
-  }, [error]);
+  }, [voskError]);
   
   // Helper function to reset pattern detection
   const resetPatternDetection = () => {
@@ -138,7 +138,9 @@ const RecordingScreen = () => {
     
     // Start recording again after a brief delay
     setTimeout(() => {
-      speakNaturally("Conte mais da sua história! Estou ouvindo...", true);
+      if (language) {
+        speakNaturally("Conte mais da sua história! Estou ouvindo...", language, true);
+      }
       toggleRecording();
     }, 500);
   };
@@ -153,7 +155,8 @@ const RecordingScreen = () => {
     setInterimTranscript,
     hasMicrophonePermission,
     requestMicrophonePermission,
-    resetDetection: resetPatternDetection
+    resetDetection: resetPatternDetection,
+    language: language || 'pt-BR' // Pass language down with a fallback
   });
   
   const { 
@@ -172,7 +175,7 @@ const RecordingScreen = () => {
 
   return (
     <>
-      {/* Speech initialization */}
+      {/* Speech initialization hook */}
       <SpeechInitializer />
       
       {/* Welcome message */}
@@ -197,6 +200,7 @@ const RecordingScreen = () => {
         recordingTime={recordingTime}
         hasStartedRecording={hasStartedRecording}
         onAnalysisResult={handleAnalysisResult}
+        language={language || 'pt-BR'} // Pass language down with a fallback
       />
       
       {/* Main UI */}

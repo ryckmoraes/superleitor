@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import { speakNaturally } from "@/services/audioProcessor";
 import { showToastOnly } from "@/services/notificationService";
@@ -20,6 +21,7 @@ interface SpeechRecognitionHandlerProps {
   recordingTime: number;
   hasStartedRecording: boolean;
   onAnalysisResult?: (result: string) => void;
+  language: string; // Add language prop
 }
 
 const SpeechRecognitionHandler = ({
@@ -32,7 +34,8 @@ const SpeechRecognitionHandler = ({
   audioBlob,
   recordingTime,
   hasStartedRecording,
-  onAnalysisResult
+  onAnalysisResult,
+  language
 }: SpeechRecognitionHandlerProps) => {
   const lastTranscriptRef = useRef("");
   const processingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -128,7 +131,7 @@ const SpeechRecognitionHandler = ({
             }
             
             showToastOnly("Análise completa!", "Sua história foi analisada com sucesso.");
-            speakNaturally(analysisResponse, true);
+            speakNaturally(analysisResponse, language, true);
           }
         }, 15000); // 15 second timeout
         
@@ -156,7 +159,7 @@ const SpeechRecognitionHandler = ({
               showToastOnly("Análise completa!", "Sua história foi analisada com sucesso.");
               
               // Speak the ElevenLabs response
-              speakNaturally(response, true);
+              speakNaturally(response, language, true);
             }
           })
           .catch(error => {
@@ -173,7 +176,7 @@ const SpeechRecognitionHandler = ({
             
             // In case of error, still show some response
             showToastOnly("Análise da história", "Sua história foi analisada localmente.");
-            speakNaturally(analysisResponse, true);
+            speakNaturally(analysisResponse, language, true);
           })
           .finally(() => {
             setIsProcessing(false);
@@ -202,7 +205,7 @@ const SpeechRecognitionHandler = ({
           isProcessingRef.current = false;
           
           showToastOnly("Análise da história", "Sua história foi analisada com sucesso.");
-          speakNaturally(analysisResponse, true);
+          speakNaturally(analysisResponse, language, true);
         }, 2000);
       }
     } else {
