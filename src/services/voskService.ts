@@ -38,7 +38,7 @@ class VoskService {
       // Store current timestamp to track model changes
       this.lastModelChangeTimestamp = modelChangedAt;
       
-      // Log de idioma/modelo
+      // Log de idioma/modelo - manter apenas UMA definição de currentModel e modelPath
       const currentModel = voskModelsService.getCurrentModel();
       const modelPath = currentModel ? currentModel.url : '/models/vosk-model-pt-br-small';
       console.log("[voskService] Inicializando VOSK com modelo:", {
@@ -60,10 +60,8 @@ class VoskService {
       const vosk = voskModule.default || voskModule;
       console.log("Métodos disponíveis em vosk:", Object.keys(vosk));
       
-      // Obter o modelo atual selecionado pelo usuário
-      const currentModel = voskModelsService.getCurrentModel();
-      const modelPath = currentModel ? currentModel.url : '/models/vosk-model-pt-br-small';
-      
+      // NÃO redeclare currentModel/modelPath aqui!
+      // Carregue modelo normalmente:
       console.log(`Carregando modelo VOSK: ${modelPath}`);
       console.log(`Idioma selecionado: ${currentModel?.language || 'pt-BR'}`);
       
