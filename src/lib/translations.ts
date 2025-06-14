@@ -90,6 +90,12 @@ export const translations = {
       greetingWithName: "Olá {name}! Pronto para melhorar sua leitura hoje?",
       readerPlaceholder: "Leitor",
     },
+    splashScreen: {
+      languageActivatedTitle: "Novo idioma ativado",
+      languageActivatedDescription: "O idioma ativo é {name} ({language})",
+      selectedLanguageLabel: "Idioma selecionado",
+      signature: "Superleitor - Transformando a maneira como você lê"
+    },
   },
   en: {
     greetings: {
@@ -181,6 +187,12 @@ export const translations = {
       configure: "Set Up",
       greetingWithName: "Hello {name}! Ready to improve your reading today?",
       readerPlaceholder: "Reader",
+    },
+    splashScreen: {
+      languageActivatedTitle: "Language activated",
+      languageActivatedDescription: "Active language is {name} ({language})",
+      selectedLanguageLabel: "Selected language",
+      signature: "Superreader – Transforming the way you read"
     },
   },
   es: {
@@ -274,6 +286,12 @@ export const translations = {
       greetingWithName: "¡Hola {name}! ¿Listo para mejorar tu lectura hoy?",
       readerPlaceholder: "Lector",
     },
+    splashScreen: {
+      languageActivatedTitle: "Nuevo idioma activado",
+      languageActivatedDescription: "El idioma activo es {name} ({language})",
+      selectedLanguageLabel: "Idioma seleccionado",
+      signature: "Superlector - Transformando la forma en que lees"
+    },
   },
   fr: {
     greetings: {
@@ -366,6 +384,12 @@ export const translations = {
       greetingWithName: "Bonjour {name} ! Prêt à améliorer votre lecture aujourd'hui ?",
       readerPlaceholder: "Lecteur",
     },
+    splashScreen: {
+      languageActivatedTitle: "Nouvelle langue activée",
+      languageActivatedDescription: "La langue active est {name} ({language})",
+      selectedLanguageLabel: "Langue sélectionnée",
+      signature: "Superlecteur - Transformer votre façon de lire"
+    },
   },
   de: {
     greetings: {
@@ -457,6 +481,12 @@ export const translations = {
       configure: "Einrichten",
       greetingWithName: "Hallo {name}! Bereit, Ihr Lesen heute zu verbessern?",
       readerPlaceholder: "Leser",
+    },
+    splashScreen: {
+      languageActivatedTitle: "Neue Sprache aktiviert",
+      languageActivatedDescription: "Die aktive Sprache ist {name} ({language})",
+      selectedLanguageLabel: "Ausgewählte Sprache",
+      signature: "Superleser – So wird Lesen neu erlebt"
     },
   },
 };
