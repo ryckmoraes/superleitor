@@ -1,5 +1,5 @@
 
-# Welcome to your Lovable project
+# Welcome to SuperLeitor
 
 ## Project info
 
