@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import { useVoskSetup } from "@/hooks/useVoskSetup";
 import { showToastOnly } from "@/services/notificationService";
-import { speakNaturally, getLocalizedGreeting } from "@/services/audioProcessor";
+import { speakNaturally } from "@/services/audioProcessor";
 import { useAppUnlock } from "@/hooks/useAppUnlock";
 import { exitApp } from "@/utils/androidHelper";
 
@@ -17,6 +17,7 @@ import RecordingManager from "@/components/recording/RecordingManager";
 import SpeechRecognitionHandler from "@/components/recording/SpeechRecognitionHandler";
 import PatternDetector, { PatternDetectorRef } from "@/components/recording/PatternDetector";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useTranslations } from "@/hooks/useTranslations";
 
 const RecordingScreen = () => {
   const [loaded, setLoaded] = useState(false);
@@ -29,25 +30,16 @@ const RecordingScreen = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<string>("");
   
-  // Create a ref for the PatternDetector
   const patternDetectorRef = useRef<PatternDetectorRef>(null);
   
-  // Get language context
   const { language } = useLanguage();
+  const { t } = useTranslations();
   
-  // Setup the VOSK recognition
   const { error: voskError } = useVoskSetup();
-  
-  // Get the unlock status and functions from the hook
   const { isUnlocked, remainingTime, checkUnlockStatus, unlockApp } = useAppUnlock();
-  
-  // Theme management
   const { isDarkMode, toggleTheme } = ThemeManager();
-  
-  // Microphone permission
   const { hasMicrophonePermission, requestMicrophonePermission } = MicrophonePermissionHandler();
   
-  // Set loaded state
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoaded(true);
@@ -56,96 +48,79 @@ const RecordingScreen = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Show unlock status message when screen loads
   useEffect(() => {
     if (loaded && language) {
-      // Check if app is already unlocked
       if (checkUnlockStatus() && isUnlocked && remainingTime > 0) {
         setTimeout(() => {
           showToastOnly(
-            "App Desbloqueado",
-            `Você ainda tem ${remainingTime} minutos de uso disponíveis.`,
+            t('recordingScreen.appUnlocked'),
+            t('recordingScreen.remainingTime', { time: remainingTime }),
             "default"
           );
           
-          const greeting = getLocalizedGreeting(language);
-          const unlockPart = language === 'pt-BR' ? "para desbloquear o SuperLeitor" : "to unlock SuperReader";
-          const welcomeBackMessage = greeting.replace(unlockPart, "Você pode continuar usando o app");
+          const welcomeBackMessage = t('greetings.unlocked');
           speakNaturally(welcomeBackMessage, language, true);
         }, 1000);
       } else {
-        // If not unlocked, prompt user to tell a story - use localized greeting
         setTimeout(() => {
-          const greeting = getLocalizedGreeting(language);
+          const greeting = t('greetings.locked');
           speakNaturally(greeting, language, true);
         }, 1000);
       }
     }
-  }, [loaded, isUnlocked, remainingTime, checkUnlockStatus, language]);
+  }, [loaded, isUnlocked, remainingTime, checkUnlockStatus, language, t]);
 
-  // Show error messages
   useEffect(() => {
     if (errorMessage) {
-      showToastOnly("Erro", errorMessage, "destructive");
+      showToastOnly(t('recordingScreen.error'), errorMessage, "destructive");
     }
-  }, [errorMessage]);
+  }, [errorMessage, t]);
   
-  // Show VOSK initialization error
   useEffect(() => {
     if (voskError) {
-      setErrorMessage(`Erro ao inicializar VOSK: ${voskError}`);
+      setErrorMessage(t('recordingScreen.voskInitError', { error: voskError }));
     }
-  }, [voskError]);
+  }, [voskError, t]);
   
-  // Helper function to reset pattern detection
   const resetPatternDetection = () => {
     if (patternDetectorRef.current) {
       patternDetectorRef.current.resetPatternDetection();
     }
   };
   
-  // Function to handle story completion and app unlock
   const handleUnlockApp = () => {
-    // Calculate earned time based on recording duration
     const earnedMinutes = Math.ceil((recordingTime || 0) / 30) * 5;
     unlockApp(recordingTime || 0);
     
-    // Show confirmation
     showToastOnly(
-      "App Desbloqueado",
-      `O app foi desbloqueado por ${earnedMinutes} minutos!`,
+      t('recordingScreen.appUnlocked'),
+      t('recordingScreen.earnedTime', { time: earnedMinutes }),
       "default"
     );
     
-    // Reset story states
     setStoryTranscript("");
     setInterimTranscript("");
     setIsProcessing(false);
     
-    // Close the app after a short delay
     setTimeout(() => {
       exitApp();
     }, 2000);
   };
   
-  // Function to handle continuing the story
   const handleContinueStory = () => {
-    // Reset states but keep accumulated time
     setStoryTranscript("");
     setInterimTranscript("");
     setIsProcessing(false);
     setAnalysisResult("");
     
-    // Start recording again after a brief delay
     setTimeout(() => {
       if (language) {
-        speakNaturally("Conte mais da sua história! Estou ouvindo...", language, true);
+        speakNaturally(t('recordingScreen.tellMore'), language, true);
       }
       toggleRecording();
     }, 500);
   };
   
-  // Get recording methods and data
   const recordingManager = RecordingManager({
     isRecording,
     setIsRecording,
@@ -156,7 +131,8 @@ const RecordingScreen = () => {
     hasMicrophonePermission,
     requestMicrophonePermission,
     resetDetection: resetPatternDetection,
-    language: language || 'pt-BR' // Pass language down with a fallback
+    language: language || 'pt-BR',
+    t,
   });
   
   const { 
@@ -168,42 +144,61 @@ const RecordingScreen = () => {
     processingComplete
   } = recordingManager;
   
-  // Function to receive analysis results from SpeechRecognitionHandler
   const handleAnalysisResult = (result: string) => {
-    setAnalysisResult(result);
+    const match = result.match(/Análise concluída: (.*)\. Precisão: (.*)%\. Padrão: (.*)\./);
+    if (match) {
+        const [, summary, accuracy, pattern] = match;
+        const translatedResult = t('analysis.result', { summary, accuracy, pattern });
+        setAnalysisResult(translatedResult);
+    } else {
+        setAnalysisResult(result);
+    }
+  };
+
+  const handleSetRecognitionStatus = (status: string) => {
+    if (status.startsWith("Erro: ")) {
+        const errorMessage = status.replace("Erro: ", "");
+        setRecognitionStatus(t('recognitionStatus.error', { error: errorMessage }));
+        return;
+    }
+    
+    let key = '';
+    switch (status) {
+        case "Aguardando áudio...": key = 'waiting'; break;
+        case "Ouvindo...": key = 'listening'; break;
+        case "Analisando...": key = 'analyzing'; break;
+        case "Processando resultado final...": key = 'processing'; break;
+        case "Pronto.": key = 'ready'; break;
+        default: setRecognitionStatus(status); return;
+    }
+    setRecognitionStatus(t(`recognitionStatus.${key}`));
   };
 
   return (
     <>
-      {/* Speech initialization hook */}
       <SpeechInitializer />
-      
-      {/* Welcome message */}
       <WelcomeHandler loaded={loaded} />
       
-      {/* Pattern detection - only pass audioData if recording */}
       <PatternDetector 
         ref={patternDetectorRef}
         audioData={isRecording ? audioData : null} 
         isRecording={isRecording} 
       />
       
-      {/* Speech recognition */}
       <SpeechRecognitionHandler
         isRecording={isRecording}
         isProcessing={isProcessing}
         setIsProcessing={setIsProcessing}
         setStoryTranscript={setStoryTranscript}
         setInterimTranscript={setInterimTranscript}
-        setRecognitionStatus={setRecognitionStatus}
+        setRecognitionStatus={handleSetRecognitionStatus}
         audioBlob={audioBlob}
         recordingTime={recordingTime}
         hasStartedRecording={hasStartedRecording}
         onAnalysisResult={handleAnalysisResult}
-        language={language || 'pt-BR'} // Pass language down with a fallback
+        language={language || 'pt-BR'}
       />
       
-      {/* Main UI */}
       <RecordingMainView
         loaded={loaded}
         isDarkMode={isDarkMode}
@@ -221,14 +216,12 @@ const RecordingScreen = () => {
         analysisResult={analysisResult}
       />
       
-      {/* Show unlock status if available */}
       {isUnlocked && remainingTime > 0 && (
         <div className="fixed top-20 right-4 bg-primary/10 py-1 px-3 rounded-full text-xs">
-          Tempo restante: {remainingTime} min
+          {t('recordingScreen.remainingTimeLabel')}: {remainingTime} min
         </div>
       )}
       
-      {/* Hamburger menu with theme toggle - Set key to force rerender when language changes */}
       <HamburgerMenu 
         key={`hamburger-${language || 'default'}`} 
         isDarkMode={isDarkMode} 

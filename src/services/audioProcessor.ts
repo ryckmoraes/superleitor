@@ -1,4 +1,3 @@
-
 import { voskModelsService } from "./voskModelsService";
 
 let voices: SpeechSynthesisVoice[] = [];
@@ -27,29 +26,6 @@ export const initVoices = async (): Promise<void> => {
   
   voices = await getVoices();
   console.log("Vozes do navegador carregadas:", voices);
-};
-
-/**
- * Gets a localized greeting message.
- * @param language - The language code (e.g., 'pt-BR').
- * @returns A localized greeting string.
- */
-export const getLocalizedGreeting = (language: string): string => {
-  const lang = language.split("-")[0];
-  switch (lang) {
-    case "pt":
-      return "Olá! Conte-me uma história para desbloquear o SuperLeitor.";
-    case "en":
-      return "Hello! Tell me a story to unlock SuperReader.";
-    case "es":
-      return "¡Hola! Cuéntame una historia para desbloquear SuperLector.";
-    case "fr":
-      return "Bonjour! Racontez-moi une histoire pour déverrouiller SuperLecteur.";
-    case "de":
-      return "Hallo! Erzähl mir eine Geschichte, um SuperLeser freizuschalten.";
-    default:
-      return "Hello! Tell me a story to unlock the app.";
-  }
 };
 
 /**

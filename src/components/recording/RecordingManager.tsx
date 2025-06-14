@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import useAudioAnalyzer from "@/hooks/useAudioAnalyzer";
 import { speakNaturally } from "@/services/audioProcessor";
@@ -15,7 +14,8 @@ interface RecordingManagerProps {
   hasMicrophonePermission: boolean;
   requestMicrophonePermission: () => Promise<void>;
   resetDetection: () => void;
-  language: string; // Add language prop
+  language: string;
+  t: (key: string, values?: Record<string, string | number>) => string;
 }
 
 const RecordingManager = ({
@@ -28,7 +28,8 @@ const RecordingManager = ({
   hasMicrophonePermission,
   requestMicrophonePermission,
   resetDetection,
-  language
+  language,
+  t,
 }: RecordingManagerProps) => {
   const { 
     startRecording, 
@@ -53,57 +54,48 @@ const RecordingManager = ({
       return () => clearTimeout(timer);
     }
   }, [processingComplete]);
-
+  
   // Toggle recording with improved audio feedback
   const toggleRecording = () => {
     if (isRecording) {
       console.log("Stopping recording session");
       stopRecording();
       
-      // Stop speech recognition
       webSpeechService.stopRecognition();
       
-      const stopMessage = `Legal! Vou analisar sua história...`;
+      const stopMessage = t('recordingManager.analyzingStory');
       
-      // Show toast only
       showToastOnly(
-        "História recebida!",
-        `Gravação finalizada após ${Math.floor(recordingTime)} segundos.`
+        t('recordingManager.storyReceived'),
+        t('recordingManager.recordingFinished', { time: Math.floor(recordingTime) })
       );
       
-      // Ensure the message is spoken only if we actually recorded something
       if (hasStartedRecording) {
         setTimeout(() => {
           speakNaturally(stopMessage, language, true);
         }, 300);
         
-        // Process the story
         setIsProcessing(true);
         
-        // Set a timeout to automatically finish processing after a delay
-        // This prevents the app from getting stuck in processing state
         setTimeout(() => {
           setIsProcessing(false);
           setProcessingComplete(true);
         }, 5000);
       } else {
-        // If no actual recording happened
         showToastOnly(
-          "Nenhuma história detectada",
-          "Não consegui ouvir sua história. Tente novamente falando mais alto."
+          t('recordingManager.noStoryDetected'),
+          t('recordingManager.noStoryDetectedDescription')
         );
         
         setTimeout(() => {
-          speakNaturally("Não consegui ouvir sua história. Vamos tentar novamente?", language, true);
+          speakNaturally(t('recordingManager.tryAgain'), language, true);
         }, 300);
         
-        // Don't process anything
         setIsProcessing(false);
       }
       
       setIsRecording(false);
     } else {
-      // Check for microphone permission before starting
       if (!hasMicrophonePermission) {
         requestMicrophonePermission();
         return;
@@ -111,28 +103,23 @@ const RecordingManager = ({
       
       console.log("Starting new recording session");
       
-      // Clear previous state
       setStoryTranscript("");
       setInterimTranscript("");
-      resetDetection(); // Reset pattern detection
+      resetDetection();
       
-      // Start recording
       startRecording();
       setIsStoryMode(true);
       
-      const startMessage = "Estou ouvindo! Pode contar sua história...";
+      const startMessage = t('recordingManager.listening');
       
-      // Show toast
       showToastOnly(
-        "Modo História Ativado",
-        "Conte sua história para a Esfera Sonora!"
+        t('recordingManager.storyModeActive'),
+        t('recordingManager.storyModeActiveDescription')
       );
       
-      // Only speak the welcome message if it hasn't been spoken already this session
       if (!welcomeSpokenRef.current) {
         welcomeSpokenRef.current = true;
         
-        // Ensure the message is spoken
         setTimeout(() => {
           speakNaturally(startMessage, language, true);
         }, 300);
