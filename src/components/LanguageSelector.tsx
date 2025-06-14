@@ -198,7 +198,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
               : "Language changed!";
     
     // Speak the confirmation in the selected language
-    speakNaturally(welcomeMessage, true);
+    speakNaturally(welcomeMessage, language, true);
   };
 
   const handleDownloadModel = async (modelId: string) => {

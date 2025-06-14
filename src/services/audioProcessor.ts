@@ -1,143 +1,107 @@
-import { showToastOnly } from './notificationService';
-import { voskModelsService } from './voskModelsService';
+
+import { voskModelsService } from "./voskModelsService";
+
+let voices: SpeechSynthesisVoice[] = [];
 
 /**
- * Retorna uma saudação localizada baseada no idioma atual do modelo VOSK
+ * Initializes speech synthesis voices from the browser.
+ */
+export const initVoices = async (): Promise<void> => {
+  if (voices.length > 0) {
+    console.log("Vozes já carregadas:", voices);
+    return;
+  }
+  
+  const getVoices = (): Promise<SpeechSynthesisVoice[]> => {
+    return new Promise((resolve) => {
+      const voiceList = window.speechSynthesis.getVoices();
+      if (voiceList.length > 0) {
+        resolve(voiceList);
+      } else {
+        window.speechSynthesis.onvoiceschanged = () => {
+          resolve(window.speechSynthesis.getVoices());
+        };
+      }
+    });
+  };
+  
+  voices = await getVoices();
+  console.log("Vozes do navegador carregadas:", voices);
+};
+
+/**
+ * Gets a localized greeting message.
+ * @param language - The language code (e.g., 'pt-BR').
+ * @returns A localized greeting string.
  */
 export const getLocalizedGreeting = (language: string): string => {
-  const currentLang = language;
-  
-  switch (currentLang) {
-    case 'en-US':
-      return "Hello! Tell me a story to unlock SuperReader.";
-    case 'es-ES':
-      return "¡Hola! Cuéntame una historia para desbloquear SuperReader.";
-    case 'fr-FR':
-      return "Bonjour! Raconte-moi une histoire pour débloquer SuperReader.";
-    case 'de-DE':
-      return "Hallo! Erzähl mir eine Geschichte, um SuperReader freizuschalten.";
-    case 'it-IT':
-      return "Ciao! Raccontami una storia per sbloccare SuperReader.";
-    case 'ru-RU':
-      return "Привет! Расскажи мне историю, чтобы разблокировать SuperReader.";
-    case 'zh-CN':
-      return "你好！给我讲个故事来解锁超级阅读器。";
-    case 'ja-JP':
-      return "こんにちは！SuperReaderのロックを解除するために物語を聞かせてください。";
-    case 'pt-BR':
-    default:
+  const lang = language.split("-")[0];
+  switch (lang) {
+    case "pt":
       return "Olá! Conte-me uma história para desbloquear o SuperLeitor.";
+    case "en":
+      return "Hello! Tell me a story to unlock SuperReader.";
+    case "es":
+      return "¡Hola! Cuéntame una historia para desbloquear SuperLector.";
+    case "fr":
+      return "Bonjour! Racontez-moi une histoire pour déverrouiller SuperLecteur.";
+    case "de":
+      return "Hallo! Erzähl mir eine Geschichte, um SuperLeser freizuschalten.";
+    default:
+      return "Hello! Tell me a story to unlock the app.";
   }
 };
 
 /**
- * Inicializa as vozes para a síntese de fala do navegador.
+ * Speaks a given text using the browser's speech synthesis.
+ * @param text The text to speak.
+ * @param languageOrPriority The language code (e.g., 'pt-BR') or a boolean for high priority.
+ * @param highPriority If the second argument is language, this is the priority.
  */
-export const initVoices = (): Promise<boolean> => {
-  return new Promise((resolve) => {
-    let voices = window.speechSynthesis.getVoices();
-
-    if (voices.length) {
-      console.log("Vozes já carregadas:", voices);
-      resolve(true);
-      return;
-    }
-
-    window.speechSynthesis.onvoiceschanged = () => {
-      voices = window.speechSynthesis.getVoices();
-      if (voices.length) {
-        console.log("Vozes carregadas após o evento:", voices);
-        resolve(true);
-      } else {
-        console.warn("Nenhuma voz disponível após o evento onvoiceschanged.");
-        resolve(false);
-      }
-    };
-
-    // Timeout de segurança caso as vozes não carreguem
-    setTimeout(() => {
-      if (!voices.length) {
-        console.warn("Timeout: Nenhuma voz carregada.");
-        resolve(false);
-      }
-    }, 5000);
-  });
-};
-
-/**
- * Função para sintetizar fala usando SpeechSynthesis do navegador,
- * agora levando em conta o idioma selecionado no modelo VOSK via context.
- */
-export function speakNaturally(
-  text: string, 
-  language: string,
-  priority: boolean = false
-) {
-  if (!text) return;
-
-  const currentLang = language;
-
-  console.log(`[speakNaturally] Falando em ${currentLang}:`, text);
-
-  if ('speechSynthesis' in window) {
-    if (priority && window.speechSynthesis.speaking) {
-      window.speechSynthesis.cancel();
-    }
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = currentLang;
-    utterance.rate = 1.0;
-
-    // Busca uma voz apropriada para o idioma selecionado
-    const voices = window.speechSynthesis.getVoices();
-    const match = voices.find(voice => voice.lang.includes(currentLang));
-    if (match) {
-      utterance.voice = match;
-      console.log(`[speakNaturally] Usando voz: ${match.name} (${match.lang})`);
-    } else {
-      console.log(`[speakNaturally] Nenhuma voz encontrada para ${currentLang}, usando padrão`);
-    }
-    window.speechSynthesis.speak(utterance);
+export const speakNaturally = (
+  text: string,
+  languageOrPriority: string | boolean,
+  highPriority: boolean = false
+) => {
+  if (typeof window.speechSynthesis === "undefined") {
+    console.warn("Speech synthesis not supported in this browser.");
+    return;
   }
-}
 
-/**
- * Reproduz um feedback sonoro simples.
- */
-export const playFeedbackSound = (): void => {
-  const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-  const audioContext = new AudioContextClass();
-  const oscillator = audioContext.createOscillator();
-  const gainNode = audioContext.createGain();
+  let language: string;
+  let priority: boolean;
 
-  oscillator.type = 'sine';
-  oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // Tom de 440Hz
-  gainNode.gain.setValueAtTime(0.1, audioContext.currentTime); // Volume baixo
-
-  oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
-
-  oscillator.start();
-  oscillator.stop(audioContext.currentTime + 0.1); // Dura 0.1 segundos
-};
-
-/**
- * Tenta obter permissão para usar o microfone.
- * @returns {Promise<boolean>} - Retorna true se a permissão for concedida, false caso contrário.
- */
-export const requestMicrophonePermission = async (): Promise<boolean> => {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    console.log("Permissão de microfone concedida.");
-    stream.getTracks().forEach(track => track.stop()); // Encerra a stream imediatamente
-    return true;
-  } catch (error) {
-    console.error("Permissão de microfone negada:", error);
-    showToastOnly(
-      "Erro de microfone",
-      "Permissão de acesso ao microfone foi negada.",
-      "destructive"
-    );
-    return false;
+  if (typeof languageOrPriority === 'string') {
+    language = languageOrPriority;
+    priority = highPriority;
+  } else {
+    // Legacy call support for read-only files
+    const currentModel = voskModelsService.getCurrentModel();
+    language = currentModel?.language || 'pt-BR';
+    priority = languageOrPriority;
+    console.log(`[speakNaturally] Language not provided, falling back to current model language: ${language}`);
   }
+
+  // Find the voice for the selected language
+  const voice = voices.find(
+    (v) => v.lang === language || v.lang.startsWith(language.split("-")[0])
+  );
+
+  if (!voice) {
+    console.warn(`[speakNaturally] Nenhuma voz encontrada para ${language}, usando padrão`);
+  }
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.voice = voice || voices[0];
+  utterance.lang = language;
+  utterance.pitch = 1;
+  utterance.rate = 1;
+  utterance.volume = 1;
+
+  if (priority) {
+    window.speechSynthesis.cancel();
+  }
+
+  console.log(`[speakNaturally] Falando em ${language}: ${text}`);
+  window.speechSynthesis.speak(utterance);
 };

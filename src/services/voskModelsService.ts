@@ -157,7 +157,7 @@ class VoskModelsService {
     }));
   }
 
-  private async checkInstalledModels(): Promise<void> {
+  private checkInstalledModels(): void { // No longer async
     try {
       // Verificar modelos instalados no localStorage
       const installedModels = JSON.parse(localStorage.getItem('vosk_installed_models') || '[]');
