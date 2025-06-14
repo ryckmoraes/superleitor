@@ -27,6 +27,10 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { formatFileSize, formatTimeRemaining } from "@/utils/formatUtils";
+import LanguageSelectorHeader from "@/components/language-selector/LanguageSelectorHeader";
+import LanguageSelectorLanguageList from "@/components/language-selector/LanguageSelectorLanguageList";
+import LanguageSelectorDownloadDialog from "@/components/language-selector/LanguageSelectorDownloadDialog";
+import LanguageSelectorFooter from "@/components/language-selector/LanguageSelectorFooter";
 
 interface LanguageSelectorProps {
   isOpen: boolean;
@@ -339,40 +343,52 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
     onClose();
   };
 
+  // -- Refactored Components Usage Below --
   return (
     <Drawer open={isOpen} onOpenChange={handleClose}>
       <DrawerContent className="max-h-[85vh]">
-        <DrawerHeader className="flex justify-between items-center">
-          <DrawerTitle className="flex items-center gap-2">
-            <Globe className="h-5 w-5" /> {t('languageSelector.title')}
-          </DrawerTitle>
-        </DrawerHeader>
-        
-        <DrawerFooter className="flex flex-col gap-2">
-          <Button 
-            variant="default"
-            onClick={forceClose}
-            className="w-full"
-          >
-            <X className="h-4 w-4 mr-2" />
-            {t('languageSelector.backToApp')}
-          </Button>
-          
-          <DrawerClose asChild ref={drawerCloseRef}>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setHasChanges(false);
-                setIsProcessing(false);
-                onClose();
-              }}
-              className="w-full"
-            >
-              <X className="h-4 w-4 mr-2" />
-              {t('languageSelector.close')}
-            </Button>
-          </DrawerClose>
-        </DrawerFooter>
+        <LanguageSelectorHeader
+          onSave={handleSaveLanguage}
+          disabled={!hasChanges || !models.find(m => m.id === selectedModelId)?.installed}
+          isProcessing={isProcessing}
+          downloadingModelId={downloadingModelId}
+          hasChanges={hasChanges}
+          t={t}
+        />
+        <div className="p-4 space-y-6">
+          <LanguageSelectorLanguageList
+            models={models}
+            selectedModelId={selectedModelId}
+            onSelect={handleLanguageSelection}
+            downloadingModelId={downloadingModelId}
+            isProcessing={isProcessing}
+            hasChanges={hasChanges}
+            handleDownloadModel={handleDownloadModel}
+            t={t}
+          />
+        </div>
+
+        <LanguageSelectorDownloadDialog
+          open={!!(downloadingModelId || forceShowDownload)}
+          downloadProgress={downloadProgress}
+          downloadStatus={downloadStatus}
+          downloadedSize={downloadedSize}
+          totalSize={totalSize}
+          downloadSpeed={downloadSpeed}
+          estimatedTime={estimatedTime}
+          onCancel={cancelDownload}
+          t={t}
+        />
+
+        <LanguageSelectorFooter
+          forceClose={forceClose}
+          onClose={() => {
+            setHasChanges(false);
+            setIsProcessing(false);
+            onClose();
+          }}
+          t={t}
+        />
       </DrawerContent>
     </Drawer>
   );
