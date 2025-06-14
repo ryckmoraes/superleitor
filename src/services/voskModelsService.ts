@@ -440,6 +440,11 @@ class VoskModelsService {
 
     console.log(`Model ${modelId} marked as installed`);
   }
+
+  public getLanguageForModel(modelId: string): string {
+    const model = this.models.find(m => m.id === modelId);
+    return model ? model.language : "pt-BR";
+  }
 }
 
 export const voskModelsService = new VoskModelsService();

@@ -6,6 +6,7 @@ import { showToastOnly } from "@/services/notificationService";
 import { speakNaturally } from "@/services/audioProcessor";
 import { voskService } from "@/services/voskService";
 import { Progress } from "@/components/ui/progress";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 import {
   Drawer,
@@ -32,9 +33,10 @@ interface LanguageSelectorProps {
 }
 
 const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
+  const { modelId, setLanguageModel, language, refreshFromStorage } = useLanguage();
   const [models, setModels] = useState(voskModelsService.getAvailableModels());
-  const [selectedModelId, setSelectedModelId] = useState<string>(voskModelsService.getCurrentModel()?.id || "pt-br-small");
-  const [currentModelId, setCurrentModelId] = useState<string>(voskModelsService.getCurrentModel()?.id || "pt-br-small");
+  const [selectedModelId, setSelectedModelId] = useState<string>(modelId);
+  const [currentModelId, setCurrentModelId] = useState<string>(modelId);
   const [downloadingModelId, setDownloadingModelId] = useState<string | null>(null);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadSpeed, setDownloadSpeed] = useState<string>("0 KB/s");
@@ -77,8 +79,8 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
       console.log("[🟦 LanguageSelector] Drawer OPEN");
       setModels(voskModelsService.getAvailableModels());
       const currentModel = voskModelsService.getCurrentModel();
-      setCurrentModelId(currentModel?.id || "pt-br-small");
-      setSelectedModelId(currentModel?.id || "pt-br-small");
+      setCurrentModelId(modelId);
+      setSelectedModelId(modelId);
       setHasChanges(false);
       setAutoCloseAfterDownload(false);
       setCloseAttempted(false);
@@ -91,7 +93,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         setForceShowDownload(true);
       }
     }
-  }, [isOpen, models]);
+  }, [isOpen, models, modelId]);
 
   // Check for active downloads
   useEffect(() => {
@@ -136,7 +138,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
     try {
       if (model.installed) {
         // Apply the selected language
-        voskModelsService.setCurrentModel(selectedModelId);
+        setLanguageModel(selectedModelId);
         setCurrentModelId(selectedModelId);
         
         toast({
@@ -286,7 +288,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
         console.log("[Idioma] currentModelId/selectedModelId", currentModelId, selectedModelId);
 
         // Salvar modelo como selecionado ANTES do reload
-        voskModelsService.setCurrentModel(modelId);
+        setLanguageModel(modelId);
         setCurrentModelId(modelId);
 
         // (LOG) Após troca, antes do reload

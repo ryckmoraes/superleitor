@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import { useVoskSetup } from "@/hooks/useVoskSetup";
@@ -16,6 +15,7 @@ import WelcomeHandler from "@/components/recording/WelcomeHandler";
 import RecordingManager from "@/components/recording/RecordingManager";
 import SpeechRecognitionHandler from "@/components/recording/SpeechRecognitionHandler";
 import PatternDetector, { PatternDetectorRef } from "@/components/recording/PatternDetector";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const RecordingScreen = () => {
   const [loaded, setLoaded] = useState(false);
@@ -28,34 +28,16 @@ const RecordingScreen = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<string>("");
   
-  // Track language changes to force UI updates
-  const [languageChanged, setLanguageChanged] = useState<string | null>(null);
-  
   // Create a ref for the PatternDetector
   const patternDetectorRef = useRef<PatternDetectorRef>(null);
   
   // Setup the VOSK recognition
-  const { isInitialized, isLoading, error, currentModelId } = useVoskSetup();
+  const { isInitialized, isLoading, error } = useVoskSetup();
   
   // Get the unlock status and functions from the hook
   const { isUnlocked, remainingTime, checkUnlockStatus, unlockApp } = useAppUnlock();
   
-  // Monitor model changes from useVoskSetup to update UI
-  useEffect(() => {
-    if (currentModelId && currentModelId !== languageChanged) {
-      console.log("Language changed detected in RecordingScreen, refreshing UI");
-      setLanguageChanged(currentModelId);
-      
-      // Reset any active recording or processing when language changes
-      if (isRecording) {
-        setIsRecording(false);
-      }
-      
-      if (isProcessing) {
-        setIsProcessing(false);
-      }
-    }
-  }, [currentModelId, languageChanged, isRecording, isProcessing]);
+  const { modelId, language } = useLanguage();
   
   // Theme management
   const { isDarkMode, toggleTheme } = ThemeManager();
@@ -244,7 +226,7 @@ const RecordingScreen = () => {
       
       {/* Hamburger menu with theme toggle - Set key to force rerender when language changes */}
       <HamburgerMenu 
-        key={`hamburger-${languageChanged || 'default'}`} 
+        key={`hamburger-${language || 'default'}`} 
         isDarkMode={isDarkMode} 
         toggleTheme={toggleTheme} 
       />

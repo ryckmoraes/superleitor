@@ -1,6 +1,8 @@
-
 import { showToastOnly } from './notificationService';
 import { voskModelsService } from './voskModelsService';
+// --- NEW: Import Language Context ---
+import { useLanguage } from '@/contexts/LanguageContext';
+// ... keep existing code ...
 
 /**
  * Retorna uma saudação localizada baseada no idioma atual do modelo VOSK
@@ -68,7 +70,7 @@ export const initVoices = (): Promise<boolean> => {
 
 /**
  * Função para sintetizar fala usando SpeechSynthesis do navegador,
- * agora levando em conta o idioma selecionado no modelo VOSK.
+ * agora levando em conta o idioma selecionado no modelo VOSK via context.
  */
 export function speakNaturally(
   text: string, 
@@ -77,8 +79,16 @@ export function speakNaturally(
 ) {
   if (!text) return;
 
-  // Se fornecido, usa o idioma; senão, pega do modelo atual:
-  const currentLang = lang || voskModelsService.getCurrentLanguage();
+  // Prefer context language if in React component context
+  let currentLang = lang;
+  try {
+    // This works only inside a React component/hook!
+    const { language } = useLanguage();
+    currentLang = lang || language;
+  } catch {
+    // fallback:
+    currentLang = lang || voskModelsService.getCurrentLanguage();
+  }
 
   console.log(`[speakNaturally] Falando em ${currentLang}:`, text);
 

@@ -1,4 +1,3 @@
-
 // Serviço VOSK para reconhecimento de fala offline
 import { voskModelsService } from './voskModelsService';
 import { VoskResult } from './vosk/voskResult';
@@ -19,12 +18,19 @@ class VoskService {
   /**
    * Inicializa o serviço VOSK
    */
-  public async initialize(): Promise<boolean> {
+  public async initialize(modelIdOverride?: string): Promise<boolean> {
     try {
+      // Use param, or fallback to localStorage
+      const useModelId =
+        modelIdOverride ||
+        localStorage.getItem("vosk_current_model") ||
+        "pt-br-small";
+      const currentModel = voskModelsService.getAvailableModels().find(m => m.id === useModelId);
+      const newModelId = currentModel?.id;
+
       // Check if we need to reinitialize due to language change
       const modelChangedAt = localStorage.getItem('vosk_model_changed_at');
-      const currentModel = voskModelsService.getCurrentModel();
-      const newModelId = currentModel?.id;
+      const newModelLanguage = currentModel?.language;
       
       // Force reinitialize if model ID changed or timestamp changed
       const needsReinit = (
