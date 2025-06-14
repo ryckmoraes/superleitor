@@ -1,4 +1,3 @@
-
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Clock, LockOpen, BookOpen, ExternalLink, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -112,10 +111,12 @@ const StoryTranscript = ({
                 Continuar a História para Ganhar Mais Tempo
               </Button>
             )}
-            
+            {/* ATUALIZAÇÃO: Sempre mostra o botão de desbloquear quando onUnlock está presente */}
             {onUnlock && (
               <Button 
-                onClick={onUnlock} 
+                onClick={() => {
+                  onUnlock();
+                }}
                 variant="outline" 
                 className="w-full text-base flex items-center justify-center gap-2"
                 size="lg"
@@ -124,7 +125,6 @@ const StoryTranscript = ({
                 Desbloquear App e Finalizar
               </Button>
             )}
-            
             <Button 
               onClick={handleExitClick} 
               variant="ghost" 
