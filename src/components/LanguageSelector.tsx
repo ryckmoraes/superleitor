@@ -51,7 +51,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
   const [forceShowDownload, setForceShowDownload] = useState(false);
   const [autoCloseAfterDownload, setAutoCloseAfterDownload] = useState(false);
   const [closeAttempted, setCloseAttempted] = useState(false);
-  const [drawerCloseRef = useRef < HTMLButtonElement > (null);
+  const drawerCloseRef = useRef<HTMLButtonElement>(null);
 
   // Make sure the download section is visible if a model is being downloaded
   useEffect(() => {
@@ -165,7 +165,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
       console.error("Erro ao mudar idioma:", error);
       toast({
         title: t('languageSelector.languageChangeError'),
-        description: "Ocorreu um erro ao alterar o idioma.",
+        description: t('languageSelector.languageChangeErrorDescription', {}, "Ocorreu um erro ao alterar o idioma."),
         variant: "destructive",
       });
     } finally {
@@ -188,7 +188,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
     if (downloadingModelId) {
       showToastOnly(
         t('languageSelector.downloadInProgress'),
-        "Aguarde o download atual terminar antes de iniciar outro.",
+        t('languageSelector.downloadInProgressDescriptionToast', {}, "Aguarde o download atual terminar antes de iniciar outro."),
         "default"
       );
       return;
@@ -210,7 +210,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
 
     showToastOnly(
       t('languageSelector.downloadInProgress'),
-      `Baixando modelo para ${model.name}. Tamanho: ${model.size}`,
+      t('languageSelector.downloadingModelToastDescription', { name: model.name, size: model.size }, `Baixando modelo para ${model.name}. Tamanho: ${model.size}`),
       "default"
     );
 
@@ -331,7 +331,7 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
       
       showToastOnly(
         t('languageSelector.downloadCanceled'),
-        "O download do modelo de idioma foi cancelado.",
+        t('languageSelector.downloadCanceledDescription', {}, "O download do modelo de idioma foi cancelado."),
         "default"
       );
     }
@@ -341,16 +341,16 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
   const handleClose = () => {
     if (isProcessing && !autoCloseAfterDownload) {
       toast({
-        title: "Operação em andamento",
-        description: "Por favor, aguarde a conclusão da operação atual.",
+        title: t('languageSelector.operationInProgressTitle', {}, "Operação em andamento"),
+        description: t('languageSelector.operationInProgressDescription', {}, "Por favor, aguarde a conclusão da operação atual."),
       });
       return;
     }
     
     if (downloadingModelId && !autoCloseAfterDownload) {
       toast({
-        title: "Download em andamento",
-        description: "Deseja cancelar o download antes de sair?",
+        title: t('languageSelector.downloadInProgress'),
+        description: t('languageSelector.downloadInProgressDescription', {}, "Deseja cancelar o download antes de sair?"),
       });
       return;
     }

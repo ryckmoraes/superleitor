@@ -4,9 +4,11 @@ import { voskService } from '@/services/voskService';
 import { voskModelsService } from '@/services/voskModelsService';
 import { showToastOnly } from '@/services/notificationService';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useTranslations } from '@/hooks/useTranslations';
 
 export const useVoskSetup = () => {
   const { modelId } = useLanguage();
+  const { t } = useTranslations();
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,8 +44,8 @@ export const useVoskSetup = () => {
           // Verify that the initialized model is the one we want
           if (currentModel && currentModel.id === modelId) {
             showToastOnly(
-              "Modelo atualizado", 
-              `Reconhecimento configurado para ${currentModel.name}`,
+              t('voskSetup.modelUpdatedTitle', {}, "Modelo atualizado"),
+              t('voskSetup.modelUpdatedDescription', { name: currentModel.name }, `Reconhecimento configurado para ${currentModel.name}`),
               "default"
             );
           }
@@ -57,8 +59,8 @@ export const useVoskSetup = () => {
         
         if (!localStorage.getItem('voskErrorShown')) {
           showToastOnly(
-            "Reconhecimento offline", 
-            "Usando serviços online para reconhecimento de fala.",
+            t('voskSetup.offlineRecognitionTitle', {}, "Reconhecimento offline"),
+            t('voskSetup.offlineRecognitionDescription', {}, "Usando serviços online para reconhecimento de fala."),
             "default"
           );
           localStorage.setItem('voskErrorShown', 'true');
@@ -70,7 +72,7 @@ export const useVoskSetup = () => {
     
     setupVosk();
     
-  }, [modelId, isInitialized]);
+  }, [modelId, isInitialized, t]);
   
   return {
     isInitialized,
