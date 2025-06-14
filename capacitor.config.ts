@@ -5,8 +5,9 @@ const config: CapacitorConfig = {
   appId: 'com.superleitor.app',
   appName: 'Superleitor',
   webDir: 'dist',
+  loggingEnabled: true,
   server: {
-    url: "", // Deixe vazio para funcionar no app instalado sem depender do servidor externo
+    url: "",
     cleartext: true,
     androidScheme: "https"
   },
@@ -14,7 +15,7 @@ const config: CapacitorConfig = {
     allowMixedContent: true,
     captureInput: true,
     webContentsDebuggingEnabled: true,
-    backgroundColor: "#00000000", // Fundo transparente
+    backgroundColor: "#00000000",
     buildOptions: {
       keystorePath: null,
       keystorePassword: null,
@@ -33,8 +34,8 @@ const config: CapacitorConfig = {
       showSpinner: true,
       splashFullScreen: true,
       splashImmersive: true,
-      backgroundColor: "#00000000", // Completamente transparente
-      spinnerColor: "#7BCB32", // Verde primário
+      backgroundColor: "#00000000",
+      spinnerColor: "#7BCB32",
       androidScaleType: "CENTER_CROP",
       spinnerStyle: "large"
     }
