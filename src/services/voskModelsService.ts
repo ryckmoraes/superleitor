@@ -120,7 +120,9 @@ class VoskModelsService {
 
   public getCurrentModel(): VoskModel | undefined {
     const currentModelId = localStorage.getItem('vosk_current_model') || 'pt-br-small';
-    return this.models.find(model => model.id === currentModelId);
+    const found = this.models.find(model => model.id === currentModelId);
+    console.log(`[voskModelsService:getCurrentModel] currentModelId in localStorage=`, currentModelId, 'Found=', found?.name);
+    return found;
   }
 
   public getCurrentLanguage(): string {
@@ -129,13 +131,11 @@ class VoskModelsService {
   }
 
   public setCurrentModel(modelId: string): void {
-    // Store the selected model ID
+    // Marcar no localStorage
     localStorage.setItem('vosk_current_model', modelId);
-    
-    // Add a timestamp to force reinitialization
+    // Timestamp para sinalizar mudança global
     localStorage.setItem('vosk_model_changed_at', Date.now().toString());
-    
-    console.log(`Model changed to ${modelId}, timestamp updated`);
+    console.log(`[voskModelsService:setCurrentModel] Atualizado para "${modelId}", localStorage.vosk_current_model=`, localStorage.getItem('vosk_current_model'));
   }
 
   private async checkInstalledModels(): Promise<void> {

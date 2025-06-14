@@ -281,33 +281,28 @@ const LanguageSelector = ({ isOpen, onClose }: LanguageSelectorProps) => {
 
         setModels(voskModelsService.getAvailableModels());
 
-        if (selectedModelId === modelId) {
-          voskModelsService.setCurrentModel(modelId);
-          setCurrentModelId(modelId);
-          setHasChanges(false);
+        // (LOG) Mostrando antes de aplicar mudanças
+        console.log("[Idioma] Antes da troca: localStorage.vosk_current_model =", localStorage.getItem('vosk_current_model'));
+        console.log("[Idioma] currentModelId/selectedModelId", currentModelId, selectedModelId);
 
-          await voskService.cleanup();
-          setDownloadStatus("Inicializando modelo...");
-          const initialized = await voskService.initialize().catch(console.error);
-          console.log(`[🟦 LanguageSelector] VOSK reinitialized with new model: ${initialized}`);
+        // Salvar modelo como selecionado ANTES do reload
+        voskModelsService.setCurrentModel(modelId);
+        setCurrentModelId(modelId);
 
-          const updatedModel = models.find(m => m.id === modelId);
-          if (updatedModel) {
-            updateUILanguage(updatedModel.language);
-          }
-        }
+        // (LOG) Após troca, antes do reload
+        console.log("[Idioma] Depois da troca: localStorage.vosk_current_model =", localStorage.getItem('vosk_current_model'));
 
-        setDownloadStatus("Download concluído!");
+        // Mensagem clara de sucesso para usuário
+        toast({
+          title: "Idioma salvo!",
+          description: `O idioma foi alterado para ${model.name}. Reiniciando app para aplicar.`,
+        });
 
-        showToastOnly(
-          "Sucesso!",
-          "Novo idioma disponível! O aplicativo será recarregado para aplicar as mudanças.",
-          "default"
-        );
+        setHasChanges(false);
 
-        // [‼️] Garantir reload após download bem-sucedido
+        // Reload logo após garantir que tudo foi salvo
         setTimeout(() => {
-          console.log("[🟩 LanguageSelector] Reloading page após download e instalação.");
+          console.log("[🟩 LanguageSelector] Reloading page após download e troca de idioma.");
           window.location.reload();
         }, 1200);
 
