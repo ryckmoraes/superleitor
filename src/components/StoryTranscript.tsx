@@ -1,5 +1,5 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Clock, LockOpen, BookOpen, ExternalLink, Home } from "lucide-react";
+import { Loader2, Clock, LockOpen, BookOpen, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { calculateEarnedTime } from "@/utils/formatUtils";
@@ -14,7 +14,7 @@ interface StoryTranscriptProps {
   recordingTime?: number;
   onContinue?: () => void;
   onExit?: () => void;
-  onUnlock?: () => void;
+  onUnlock?: (recordingTime?: number) => void;
   analysisResult?: string;
   processingComplete?: boolean;
 }
@@ -32,47 +32,32 @@ const StoryTranscript = ({
   processingComplete = false
 }: StoryTranscriptProps) => {
   const [showSummary, setShowSummary] = useState(false);
-  const [showExitOptions, setShowExitOptions] = useState(false);
   const navigate = useNavigate();
   
-  // Show summary when recording stops and there's a transcript
+  // Mostra o resumo quando parte final da gravação
   useEffect(() => {
     if ((!isProcessing && !isInterim && storyTranscript && recordingTime && recordingTime > 3) || 
         processingComplete) {
-      // Show summary after a short delay to allow for final speech to complete
       const timer = setTimeout(() => {
-        console.log("Showing story summary");
         setShowSummary(true);
       }, 1000);
-      
       return () => clearTimeout(timer);
     }
   }, [isProcessing, isInterim, storyTranscript, recordingTime, processingComplete]);
   
   if (!storyTranscript && !isProcessing && !recognitionStatus && !showSummary) return null;
   
-  // Calculate earned time based on recording duration using the utility function
+  // Tempo desbloqueado conforme gravação
   const getEarnedTime = (seconds: number): number => {
     return calculateEarnedTime(seconds);
   };
-  
-  // Handle exit button with options - now directly exits the app
+
+  // Encerrar app completamente
   const handleExitClick = () => {
-    // Close the app completely using the Android helper
     exitApp();
   };
-  
-  // Close app completely
-  const handleCloseApp = () => {
-    exitApp();
-  };
-  
-  // Navigate to home screen
-  const handleGoHome = () => {
-    navigate("/");
-  };
-  
-  // Show recording summary with time and controls
+
+  // Mostra resumo final, com botão de desbloqueio destacado
   if (showSummary && recordingTime) {
     const earnedMinutes = getEarnedTime(recordingTime);
     
@@ -111,13 +96,12 @@ const StoryTranscript = ({
                 Continuar a História para Ganhar Mais Tempo
               </Button>
             )}
-            {/* ATUALIZAÇÃO: Sempre mostra o botão de desbloquear quando onUnlock está presente */}
             {onUnlock && (
               <Button 
-                onClick={() => {
-                  onUnlock();
+                onClick={() => { 
+                  onUnlock(recordingTime); 
                 }}
-                variant="outline" 
+                variant="outline"
                 className="w-full text-base flex items-center justify-center gap-2"
                 size="lg"
               >

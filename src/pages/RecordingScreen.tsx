@@ -87,25 +87,26 @@ const RecordingScreen = () => {
     }
   };
   
-  const handleUnlockApp = () => {
-    const earnedMinutes = Math.ceil((recordingTime || 0) / 30) * 5;
-    unlockApp(recordingTime || 0);
+  const handleUnlockApp = (customTime?: number) => {
+    const finalRecordingTime = typeof customTime === "number" ? customTime : recordingTime;
+    if (!finalRecordingTime) return;
+
+    const earnedMinutes = unlockApp(finalRecordingTime);
 
     showToastOnly(
       t('recordingScreen.appUnlocked'),
       t('recordingScreen.earnedTime', { time: earnedMinutes }),
       "default"
     );
-    
+
     setStoryTranscript("");
     setInterimTranscript("");
     setIsProcessing(false);
-
     setTimeout(() => {
       exitApp();
     }, 2000);
   };
-
+  
   const handleContinueStory = () => {
     setStoryTranscript("");
     setInterimTranscript("");
