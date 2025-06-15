@@ -1,29 +1,22 @@
+
 <resources>
-    <!-- Base application theme -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Cores baseadas no novo tema de áudio -->
         <item name="colorPrimary">#7BCB32</item>
         <item name="colorPrimaryDark">#5A9424</item>
         <item name="colorAccent">#E25C8C</item>
         <item name="android:windowFullscreen">true</item>
-        <item name="android:windowContentOverlay">@null</item>
         <item name="android:windowTranslucentStatus">true</item>
         <item name="android:windowTranslucentNavigation">true</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
-        <item name="android:usesCleartextTraffic">true</item>
     </style>
-
-    <!-- Theme applied to the Android Window while the process is starting -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowFullscreen">true</item>
-        <item name="android:windowContentOverlay">@null</item>
         <item name="android:windowTranslucentStatus">true</item>
         <item name="android:windowTranslucentNavigation">true</item>
         <item name="android:windowLightStatusBar">true</item>
-        <item name="android:usesCleartextTraffic">true</item>
     </style>
 </resources>
