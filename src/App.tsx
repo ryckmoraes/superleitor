@@ -1,3 +1,4 @@
+import DebugLogExporter from "@/components/DebugLogExporter";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +13,7 @@ import { OnboardingProvider } from "./contexts/OnboardingContext";
 import WelcomeSplashScreen from "./pages/WelcomeSplashScreen";
 import { elevenLabsService } from "./services/elevenlabs";
 import { LanguageProvider } from "./contexts/LanguageContext"; // ✅ import
+import { logger } from "@/utils/logger";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +40,8 @@ const AnimatedRoutes = () => {
 
 const App = () => {
   useEffect(() => {
+    // Adiciona logs de lifecycle do App
+    logger.info("App.tsx montado - useEffect inicia");
     const enableFullScreen = async () => {
       try {
         // Request fullscreen
@@ -130,10 +134,13 @@ const App = () => {
     if (elevenLabsService.hasApiKey()) {
       console.log("ElevenLabs API key found in session");
     }
+    logger.info("App.tsx - finalizou useEffect setup");
   }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
+      {/* Logger Exporter Button */}
+      <DebugLogExporter />
       <LanguageProvider>
         <TooltipProvider>
           <OnboardingProvider>
