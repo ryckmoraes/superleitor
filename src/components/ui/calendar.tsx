@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { DayPicker } from "react-day-picker"
@@ -48,41 +47,60 @@ function Calendar({
 
   return (
     <div className="space-y-4">
-      {/* Custom month/year selector row */}
+      {/* Custom month/year selector row with HIGH contrast styling */}
       <div className="flex justify-between items-center gap-2 px-1">
         <Select
           value={month.getMonth().toString()}
           onValueChange={handleMonthChange}
         >
-          <SelectTrigger className="w-[140px] bg-primary/10 border-primary/20 font-medium text-primary-foreground dark:text-primary">
-            <SelectValue placeholder="Mês" />
+          <SelectTrigger
+            className={cn(
+              // ALTO CONTRASTE: botão mês
+              "w-[140px] font-semibold bg-primary text-white border-2 border-primary shadow hover:bg-primary/90 transition-colors focus:ring-2 ring-accent ring-offset-2",
+              "dark:bg-primary dark:text-white dark:border-primary",
+              "focus:outline-none"
+            )}
+          >
+            <SelectValue
+              placeholder="Mês"
+              className="text-white font-semibold"
+            />
           </SelectTrigger>
           <SelectContent className="max-h-[300px]">
             {months.map((month, index) => (
               <SelectItem 
                 key={month} 
                 value={index.toString()}
-                className="cursor-pointer hover:bg-primary/10"
+                className="cursor-pointer font-semibold text-primary bg-white hover:bg-primary hover:text-white transition-colors"
               >
                 {month}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-
         <Select
           value={month.getFullYear().toString()}
           onValueChange={handleYearChange}
         >
-          <SelectTrigger className="w-[100px] bg-primary/10 border-primary/20 font-medium text-primary-foreground dark:text-primary">
-            <SelectValue placeholder="Ano" />
+          <SelectTrigger
+            className={cn(
+              // ALTO CONTRASTE: botão ano
+              "w-[100px] font-semibold bg-primary text-white border-2 border-primary shadow hover:bg-primary/90 transition-colors focus:ring-2 ring-accent ring-offset-2",
+              "dark:bg-primary dark:text-white dark:border-primary",
+              "focus:outline-none"
+            )}
+          >
+            <SelectValue
+              placeholder="Ano"
+              className="text-white font-semibold"
+            />
           </SelectTrigger>
           <SelectContent className="max-h-[300px]">
             {years.map((year) => (
               <SelectItem 
                 key={year} 
                 value={year.toString()}
-                className="cursor-pointer hover:bg-primary/10"
+                className="cursor-pointer font-semibold text-primary bg-white hover:bg-primary hover:text-white transition-colors"
               >
                 {year}
               </SelectItem>
