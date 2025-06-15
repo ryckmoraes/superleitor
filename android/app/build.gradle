@@ -42,4 +42,5 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.webkit:webkit:1.6.1'
     implementation 'com.capacitorjs:core:5.0.0'
+    implementation 'com.capacitorjs:android:5.0.0'
 }
