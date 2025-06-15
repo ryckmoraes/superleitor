@@ -1,0 +1,65 @@
+
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle with gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7BCB32;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#5A9B24;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="micGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f0f0f0;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0.6" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Main background circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#bgGradient)" stroke="#4A7C1A" stroke-width="8"/>
+  
+  <!-- Outer ring for depth -->
+  <circle cx="256" cy="256" r="220" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.3"/>
+  
+  <!-- Microphone body -->
+  <rect x="230" y="180" width="52" height="80" rx="26" ry="26" fill="url(#micGradient)" stroke="#333" stroke-width="3"/>
+  
+  <!-- Microphone details -->
+  <rect x="240" y="195" width="32" height="6" rx="3" fill="#7BCB32" opacity="0.7"/>
+  <rect x="240" y="215" width="32" height="6" rx="3" fill="#7BCB32" opacity="0.7"/>
+  <rect x="240" y="235" width="32" height="6" rx="3" fill="#7BCB32" opacity="0.7"/>
+  
+  <!-- Microphone stand -->
+  <rect x="250" y="260" width="12" height="40" fill="#333"/>
+  <rect x="240" y="295" width="32" height="8" rx="4" fill="#333"/>
+  
+  <!-- Sound waves -->
+  <path d="M 300 200 Q 320 220 300 240" stroke="url(#waveGradient)" stroke-width="4" fill="none" opacity="0.8"/>
+  <path d="M 315 190 Q 340 220 315 250" stroke="url(#waveGradient)" stroke-width="4" fill="none" opacity="0.6"/>
+  <path d="M 330 180 Q 360 220 330 260" stroke="url(#waveGradient)" stroke-width="4" fill="none" opacity="0.4"/>
+  
+  <!-- Book/Reading element -->
+  <rect x="160" y="320" width="60" height="45" rx="3" fill="#ffffff" stroke="#333" stroke-width="2"/>
+  <rect x="220" y="320" width="60" height="45" rx="3" fill="#ffffff" stroke="#333" stroke-width="2"/>
+  <path d="M 220 320 L 220 365" stroke="#333" stroke-width="2"/>
+  
+  <!-- Book pages lines -->
+  <line x1="170" y1="330" x2="210" y2="330" stroke="#7BCB32" stroke-width="2" opacity="0.7"/>
+  <line x1="170" y1="340" x2="205" y2="340" stroke="#7BCB32" stroke-width="2" opacity="0.7"/>
+  <line x1="170" y1="350" x2="200" y2="350" stroke="#7BCB32" stroke-width="2" opacity="0.7"/>
+  
+  <line x1="230" y1="330" x2="270" y2="330" stroke="#7BCB32" stroke-width="2" opacity="0.7"/>
+  <line x1="230" y1="340" x2="265" y2="340" stroke="#7BCB32" stroke-width="2" opacity="0.7"/>
+  <line x1="230" y1="350" x2="260" y2="350" stroke="#7BCB32" stroke-width="2" opacity="0.7"/>
+  
+  <!-- Audio visualization bars -->
+  <rect x="350" y="300" width="8" height="20" rx="4" fill="#ffffff" opacity="0.8"/>
+  <rect x="365" y="290" width="8" height="40" rx="4" fill="#ffffff" opacity="0.8"/>
+  <rect x="380" y="285" width="8" height="50" rx="4" fill="#ffffff" opacity="0.8"/>
+  <rect x="395" y="295" width="8" height="30" rx="4" fill="#ffffff" opacity="0.8"/>
+  <rect x="410" y="305" width="8" height="15" rx="4" fill="#ffffff" opacity="0.8"/>
+  
+  <!-- Central highlight -->
+  <circle cx="256" cy="256" r="4" fill="#ffffff" opacity="0.9"/>
+</svg>
