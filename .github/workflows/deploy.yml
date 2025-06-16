@@ -90,11 +90,11 @@ jobs:
           npx cap copy android
           echo "Assets copied successfully"
 
-      # Sync Capacitor with force flag
+      # Sync Capacitor without --force flag (it doesn't exist)
       - name: Sync Capacitor
         run: |
           echo "Syncing Capacitor..."
-          npx cap sync android --force
+          npx cap sync android
           echo "Capacitor sync completed"
 
       # Verify assets were copied correctly
