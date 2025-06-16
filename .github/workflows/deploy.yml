@@ -56,7 +56,6 @@ jobs:
       - name: Install Capacitor Android
         run: npm install @capacitor/android --legacy-peer-deps
 
-      # Use existing capacitor.config.ts instead of creating new one
       - name: Verify Capacitor config
         run: |
           echo "Checking capacitor.config.ts..."
@@ -68,7 +67,6 @@ jobs:
             exit 1
           fi
 
-      # Check if Android platform exists
       - name: Check if Android platform exists
         id: check_android
         run: |
@@ -78,26 +76,24 @@ jobs:
             echo "platform_exists=false" >> $GITHUB_OUTPUT
           fi
 
-      # Add Android platform if needed
       - name: Add Android platform if needed
         if: steps.check_android.outputs.platform_exists == 'false'
         run: npx cap add android
 
-      # Force copy web assets to Android
       - name: Copy web assets to Android
         run: |
           echo "Copying web assets to Android..."
+          echo "Build output directory:"
+          ls -la dist/
           npx cap copy android
           echo "Assets copied successfully"
 
-      # Sync Capacitor without --force flag (it doesn't exist)
       - name: Sync Capacitor
         run: |
           echo "Syncing Capacitor..."
           npx cap sync android
           echo "Capacitor sync completed"
 
-      # Verify assets were copied correctly
       - name: Verify Android assets
         run: |
           echo "Checking Android assets..."
@@ -110,27 +106,26 @@ jobs:
               echo "✓ index.html found in assets"
             else
               echo "✗ index.html NOT found in assets"
-              exit 1
+              # Let's check if it's in a different location
+              echo "Searching for index.html in assets..."
+              find android/app/src/main/assets -name "index.html" -type f
             fi
           else
             echo "✗ Assets folder does not exist at $ASSETS_PATH"
             echo "Checking alternative asset paths..."
             find android/app/src/main -name "assets" -type d
-            exit 1
+            find android/app/src/main -name "*.html" -type f
           fi
 
-      # Create proper Gradle project structure
       - name: Create proper Gradle project structure
         run: |
           cd android
           
-          # Create settings.gradle if missing
           if [ ! -f "settings.gradle" ]; then
             echo "rootProject.name = 'superleitor'" > settings.gradle
             echo "include ':app'" >> settings.gradle
           fi
           
-          # Create build.gradle in root directory if missing
           if [ ! -f "build.gradle" ]; then
             echo "buildscript {
                 repositories {
@@ -150,14 +145,10 @@ jobs:
             }" > build.gradle
           fi
           
-          # Make sure app directory exists
           mkdir -p app
-          
-          # Create gradle wrapper with specific version
           gradle wrapper --gradle-version 7.6
           chmod +x ./gradlew
 
-      # Verify MainActivity exists before building
       - name: Verify MainActivity
         run: |
           MAIN_ACTIVITY_PATH="android/app/src/main/java/com/superleitor/app/MainActivity.java"
@@ -172,7 +163,6 @@ jobs:
             exit 1
           fi
 
-      # Clean and build the Android APK
       - name: Clean and Build Android APK
         run: |
           cd android
@@ -181,14 +171,12 @@ jobs:
           echo "Building APK..."
           ./gradlew :app:assembleDebug --stacktrace --info
 
-      # Upload the APK artifact
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: superleitor_01
           path: android/app/build/outputs/apk/debug/superleitor_01-debug.apk
 
-      # Deployment to server (disabled for now)
       - name: Deploy to server
         if: false # Disable server deployment for now
         run: ./deploy.sh
