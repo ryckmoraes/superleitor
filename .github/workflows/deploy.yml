@@ -24,6 +24,26 @@ jobs:
       - name: Build web app
         run: npm run build
 
+      - name: Verify build output
+        run: |
+          echo "Checking if dist folder exists..."
+          ls -la
+          if [ -d "dist" ]; then
+            echo "✓ dist folder exists"
+            echo "Contents of dist folder:"
+            ls -la dist/
+            echo "Checking for index.html..."
+            if [ -f "dist/index.html" ]; then
+              echo "✓ index.html found in dist"
+            else
+              echo "✗ index.html NOT found in dist"
+              exit 1
+            fi
+          else
+            echo "✗ dist folder does not exist"
+            exit 1
+          fi
+
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
@@ -36,24 +56,16 @@ jobs:
       - name: Install Capacitor Android
         run: npm install @capacitor/android --legacy-peer-deps
 
-      # Initialize Capacitor
-      - name: Initialize Capacitor
+      # Use existing capacitor.config.ts instead of creating new one
+      - name: Verify Capacitor config
         run: |
-          if [ ! -f "capacitor.config.ts" ]; then
-            echo 'import { CapacitorConfig } from "@capacitor/cli";
-            const config: CapacitorConfig = {
-              appId: "com.superleitor.app",
-              appName: "Superleitor",
-              webDir: "dist",
-              server: {
-                url: "https://61c9c85a-521b-4753-a60e-0cdb64c7b0cc.lovableproject.com?forceHideBadge=true",
-                cleartext: true
-              },
-              android: {
-                allowMixedContent: true
-              }
-            };
-            export default config;' > capacitor.config.ts
+          echo "Checking capacitor.config.ts..."
+          if [ -f "capacitor.config.ts" ]; then
+            echo "✓ capacitor.config.ts exists"
+            cat capacitor.config.ts
+          else
+            echo "✗ capacitor.config.ts missing"
+            exit 1
           fi
 
       # Check if Android platform exists
@@ -71,9 +83,41 @@ jobs:
         if: steps.check_android.outputs.platform_exists == 'false'
         run: npx cap add android
 
-      # Sync Capacitor before any Gradle operations
+      # Force copy web assets to Android
+      - name: Copy web assets to Android
+        run: |
+          echo "Copying web assets to Android..."
+          npx cap copy android
+          echo "Assets copied successfully"
+
+      # Sync Capacitor with force flag
       - name: Sync Capacitor
-        run: npx cap sync android
+        run: |
+          echo "Syncing Capacitor..."
+          npx cap sync android --force
+          echo "Capacitor sync completed"
+
+      # Verify assets were copied correctly
+      - name: Verify Android assets
+        run: |
+          echo "Checking Android assets..."
+          ASSETS_PATH="android/app/src/main/assets/public"
+          if [ -d "$ASSETS_PATH" ]; then
+            echo "✓ Assets folder exists at $ASSETS_PATH"
+            echo "Contents of assets folder:"
+            ls -la "$ASSETS_PATH"
+            if [ -f "$ASSETS_PATH/index.html" ]; then
+              echo "✓ index.html found in assets"
+            else
+              echo "✗ index.html NOT found in assets"
+              exit 1
+            fi
+          else
+            echo "✗ Assets folder does not exist at $ASSETS_PATH"
+            echo "Checking alternative asset paths..."
+            find android/app/src/main -name "assets" -type d
+            exit 1
+          fi
 
       # Create proper Gradle project structure
       - name: Create proper Gradle project structure
@@ -109,43 +153,33 @@ jobs:
           # Make sure app directory exists
           mkdir -p app
           
-          # Create app/build.gradle if missing
-          if [ ! -f "app/build.gradle" ]; then
-            echo "apply plugin: 'com.android.application'
-            
-            android {
-                compileSdkVersion 33
-                defaultConfig {
-                    applicationId \"com.superleitor.app\"
-                    minSdkVersion 22
-                    targetSdkVersion 33
-                    versionCode 1
-                    versionName \"1.0\"
-                    testInstrumentationRunner \"androidx.test.runner.AndroidJUnitRunner\"
-                    archivesBaseName = \"superleitor_01\"
-                }
-                buildTypes {
-                    release {
-                        minifyEnabled false
-                        proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-                    }
-                }
-            }
-            
-            dependencies {
-                implementation 'androidx.appcompat:appcompat:1.6.1'
-            }" > app/build.gradle
-          fi
-          
           # Create gradle wrapper with specific version
           gradle wrapper --gradle-version 7.6
           chmod +x ./gradlew
 
-      # Build the Android APK
-      - name: Build Android APK
+      # Verify MainActivity exists before building
+      - name: Verify MainActivity
+        run: |
+          MAIN_ACTIVITY_PATH="android/app/src/main/java/com/superleitor/app/MainActivity.java"
+          if [ -f "$MAIN_ACTIVITY_PATH" ]; then
+            echo "✓ MainActivity.java exists"
+            echo "Contents:"
+            cat "$MAIN_ACTIVITY_PATH"
+          else
+            echo "✗ MainActivity.java does not exist"
+            echo "Searching for MainActivity..."
+            find android -name "MainActivity.java" -type f
+            exit 1
+          fi
+
+      # Clean and build the Android APK
+      - name: Clean and Build Android APK
         run: |
           cd android
-          ./gradlew :app:assembleDebug
+          echo "Cleaning previous builds..."
+          ./gradlew clean
+          echo "Building APK..."
+          ./gradlew :app:assembleDebug --stacktrace --info
 
       # Upload the APK artifact
       - name: Upload APK artifact
