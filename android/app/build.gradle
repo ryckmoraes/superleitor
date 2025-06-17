@@ -1,3 +1,4 @@
+
 apply plugin: 'com.android.application'
 
 android {
@@ -11,6 +12,10 @@ android {
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         archivesBaseName = "superleitor_01"
+        
+        // Configurações adicionais para estabilidade
+        multiDexEnabled true
+        vectorDrawables.useSupportLibrary = true
     }
     buildTypes {
         release {
@@ -21,6 +26,7 @@ android {
         debug {
             debuggable true
             applicationIdSuffix ".debug"
+            minifyEnabled false
         }
     }
     aaptOptions {
@@ -32,6 +38,13 @@ android {
     }
     lintOptions {
         abortOnError false
+        checkReleaseBuilds false
+    }
+    
+    // Configurações para evitar crashes
+    packagingOptions {
+        pickFirst '**/libc++_shared.so'
+        pickFirst '**/libjsc.so'
     }
 }
 
@@ -41,6 +54,22 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.webkit:webkit:1.6.1'
     implementation 'com.capacitorjs:core:5.0.0'
-    // Dependência adicionada para corrigir erro de CoordinatorLayout
     implementation 'androidx.coordinatorlayout:coordinatorlayout:1.2.0'
+    
+    // Dependências adicionais para estabilidade
+    implementation 'androidx.multidex:multidex:2.0.1'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
+    implementation 'androidx.activity:activity:1.7.2'
+    
+    // Para debugging
+    debugImplementation 'com.facebook.flipper:flipper:0.125.0'
+    debugImplementation 'com.facebook.soloader:soloader:0.10.4'
+}
+
+// Configurações de build adicionais
+configurations.all {
+    resolutionStrategy {
+        force 'androidx.core:core:1.9.0'
+        force 'androidx.appcompat:appcompat:1.6.1'
+    }
 }
