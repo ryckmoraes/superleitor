@@ -4,7 +4,4 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/transparent">
-    
-    <!-- Layout vazio - Capacitor irá injetar o WebView aqui -->
-    
 </FrameLayout>
