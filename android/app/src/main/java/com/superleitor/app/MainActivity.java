@@ -1,4 +1,3 @@
-
 package com.superleitor.app;
 
 import android.os.Bundle;
