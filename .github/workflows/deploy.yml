@@ -70,9 +70,9 @@ jobs:
         id: check_android
         run: |
           if [ -d "android" ]; then
-            echo "platform_exists=true" >> $GITHUB_OUTPUT
+            echo "platform_exists=true" >> "$GITHUB_OUTPUT"
           else
-            echo "platform_exists=false" >> $GITHUB_OUTPUT
+            echo "platform_exists=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Add Android platform if needed
@@ -96,7 +96,7 @@ jobs:
       - name: Sanitize file_paths.xml
         run: |
           echo "Sanitizing file_paths.xml..."
-          sed -i '1s/^\\s*//' android/app/src/main/res/xml/file_paths.xml || true
+          sed -i '1s/^\s*//' android/app/src/main/res/xml/file_paths.xml || true
           head -n 5 android/app/src/main/res/xml/file_paths.xml
 
       - name: Verify Android assets
