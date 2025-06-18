@@ -93,13 +93,13 @@ jobs:
           npx cap sync android
           echo "Capacitor sync completed"
 
-      - name: Sanitize file_paths.xml
+      - name: Fix file_paths.xml content
         run: |
-          FILE=android/app/src/main/res/xml/file_paths.xml
-          echo "Sanitizing file_paths.xml removing any line before XML declaration..."
-          sed -i '1,/<\?xml version="1.0" encoding="utf-8"?>/!d' $FILE
-          echo "Sanitized file content:"
-          cat $FILE
+          echo '<?xml version="1.0" encoding="utf-8"?>' > android/app/src/main/res/xml/file_paths.xml
+          echo '<paths xmlns:android="http://schemas.android.com/apk/res/android">' >> android/app/src/main/res/xml/file_paths.xml
+          echo '    <external-path name="external_files" path="." />' >> android/app/src/main/res/xml/file_paths.xml
+          echo '</paths>' >> android/app/src/main/res/xml/file_paths.xml
+          head -n 5 android/app/src/main/res/xml/file_paths.xml
 
       - name: Verify Android assets
         run: |
