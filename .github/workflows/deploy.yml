@@ -127,25 +127,29 @@ jobs:
             echo "include ':app'" >> settings.gradle
           fi
           if [ ! -f "build.gradle" ]; then
-            echo "buildscript {
-                repositories {
-                    google()
-                    mavenCentral()
-                }
-                dependencies {
-                    classpath 'com.android.tools.build:gradle:7.3.1'
-                }
-            }
-            allprojects {
-                repositories {
-                    google()
-                    mavenCentral()
-                }
-            }" > build.gradle
+            cat <<EOF > build.gradle
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.3.1'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+EOF
           fi
           mkdir -p app
           gradle wrapper --gradle-version 7.6
           chmod +x ./gradlew
+
 
       - name: Verify MainActivity
         run: |
