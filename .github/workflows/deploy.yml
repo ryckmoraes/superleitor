@@ -95,9 +95,11 @@ jobs:
 
       - name: Sanitize file_paths.xml
         run: |
-          echo "Sanitizing file_paths.xml..."
-          sed -i '1s/^\s*//' android/app/src/main/res/xml/file_paths.xml
-          head -n 5 android/app/src/main/res/xml/file_paths.xml
+          FILE=android/app/src/main/res/xml/file_paths.xml
+          echo "Sanitizing file_paths.xml removing any line before XML declaration..."
+          sed -i '1,/<\?xml version="1.0" encoding="utf-8"?>/!d' $FILE
+          echo "Sanitized file content:"
+          cat $FILE
 
       - name: Verify Android assets
         run: |
