@@ -96,7 +96,7 @@ jobs:
       - name: Sanitize file_paths.xml
         run: |
           echo "Sanitizing file_paths.xml..."
-          sed -i '1s/^\xEF\xBB\xBF//' android/app/src/main/res/xml/file_paths.xml || true
+          sed -i '1s/^\\s*//' android/app/src/main/res/xml/file_paths.xml || true
           head -n 5 android/app/src/main/res/xml/file_paths.xml
 
       - name: Verify Android assets
