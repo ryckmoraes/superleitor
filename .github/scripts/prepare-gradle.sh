@@ -32,7 +32,7 @@ echo "Creating Gradle wrapper..."
 # Create gradle wrapper directory
 mkdir -p gradle/wrapper
 
-# Create gradle-wrapper.properties with Gradle 7.6 (compatible with AGP 7.4.2)
+# Create gradle-wrapper.properties with Gradle 7.6.3 (compatible with AGP 7.4.2)
 cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
 distributionBase=GRADLE_USER_HOME
 distributionPath=wrapper/dists
@@ -113,6 +113,3 @@ else
 fi
 
 echo "=== Gradle preparation completed successfully ==="
-EOF
-
-chmod +x .github/scripts/prepare-gradle.sh
