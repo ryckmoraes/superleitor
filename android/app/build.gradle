@@ -32,7 +32,7 @@ android {
         }
     }
     
-    // Substituindo aaptOptions por androidResources
+    // Configuração de recursos Android
     androidResources {
         noCompress 'tflite', 'lite'
     }
@@ -42,14 +42,14 @@ android {
         targetCompatibility JavaVersion.VERSION_11
     }
     
-    // Substituindo lintOptions por lint
+    // Configuração de lint
     lint {
         abortOnError false
         checkReleaseBuilds false
         disable 'InvalidPackage'
     }
     
-    // Substituindo packagingOptions por packaging
+    // Configuração de empacotamento
     packaging {
         resources {
             pickFirsts += ['**/libc++_shared.so', '**/libjsc.so']
@@ -78,11 +78,6 @@ dependencies {
     // Para debugging
     debugImplementation 'com.facebook.flipper:flipper:0.125.0'
     debugImplementation 'com.facebook.soloader:soloader:0.10.5'
-}
-
-// Configurações de resolução atualizadas
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
 }
 
 configurations.all {
