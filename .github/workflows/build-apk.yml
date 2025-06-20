@@ -65,7 +65,20 @@ jobs:
             exit 1
           fi
 
-      - name: Add Android platform
+      - name: Check Android platform
+        id: check_android
+        run: |
+          echo "Checking if Android platform exists..."
+          if [ -d "android" ]; then
+            echo "✅ Android platform already exists"
+            echo "platform_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Android platform does not exist"
+            echo "platform_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Add Android platform (if needed)
+        if: steps.check_android.outputs.platform_exists == 'false'
         run: |
           echo "Adding Android platform..."
           npx cap add android
