@@ -68,7 +68,7 @@ jobs:
       - name: Add Android platform
         run: |
           echo "Adding Android platform..."
-          npx cap add android --confirm
+          npx cap add android
           echo "Android platform added"
 
       - name: Sync Capacitor
