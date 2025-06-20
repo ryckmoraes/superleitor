@@ -31,58 +31,86 @@ echo "Running tasks to prepare build..."
 }
 
 echo "Building APK with detailed logging..."
+set +e  # Temporarily disable exit on error to capture build output
 ./gradlew assembleDebug \
   --stacktrace \
   --info \
   --no-daemon \
   --warning-mode none \
   --no-build-cache \
-  --gradle-user-home ~/.gradle 2>&1 | tee build.log || {
-  echo "❌ APK build failed"
+  --gradle-user-home ~/.gradle > build.log 2>&1
+
+BUILD_EXIT_CODE=$?
+set -e  # Re-enable exit on error
+
+echo "Build exit code: $BUILD_EXIT_CODE"
+
+if [ $BUILD_EXIT_CODE -ne 0 ]; then
+  echo "❌ APK build failed with exit code $BUILD_EXIT_CODE"
   echo "=== BUILD ERROR DETAILS ==="
   
-  # Show the last 50 lines of build output
-  echo "=== Last 50 lines of build output ==="
-  tail -50 build.log || echo "Could not read build.log"
-  
-  # Look for common error patterns
-  echo "=== Searching for specific errors ==="
-  grep -i "error" build.log | tail -10 || echo "No errors found in grep"
-  grep -i "failed" build.log | tail -10 || echo "No failures found in grep"
-  grep -i "exception" build.log | tail -10 || echo "No exceptions found in grep"
-  
-  # Check for dependency issues
-  echo "=== Checking for dependency issues ==="
-  grep -i "resolve" build.log | tail -5 || echo "No resolve issues found"
-  grep -i "dependency" build.log | tail -5 || echo "No dependency issues found"
-  
-  # Check for compilation issues
-  echo "=== Checking for compilation issues ==="
-  grep -i "compilation" build.log | tail -5 || echo "No compilation issues found"
-  grep -i "java" build.log | tail -5 || echo "No java issues found"
+  # Show the entire build log if it's not too large
+  if [ -f "build.log" ]; then
+    LOG_SIZE=$(wc -l < build.log)
+    echo "Build log has $LOG_SIZE lines"
+    
+    if [ $LOG_SIZE -lt 200 ]; then
+      echo "=== Complete build log ==="
+      cat build.log
+    else
+      echo "=== Last 100 lines of build output ==="
+      tail -100 build.log
+      echo ""
+      echo "=== First 50 lines of build output ==="
+      head -50 build.log
+    fi
+    
+    echo ""
+    echo "=== Searching for specific errors ==="
+    grep -i "error\|failed\|exception" build.log | tail -20 || echo "No obvious errors found in grep"
+    
+    echo ""
+    echo "=== Checking for compilation issues ==="
+    grep -i "compilation\|cannot find symbol\|package does not exist" build.log | tail -10 || echo "No compilation issues found"
+    
+    echo ""
+    echo "=== Checking for resource issues ==="
+    grep -i "resource\|aapt\|manifest" build.log | tail -10 || echo "No resource issues found"
+    
+    echo ""
+    echo "=== Checking for dependency issues ==="
+    grep -i "resolve\|dependency\|could not find" build.log | tail -10 || echo "No dependency issues found"
+  else
+    echo "No build.log file found"
+  fi
   
   # Show build directory structure
+  echo ""
   echo "=== Build directory structure ==="
   if [ -d "app/build" ]; then
-    find app/build -type f -name "*.log" -exec echo "=== {} ===" \; -exec tail -10 {} \; 2>/dev/null || echo "No additional log files found"
+    echo "Build directory exists"
+    find app/build -type f -name "*.log" -exec echo "Found log: {}" \; -exec tail -5 {} \; 2>/dev/null || echo "No additional log files found"
     
+    echo ""
     echo "=== Build outputs directory structure ==="
-    find app/build/outputs -type f 2>/dev/null | head -20 || echo "No outputs directory found"
+    if [ -d "app/build/outputs" ]; then
+      find app/build/outputs -type f 2>/dev/null | head -20 || echo "No files in outputs directory"
+    else
+      echo "No outputs directory found"
+    fi
   else
     echo "No app/build directory found"
   fi
   
-  # Show Gradle daemon status
-  echo "=== Gradle daemon status ==="
-  ./gradlew --status || echo "Could not get daemon status"
-  
   # Show system resources
+  echo ""
   echo "=== System resources ==="
   free -h || echo "Could not get memory info"
   df -h . || echo "Could not get disk info"
   
   exit 1
-}
+fi
+
 echo "APK build process completed successfully"
 
 echo "Searching for generated APK files..."
