@@ -30,32 +30,56 @@ echo "Running tasks to prepare build..."
   echo "⚠️ Tasks listing failed, but continuing..."
 }
 
-echo "Building APK with modern Gradle settings..."
+echo "Building APK with detailed logging..."
 ./gradlew assembleDebug \
   --stacktrace \
   --info \
   --no-daemon \
   --warning-mode none \
   --no-build-cache \
-  --gradle-user-home ~/.gradle || {
+  --gradle-user-home ~/.gradle 2>&1 | tee build.log || {
   echo "❌ APK build failed"
-  echo "Checking for build errors..."
+  echo "=== BUILD ERROR DETAILS ==="
   
-  # Try to find and display relevant error information
+  # Show the last 50 lines of build output
+  echo "=== Last 50 lines of build output ==="
+  tail -50 build.log || echo "Could not read build.log"
+  
+  # Look for common error patterns
+  echo "=== Searching for specific errors ==="
+  grep -i "error" build.log | tail -10 || echo "No errors found in grep"
+  grep -i "failed" build.log | tail -10 || echo "No failures found in grep"
+  grep -i "exception" build.log | tail -10 || echo "No exceptions found in grep"
+  
+  # Check for dependency issues
+  echo "=== Checking for dependency issues ==="
+  grep -i "resolve" build.log | tail -5 || echo "No resolve issues found"
+  grep -i "dependency" build.log | tail -5 || echo "No dependency issues found"
+  
+  # Check for compilation issues
+  echo "=== Checking for compilation issues ==="
+  grep -i "compilation" build.log | tail -5 || echo "No compilation issues found"
+  grep -i "java" build.log | tail -5 || echo "No java issues found"
+  
+  # Show build directory structure
+  echo "=== Build directory structure ==="
   if [ -d "app/build" ]; then
-    echo "Build directory exists, checking for error logs..."
-    find app/build -name "*.log" -type f -exec echo "=== {} ===" \; -exec cat {} \; || echo "No log files found"
+    find app/build -type f -name "*.log" -exec echo "=== {} ===" \; -exec tail -10 {} \; 2>/dev/null || echo "No additional log files found"
     
-    echo "=== Recent build outputs ==="
-    find app/build -type f -name "*.txt" -newer app/build 2>/dev/null | head -10 | while read file; do
-      echo "=== $file ==="
-      tail -20 "$file" 2>/dev/null || echo "Could not read $file"
-    done
+    echo "=== Build outputs directory structure ==="
+    find app/build/outputs -type f 2>/dev/null | head -20 || echo "No outputs directory found"
+  else
+    echo "No app/build directory found"
   fi
   
-  # Show detailed Gradle info
+  # Show Gradle daemon status
   echo "=== Gradle daemon status ==="
   ./gradlew --status || echo "Could not get daemon status"
+  
+  # Show system resources
+  echo "=== System resources ==="
+  free -h || echo "Could not get memory info"
+  df -h . || echo "Could not get disk info"
   
   exit 1
 }
