@@ -1,0 +1,6 @@
+
+// Cordova plugin variables
+ext {
+    // Default values for Cordova plugin variables
+    // These can be overridden in the main gradle files if needed
+}
