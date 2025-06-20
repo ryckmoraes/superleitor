@@ -1,16 +1,17 @@
 
 buildscript {
-    ext.kotlin_version = '1.8.20'
+    ext.kotlin_version = '1.9.10'
     repositories {
         google()
         mavenCentral()
-        gradlePluginPortal()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.4.2'
+        classpath 'com.android.tools.build:gradle:8.2.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
+
+apply from: "variables.gradle"
 
 allprojects {
     repositories {
@@ -22,22 +23,4 @@ allprojects {
 
 tasks.register('clean', Delete) {
     delete rootProject.buildDir
-}
-
-// Debug task to check project structure
-tasks.register('debugProject') {
-    doLast {
-        println "=== PROJECT DEBUG INFO ==="
-        println "Root project: ${rootProject.name}"
-        println "Sub projects:"
-        subprojects.each { project ->
-            println "  - ${project.name} (${project.projectDir})"
-        }
-        
-        def appBuildGradle = file('app/build.gradle')
-        println "App build.gradle exists: ${appBuildGradle.exists()}"
-        
-        def manifestFile = file('app/src/main/AndroidManifest.xml')
-        println "AndroidManifest.xml exists: ${manifestFile.exists()}"
-    }
 }

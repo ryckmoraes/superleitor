@@ -1,12 +1,11 @@
+
 package com.superleitor.app;
 
 import android.os.Bundle;
 import android.util.Log;
 import android.webkit.WebView;
-import com.getcapacitor.BridgeActivity;
-import com.getcapacitor.Plugin;
 
-import java.util.ArrayList;
+import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
     private static final String TAG = "SuperleitorMainActivity";
@@ -24,13 +23,6 @@ public class MainActivity extends BridgeActivity {
             Log.d(TAG, "Habilitando WebView debugging...");
             WebView.setWebContentsDebuggingEnabled(true);
             Log.d(TAG, "WebView debugging habilitado");
-            
-            // Registrar plugins adicionais se necessário
-            Log.d(TAG, "Registrando plugins...");
-            this.init(savedInstanceState, new ArrayList<Class<? extends Plugin>>() {{
-                // Adicionar plugins customizados aqui se necessário
-            }});
-            Log.d(TAG, "Plugins registrados com sucesso");
             
             Log.d(TAG, "=== MAINACTIVITY INICIALIZADA COM SUCESSO ===");
             
