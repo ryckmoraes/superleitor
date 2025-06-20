@@ -19,14 +19,25 @@ echo "Testing gradlew connectivity..."
 }
 
 echo "Cleaning Android project..."
-./gradlew clean --no-daemon --stacktrace || {
+./gradlew clean --no-daemon --stacktrace --warning-mode none || {
   echo "❌ Clean failed"
   exit 1
 }
 echo "Clean completed successfully"
 
-echo "Building APK..."
-./gradlew assembleDebug --stacktrace --info --no-daemon || {
+echo "Running tasks to prepare build..."
+./gradlew tasks --no-daemon --warning-mode none || {
+  echo "⚠️ Tasks listing failed, but continuing..."
+}
+
+echo "Building APK with modern Gradle settings..."
+./gradlew assembleDebug \
+  --stacktrace \
+  --info \
+  --no-daemon \
+  --warning-mode none \
+  --no-build-cache \
+  --gradle-user-home ~/.gradle || {
   echo "❌ APK build failed"
   echo "Checking for build errors..."
   
@@ -34,7 +45,17 @@ echo "Building APK..."
   if [ -d "app/build" ]; then
     echo "Build directory exists, checking for error logs..."
     find app/build -name "*.log" -type f -exec echo "=== {} ===" \; -exec cat {} \; || echo "No log files found"
+    
+    echo "=== Recent build outputs ==="
+    find app/build -type f -name "*.txt" -newer app/build 2>/dev/null | head -10 | while read file; do
+      echo "=== $file ==="
+      tail -20 "$file" 2>/dev/null || echo "Could not read $file"
+    done
   fi
+  
+  # Show detailed Gradle info
+  echo "=== Gradle daemon status ==="
+  ./gradlew --status || echo "Could not get daemon status"
   
   exit 1
 }
