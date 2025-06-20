@@ -90,6 +90,52 @@ jobs:
           npx cap sync android
           echo "Capacitor sync completed"
 
+      - name: Debug Android directory structure
+        run: |
+          echo "Debugging Android project structure..."
+          echo "Contents of android directory:"
+          ls -la android/ || echo "Android directory not found"
+          
+          echo "Contents of android root:"
+          find android -maxdepth 2 -type f -name "*gradle*" || echo "No gradle files found"
+          
+          echo "Looking for gradlew:"
+          find android -name "gradlew" -type f || echo "gradlew not found"
+
+      - name: Create Gradle wrapper if missing
+        run: |
+          cd android
+          echo "Checking if gradlew exists..."
+          
+          if [ ! -f "./gradlew" ]; then
+            echo "❌ gradlew not found, creating Gradle wrapper..."
+            
+            # Try to use existing gradle installation first
+            if command -v gradle &> /dev/null; then
+              echo "Using system gradle to create wrapper..."
+              gradle wrapper --gradle-version 7.6
+            else
+              echo "Installing gradle wrapper manually..."
+              # Download gradle wrapper files
+              curl -L https://services.gradle.org/distributions/gradle-7.6-bin.zip -o gradle.zip
+              unzip -q gradle.zip
+              mv gradle-7.6 gradle-home
+              
+              # Create gradlew script
+              cat > gradlew << 'EOF'
+#!/bin/sh
+exec "$(dirname "$0")/gradle-home/bin/gradle" "$@"
+EOF
+              
+              chmod +x gradlew
+              rm gradle.zip
+            fi
+            
+            echo "Gradle wrapper created"
+          else
+            echo "✅ gradlew already exists"
+          fi
+
       - name: Verify Android project structure
         run: |
           echo "Verifying Android project structure..."
@@ -112,6 +158,14 @@ jobs:
             exit 1
           fi
           
+          # Check for gradlew
+          if [ -f "android/gradlew" ]; then
+            echo "✅ gradlew found and ready"
+          else
+            echo "❌ gradlew still missing after creation attempt"
+            exit 1
+          fi
+          
           # Check assets
           ASSETS_PATH="android/app/src/main/assets/public"
           if [ -d "$ASSETS_PATH" ] && [ -f "$ASSETS_PATH/index.html" ]; then
@@ -125,14 +179,23 @@ jobs:
       - name: Make gradlew executable
         run: |
           cd android
+          echo "Making gradlew executable..."
           chmod +x ./gradlew
-          echo "Gradle wrapper made executable"
+          echo "Gradle wrapper permissions set"
+          
+          # Verify it's executable
+          if [ -x "./gradlew" ]; then
+            echo "✅ gradlew is now executable"
+          else
+            echo "❌ Failed to make gradlew executable"
+            exit 1
+          fi
 
       - name: Clean Android project
         run: |
           cd android
           echo "Cleaning Android project..."
-          ./gradlew clean
+          ./gradlew clean --no-daemon
           echo "Clean completed"
 
       - name: Build APK
