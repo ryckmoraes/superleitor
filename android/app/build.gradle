@@ -4,7 +4,7 @@ apply plugin: 'com.android.application'
 android {
     namespace 'com.superleitor.app'
     compileSdkVersion rootProject.ext.compileSdkVersion
-    buildToolsVersion '34.0.0'
+    buildToolsVersion rootProject.ext.buildToolsVersion
     
     defaultConfig {
         applicationId "com.superleitor.app"
