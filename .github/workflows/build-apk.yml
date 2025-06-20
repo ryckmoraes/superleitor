@@ -1,0 +1,198 @@
+
+name: Build APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          echo "Installing dependencies..."
+          npm ci --legacy-peer-deps
+          echo "Dependencies installed successfully"
+
+      - name: Build web app
+        run: |
+          echo "Building web application..."
+          npm run build
+          echo "Web build completed"
+
+      - name: Verify web build
+        run: |
+          echo "Verifying web build output..."
+          if [ -d "dist" ] && [ -f "dist/index.html" ]; then
+            echo "✅ Web build successful - dist folder and index.html found"
+            echo "Build size: $(du -sh dist)"
+          else
+            echo "❌ Web build failed - missing dist folder or index.html"
+            exit 1
+          fi
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Verify Capacitor config
+        run: |
+          echo "Checking Capacitor configuration..."
+          if [ -f "capacitor.config.ts" ]; then
+            echo "✅ capacitor.config.ts found"
+            echo "Config contents:"
+            cat capacitor.config.ts
+          else
+            echo "❌ capacitor.config.ts missing"
+            exit 1
+          fi
+
+      - name: Add Android platform
+        run: |
+          echo "Adding Android platform..."
+          npx cap add android --confirm
+          echo "Android platform added"
+
+      - name: Sync Capacitor
+        run: |
+          echo "Syncing Capacitor with Android..."
+          npx cap sync android
+          echo "Capacitor sync completed"
+
+      - name: Verify Android project structure
+        run: |
+          echo "Verifying Android project structure..."
+          
+          # Check main directories
+          for dir in "android" "android/app" "android/app/src" "android/app/src/main"; do
+            if [ -d "$dir" ]; then
+              echo "✅ $dir exists"
+            else
+              echo "❌ $dir missing"
+              exit 1
+            fi
+          done
+          
+          # Check key files
+          if [ -f "android/app/build.gradle" ]; then
+            echo "✅ build.gradle found"
+          else
+            echo "❌ build.gradle missing"
+            exit 1
+          fi
+          
+          # Check assets
+          ASSETS_PATH="android/app/src/main/assets/public"
+          if [ -d "$ASSETS_PATH" ] && [ -f "$ASSETS_PATH/index.html" ]; then
+            echo "✅ Web assets properly copied to Android"
+          else
+            echo "❌ Web assets not found in Android project"
+            find android -name "index.html" -type f || echo "No index.html found in Android project"
+            exit 1
+          fi
+
+      - name: Make gradlew executable
+        run: |
+          cd android
+          chmod +x ./gradlew
+          echo "Gradle wrapper made executable"
+
+      - name: Clean Android project
+        run: |
+          cd android
+          echo "Cleaning Android project..."
+          ./gradlew clean
+          echo "Clean completed"
+
+      - name: Build APK
+        run: |
+          cd android
+          echo "Building APK..."
+          ./gradlew assembleDebug --stacktrace --info --no-daemon
+          echo "APK build process completed"
+
+      - name: Find and verify APK
+        id: find_apk
+        run: |
+          echo "Searching for generated APK files..."
+          
+          # Search for APK files
+          find android -name "*.apk" -type f | while read apk_file; do
+            echo "Found APK: $apk_file"
+            echo "Size: $(ls -lh "$apk_file" | awk '{print $5}')"
+          done
+          
+          # Look for the main APK
+          APK_PATH=""
+          if [ -f "android/app/build/outputs/apk/debug/app-debug.apk" ]; then
+            APK_PATH="android/app/build/outputs/apk/debug/app-debug.apk"
+          elif [ -f "android/app/build/outputs/apk/debug/superleitor-debug.apk" ]; then
+            APK_PATH="android/app/build/outputs/apk/debug/superleitor-debug.apk"
+          else
+            # Search for any debug APK
+            APK_PATH=$(find android/app/build/outputs/apk/debug -name "*debug.apk" -type f | head -1)
+          fi
+          
+          if [ -n "$APK_PATH" ] && [ -f "$APK_PATH" ]; then
+            echo "✅ APK found at: $APK_PATH"
+            echo "APK size: $(ls -lh "$APK_PATH" | awk '{print $5}')"
+            echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
+            echo "apk_found=true" >> $GITHUB_OUTPUT
+            
+            # Copy APK to a standard location with standard name
+            cp "$APK_PATH" "superleitor.apk"
+            echo "APK copied to superleitor.apk"
+          else
+            echo "❌ No APK file found"
+            echo "Build output structure:"
+            find android/app/build -type f -name "*.apk" || echo "No APK files found"
+            echo "apk_found=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Upload APK artifact
+        if: steps.find_apk.outputs.apk_found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: superleitor-apk
+          path: superleitor.apk
+          retention-days: 30
+
+      - name: Build summary
+        if: always()
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.find_apk.outputs.apk_found }}" == "true" ]; then
+            echo "✅ **APK Build Successful**" >> $GITHUB_STEP_SUMMARY
+            echo "- APK Location: \`${{ steps.find_apk.outputs.apk_path }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- Artifact Name: \`superleitor-apk\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **APK Build Failed**" >> $GITHUB_STEP_SUMMARY
+            echo "- Check the build logs for details" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Environment" >> $GITHUB_STEP_SUMMARY
+          echo "- Node.js: $(node --version)" >> $GITHUB_STEP_SUMMARY
+          echo "- Java: $(java -version 2>&1 | head -1)" >> $GITHUB_STEP_SUMMARY
+          echo "- Capacitor: $(npx cap --version)" >> $GITHUB_STEP_SUMMARY

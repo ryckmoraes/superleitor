@@ -1,14 +1,25 @@
-name: Deploy Application and Build APK
+name: Deploy Application and Build APK (DISABLED)
 
 on:
-  push:
-    branches:
-      - main
+  # Temporarily disabled - using build-apk.yml instead
+  workflow_dispatch:
+    inputs:
+      force_run:
+        description: 'Force run this workflow (use build-apk.yml instead)'
+        required: false
+        default: 'false'
 
 jobs:
   deploy:
+    if: github.event.inputs.force_run == 'true'
     runs-on: ubuntu-latest
     steps:
+      - name: Workflow disabled
+        run: |
+          echo "This workflow has been replaced by build-apk.yml"
+          echo "Please use the new workflow for APK generation"
+          exit 1
+
       - name: Checkout code
         uses: actions/checkout@v3
 
