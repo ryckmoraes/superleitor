@@ -33,17 +33,6 @@ jobs:
           npm run build
           echo "Web build completed"
 
-      - name: Verify web build
-        run: |
-          echo "Verifying web build output..."
-          if [ -d "dist" ] && [ -f "dist/index.html" ]; then
-            echo "✅ Web build successful - dist folder and index.html found"
-            echo "Build size: $(du -sh dist)"
-          else
-            echo "❌ Web build failed - missing dist folder or index.html"
-            exit 1
-          fi
-
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -53,32 +42,14 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Verify Capacitor config
+      - name: Setup Android environment
+        id: setup_android
         run: |
-          echo "Checking Capacitor configuration..."
-          if [ -f "capacitor.config.ts" ]; then
-            echo "✅ capacitor.config.ts found"
-            echo "Config contents:"
-            cat capacitor.config.ts
-          else
-            echo "❌ capacitor.config.ts missing"
-            exit 1
-          fi
-
-      - name: Check Android platform
-        id: check_android
-        run: |
-          echo "Checking if Android platform exists..."
-          if [ -d "android" ]; then
-            echo "✅ Android platform already exists"
-            echo "platform_exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "❌ Android platform does not exist"
-            echo "platform_exists=false" >> $GITHUB_OUTPUT
-          fi
+          chmod +x .github/scripts/setup-android.sh
+          .github/scripts/setup-android.sh
 
       - name: Add Android platform (if needed)
-        if: steps.check_android.outputs.platform_exists == 'false'
+        if: steps.setup_android.outputs.platform_exists == 'false'
         run: |
           echo "Adding Android platform..."
           npx cap add android
@@ -90,162 +61,24 @@ jobs:
           npx cap sync android
           echo "Capacitor sync completed"
 
-      - name: Debug Android directory structure
+      - name: Prepare Gradle environment
         run: |
-          echo "Debugging Android project structure..."
-          echo "Contents of android directory:"
-          ls -la android/ || echo "Android directory not found"
-          
-          echo "Contents of android root:"
-          find android -maxdepth 2 -type f -name "*gradle*" || echo "No gradle files found"
-          
-          echo "Looking for gradlew:"
-          find android -name "gradlew" -type f || echo "gradlew not found"
+          chmod +x .github/scripts/prepare-gradle.sh
+          .github/scripts/prepare-gradle.sh
 
-      - name: Create Gradle wrapper if missing
+      - name: Verify build environment
         run: |
-          cd android
-          echo "Checking if gradlew exists..."
-          
-          if [ ! -f "./gradlew" ]; then
-            echo "❌ gradlew not found, creating Gradle wrapper..."
-            
-            # Try to use existing gradle installation first
-            if command -v gradle &> /dev/null; then
-              echo "Using system gradle to create wrapper..."
-              gradle wrapper --gradle-version 7.6
-            else
-              echo "Installing gradle wrapper manually..."
-              # Download gradle wrapper files
-              curl -L https://services.gradle.org/distributions/gradle-7.6-bin.zip -o gradle.zip
-              unzip -q gradle.zip
-              mv gradle-7.6 gradle-home
-              
-              # Create gradlew script
-              cat > gradlew << 'EOF'
-#!/bin/sh
-exec "$(dirname "$0")/gradle-home/bin/gradle" "$@"
-EOF
-              
-              chmod +x gradlew
-              rm gradle.zip
-            fi
-            
-            echo "Gradle wrapper created"
-          else
-            echo "✅ gradlew already exists"
-          fi
-
-      - name: Verify Android project structure
-        run: |
-          echo "Verifying Android project structure..."
-          
-          # Check main directories
-          for dir in "android" "android/app" "android/app/src" "android/app/src/main"; do
-            if [ -d "$dir" ]; then
-              echo "✅ $dir exists"
-            else
-              echo "❌ $dir missing"
-              exit 1
-            fi
-          done
-          
-          # Check key files
-          if [ -f "android/app/build.gradle" ]; then
-            echo "✅ build.gradle found"
-          else
-            echo "❌ build.gradle missing"
-            exit 1
-          fi
-          
-          # Check for gradlew
-          if [ -f "android/gradlew" ]; then
-            echo "✅ gradlew found and ready"
-          else
-            echo "❌ gradlew still missing after creation attempt"
-            exit 1
-          fi
-          
-          # Check assets
-          ASSETS_PATH="android/app/src/main/assets/public"
-          if [ -d "$ASSETS_PATH" ] && [ -f "$ASSETS_PATH/index.html" ]; then
-            echo "✅ Web assets properly copied to Android"
-          else
-            echo "❌ Web assets not found in Android project"
-            find android -name "index.html" -type f || echo "No index.html found in Android project"
-            exit 1
-          fi
-
-      - name: Make gradlew executable
-        run: |
-          cd android
-          echo "Making gradlew executable..."
-          chmod +x ./gradlew
-          echo "Gradle wrapper permissions set"
-          
-          # Verify it's executable
-          if [ -x "./gradlew" ]; then
-            echo "✅ gradlew is now executable"
-          else
-            echo "❌ Failed to make gradlew executable"
-            exit 1
-          fi
-
-      - name: Clean Android project
-        run: |
-          cd android
-          echo "Cleaning Android project..."
-          ./gradlew clean --no-daemon
-          echo "Clean completed"
+          chmod +x .github/scripts/verify-build.sh
+          .github/scripts/verify-build.sh
 
       - name: Build APK
+        id: build_apk
         run: |
-          cd android
-          echo "Building APK..."
-          ./gradlew assembleDebug --stacktrace --info --no-daemon
-          echo "APK build process completed"
-
-      - name: Find and verify APK
-        id: find_apk
-        run: |
-          echo "Searching for generated APK files..."
-          
-          # Search for APK files
-          find android -name "*.apk" -type f | while read apk_file; do
-            echo "Found APK: $apk_file"
-            echo "Size: $(ls -lh "$apk_file" | awk '{print $5}')"
-          done
-          
-          # Look for the main APK
-          APK_PATH=""
-          if [ -f "android/app/build/outputs/apk/debug/app-debug.apk" ]; then
-            APK_PATH="android/app/build/outputs/apk/debug/app-debug.apk"
-          elif [ -f "android/app/build/outputs/apk/debug/superleitor-debug.apk" ]; then
-            APK_PATH="android/app/build/outputs/apk/debug/superleitor-debug.apk"
-          else
-            # Search for any debug APK
-            APK_PATH=$(find android/app/build/outputs/apk/debug -name "*debug.apk" -type f | head -1)
-          fi
-          
-          if [ -n "$APK_PATH" ] && [ -f "$APK_PATH" ]; then
-            echo "✅ APK found at: $APK_PATH"
-            echo "APK size: $(ls -lh "$APK_PATH" | awk '{print $5}')"
-            echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
-            echo "apk_found=true" >> $GITHUB_OUTPUT
-            
-            # Copy APK to a standard location with standard name
-            cp "$APK_PATH" "superleitor.apk"
-            echo "APK copied to superleitor.apk"
-          else
-            echo "❌ No APK file found"
-            echo "Build output structure:"
-            find android/app/build -type f -name "*.apk" || echo "No APK files found"
-            echo "apk_found=false" >> $GITHUB_OUTPUT
-            exit 1
-          fi
+          chmod +x .github/scripts/build-apk.sh
+          .github/scripts/build-apk.sh
 
       - name: Upload APK artifact
-        if: steps.find_apk.outputs.apk_found == 'true'
+        if: steps.build_apk.outputs.apk_found == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: superleitor-apk
@@ -258,9 +91,9 @@ EOF
           echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          if [ "${{ steps.find_apk.outputs.apk_found }}" == "true" ]; then
+          if [ "${{ steps.build_apk.outputs.apk_found }}" == "true" ]; then
             echo "✅ **APK Build Successful**" >> $GITHUB_STEP_SUMMARY
-            echo "- APK Location: \`${{ steps.find_apk.outputs.apk_path }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- APK Location: \`${{ steps.build_apk.outputs.apk_path }}\`" >> $GITHUB_STEP_SUMMARY
             echo "- Artifact Name: \`superleitor-apk\`" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ **APK Build Failed**" >> $GITHUB_STEP_SUMMARY
