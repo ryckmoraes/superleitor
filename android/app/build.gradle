@@ -51,8 +51,6 @@ android {
     }
 }
 
-apply from: file('capacitor.build.gradle')
-
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
@@ -68,6 +66,8 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
 }
+
+apply from: file('capacitor.build.gradle')
 
 // Ensure APK generation
 tasks.whenTaskAdded { task ->

@@ -1,6 +1,9 @@
 
 // Cordova plugin variables
 ext {
-    // Default values for Cordova plugin variables
-    // These can be overridden in the main gradle files if needed
+    // Default values for Capacitor plugin variables
+    minSdkVersion = hasProperty('cdvMinSdkVersion') ? cdvMinSdkVersion : 24
+    compileSdkVersion = hasProperty('cdvCompileSdkVersion') ? cdvCompileSdkVersion : 34
+    targetSdkVersion = hasProperty('cdvTargetSdkVersion') ? cdvTargetSdkVersion : 34
+    buildToolsVersion = hasProperty('cdvBuildToolsVersion') ? cdvBuildToolsVersion : '34.0.0'
 }

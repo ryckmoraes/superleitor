@@ -10,6 +10,14 @@ android {
 
 dependencies {
     implementation project(':capacitor-android')
+    implementation project(':capacitor-cordova-android-plugins')
+    
+    // Capacitor core plugins
+    implementation project(':capacitor-app')
+    implementation project(':capacitor-haptics')
+    implementation project(':capacitor-keyboard')
+    implementation project(':capacitor-status-bar')
+    implementation project(':capacitor-splash-screen')
 }
 
 if (hasProperty('postBuildExtras')) {
