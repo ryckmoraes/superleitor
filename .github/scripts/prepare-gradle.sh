@@ -32,11 +32,11 @@ echo "Creating Gradle wrapper..."
 # Create gradle wrapper directory
 mkdir -p gradle/wrapper
 
-# Create gradle-wrapper.properties with Gradle 8.0.2 (compatible with AGP 8.0.2)
+# Create gradle-wrapper.properties with Gradle 7.6 (compatible with AGP 7.4.2)
 cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
 distributionBase=GRADLE_USER_HOME
 distributionPath=wrapper/dists
-distributionUrl=https\://services.gradle.org/distributions/gradle-8.0.2-all.zip
+distributionUrl=https\://services.gradle.org/distributions/gradle-7.6.3-all.zip
 networkTimeout=10000
 validateDistributionUrl=true
 zipStoreBase=GRADLE_USER_HOME
@@ -45,7 +45,7 @@ EOF
 
 # Download gradle-wrapper.jar
 echo "Downloading gradle-wrapper.jar..."
-WRAPPER_JAR_URL="https://github.com/gradle/gradle/raw/v8.0.2/gradle/wrapper/gradle-wrapper.jar"
+WRAPPER_JAR_URL="https://github.com/gradle/gradle/raw/v7.6.3/gradle/wrapper/gradle-wrapper.jar"
 curl -L "$WRAPPER_JAR_URL" -o gradle/wrapper/gradle-wrapper.jar
 
 # Verify jar was downloaded
@@ -54,7 +54,7 @@ if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ] || [ ! -s "gradle/wrapper/gradle
   exit 1
 fi
 
-# Create minimal gradlew script
+# Create gradlew script
 cat > gradlew << 'EOF'
 #!/bin/sh
 
@@ -84,14 +84,12 @@ if [ -n "$JAVA_HOME" ] ; then
     fi
     if [ ! -x "$JAVACMD" ] ; then
         echo "ERROR: JAVA_HOME is set to an invalid directory: $JAVA_HOME"
-        echo "Please set the JAVA_HOME variable in your environment to match the location of your Java installation."
         exit 1
     fi
 else
     JAVACMD="java"
     which java >/dev/null 2>&1 || {
         echo "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH."
-        echo "Please set the JAVA_HOME variable in your environment to match the location of your Java installation."
         exit 1
     }
 fi
@@ -115,3 +113,6 @@ else
 fi
 
 echo "=== Gradle preparation completed successfully ==="
+EOF
+
+chmod +x .github/scripts/prepare-gradle.sh
