@@ -3,12 +3,13 @@ apply plugin: 'com.android.application'
 
 android {
     namespace 'com.superleitor.app'
-    compileSdk 33
+    compileSdkVersion 33
+    buildToolsVersion '33.0.2'
     
     defaultConfig {
         applicationId "com.superleitor.app"
-        minSdk 24
-        targetSdk 33
+        minSdkVersion 24
+        targetSdkVersion 33
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -16,15 +17,15 @@ android {
     }
     
     buildTypes {
+        debug {
+            debuggable true
+            minifyEnabled false
+            applicationIdSuffix ".debug"
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.debug
-        }
-        debug {
-            debuggable true
-            applicationIdSuffix ".debug"
-            minifyEnabled false
         }
     }
     
@@ -33,9 +34,10 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
     
-    lint {
+    lintOptions {
         abortOnError false
         checkReleaseBuilds false
+        disable 'InvalidPackage'
     }
     
     packagingOptions {
@@ -56,4 +58,28 @@ dependencies {
     implementation 'androidx.webkit:webkit:1.7.0'
     implementation 'com.capacitorjs:core:5.7.4'
     implementation 'androidx.coordinatorlayout:coordinatorlayout:1.2.0'
+    
+    // Capacitor dependencies
+    implementation project(':capacitor-android')
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+// Ensure APK generation
+tasks.whenTaskAdded { task ->
+    if (task.name == 'assembleDebug') {
+        task.doLast {
+            println "=== DEBUG APK BUILD COMPLETED ==="
+            def apkDir = file("$buildDir/outputs/apk/debug")
+            if (apkDir.exists()) {
+                apkDir.listFiles().each { file ->
+                    if (file.name.endsWith('.apk')) {
+                        println "APK generated: ${file.absolutePath}"
+                        println "APK size: ${file.length()} bytes"
+                    }
+                }
+            } else {
+                println "APK directory not found: ${apkDir.absolutePath}"
+            }
+        }
+    }
 }
