@@ -1,15 +1,17 @@
 rootProject.name = 'superleitor'
 include ':app'
 
-// Função auxiliar para verificar se o módulo tem build.gradle válido
 def hasValidBuildGradle(File moduleDir) {
     return moduleDir.exists() && new File(moduleDir, 'build.gradle').exists()
 }
 
 println "=== Capacitor Module Detection ==="
 
-// Capacitor Core Android - essencial
-def capacitorAndroidDir = new File(rootDir, 'node_modules/@capacitor/android')
+// Corrigir caminho relativo para voltar ao root do projeto
+def nodeModulesRoot = new File(rootDir, '../node_modules')
+
+// Capacitor Android (obrigatório)
+def capacitorAndroidDir = new File(nodeModulesRoot, '@capacitor/android')
 
 if (hasValidBuildGradle(capacitorAndroidDir)) {
     include ':capacitor-android'
@@ -22,11 +24,11 @@ if (hasValidBuildGradle(capacitorAndroidDir)) {
 
 // Módulos opcionais
 def optionalModules = [
-    [name: ':capacitor-app', path: new File(rootDir, 'node_modules/@capacitor/app/android')],
-    [name: ':capacitor-haptics', path: new File(rootDir, 'node_modules/@capacitor/haptics/android')],
-    [name: ':capacitor-keyboard', path: new File(rootDir, 'node_modules/@capacitor/keyboard/android')],
-    [name: ':capacitor-status-bar', path: new File(rootDir, 'node_modules/@capacitor/status-bar/android')],
-    [name: ':capacitor-splash-screen', path: new File(rootDir, 'node_modules/@capacitor/splash-screen/android')],
+    [name: ':capacitor-app', path: new File(nodeModulesRoot, '@capacitor/app/android')],
+    [name: ':capacitor-haptics', path: new File(nodeModulesRoot, '@capacitor/haptics/android')],
+    [name: ':capacitor-keyboard', path: new File(nodeModulesRoot, '@capacitor/keyboard/android')],
+    [name: ':capacitor-status-bar', path: new File(nodeModulesRoot, '@capacitor/status-bar/android')],
+    [name: ':capacitor-splash-screen', path: new File(nodeModulesRoot, '@capacitor/splash-screen/android')],
 ]
 
 optionalModules.each { module ->
