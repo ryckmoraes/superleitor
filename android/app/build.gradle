@@ -1,3 +1,4 @@
+
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
@@ -69,9 +70,6 @@ dependencies {
     implementation "androidx.webkit:webkit:$androidxWebkitVersion"
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
-
-    // Capacitor Android (adiciona se faltar no capacitor.build.gradle)
-    implementation 'com.getcapacitor:capacitor-android:4.6.0'
 
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
