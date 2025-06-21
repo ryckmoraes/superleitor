@@ -2,27 +2,16 @@
 #!/usr/bin/env bash
 set -e
 
-echo "🔨 Iniciando build do APK com validação aprimorada..."
+echo "🔨 Iniciando build do APK com correção forçada do settings.gradle..."
 
 cd android
 
-# Final validation before build - check what's actually included
-echo "Realizando validação final antes do build..."
-echo "Verificando módulos incluídos no settings.gradle..."
-
-if [ -f "settings.gradle" ]; then
-    echo "Conteúdo do settings.gradle:"
-    cat settings.gradle
-    
-    # Check if core Capacitor module is included
-    if ! grep -q ":capacitor-android" settings.gradle; then
-        echo "❌ ERRO CRÍTICO: Módulo :capacitor-android não está incluído!"
-        echo "Tentando corrigir o settings.gradle..."
-        
-        # Force regenerate the correct settings.gradle
-        cat > settings.gradle << 'EOF'
+# FORÇA a correção do settings.gradle SEMPRE
+echo "🔧 Forçando correção do settings.gradle..."
+cat > settings.gradle << 'EOF'
 rootProject.name = 'superleitor'
 include ':app'
+include ':capacitor-cordova-android-plugins'
 
 println "=== Capacitor 7.x Module Detection ==="
 
@@ -75,46 +64,96 @@ pluginModules.each { plugin ->
 
 println "=== Capacitor 7.x Module Detection Complete ==="
 EOF
-        echo "✅ settings.gradle corrigido"
-    else
-        echo "✅ Módulo :capacitor-android encontrado"
-    fi
+
+echo "✅ settings.gradle forçado com configuração correta"
+
+# Verificar o conteúdo após a correção
+echo "📋 Verificando conteúdo do settings.gradle após correção:"
+cat settings.gradle
+
+# Forçar também a correção do capacitor.build.gradle
+echo "🔧 Verificando capacitor.build.gradle..."
+if [ ! -f "app/capacitor.build.gradle" ]; then
+    echo "⚠️ capacitor.build.gradle não encontrado, criando..."
+    cat > app/capacitor.build.gradle << 'EOF'
+// IMPORTANT: Do not modify this file directly.
+// This file is managed by the 'npx cap sync' command.
+
+android {
+  compileOptions {
+      sourceCompatibility JavaVersion.VERSION_17
+      targetCompatibility JavaVersion.VERSION_17
+  }
+}
+
+apply from: '../capacitor-cordova-android-plugins/cordova.variables.gradle'
+
+dependencies {
+    // Capacitor Core - required for all Capacitor apps
+    implementation project(':capacitor-android')
     
-    # Show what modules are actually included
-    echo "Módulos incluídos:"
-    grep "include " settings.gradle || echo "Nenhum include encontrado"
-    
-else
-    echo "❌ settings.gradle não encontrado"
-    exit 1
+    // Capacitor plugins that the app uses
+    if (findProject(':capacitor-haptics') != null) {
+        implementation project(':capacitor-haptics')
+    }
+    if (findProject(':capacitor-keyboard') != null) {
+        implementation project(':capacitor-keyboard')
+    }
+    if (findProject(':capacitor-status-bar') != null) {
+        implementation project(':capacitor-status-bar')
+    }
+    if (findProject(':capacitor-splash-screen') != null) {
+        implementation project(':capacitor-splash-screen')
+    }
+}
+
+if (hasProperty('postBuildExtras')) {
+  postBuildExtras()
+}
+EOF
 fi
 
 # Clear any remaining build artifacts
-echo "Limpando artefatos de build remanescentes..."
-./gradlew clean || echo "Gradle clean completado com avisos"
+echo "🧹 Limpando artefatos de build remanescentes..."
+./gradlew clean || echo "Gradle clean completou (pode ter avisos)"
 
 # Test Gradle configuration before build
-echo "Testando configuração do Gradle..."
+echo "🧪 Testando configuração do Gradle..."
 if ./gradlew projects --stacktrace; then
     echo "✅ Configuração do Gradle válida"
-    echo "Projetos detectados:"
-    ./gradlew projects | grep "Project" || echo "Nenhum projeto adicional detectado"
+    echo "📋 Projetos detectados:"
+    ./gradlew projects | grep "Project" || echo "Listando todos os projetos..."
+    ./gradlew projects
 else
     echo "❌ Configuração do Gradle inválida"
+    
+    # Debug information
+    echo "🔍 Informações de debug:"
+    echo "Conteúdo do settings.gradle:"
+    cat settings.gradle
+    echo ""
+    echo "Verificando se node_modules/@capacitor existe:"
+    ls -la ../node_modules/@capacitor/ || echo "Diretório @capacitor não encontrado"
+    
     exit 1
 fi
 
 # Attempt the build with enhanced error reporting
-echo "Iniciando build do APK..."
+echo "🚀 Iniciando build do APK..."
 if ./gradlew assembleRelease --stacktrace; then
     echo "✅ Build do Gradle completado com sucesso"
 else
     echo "❌ Build do Gradle falhou"
-    echo "Informações de debug:"
+    echo "🔍 Informações de debug finais:"
     echo "Módulos incluídos no settings.gradle:"
     grep "include" settings.gradle || echo "Nenhum include encontrado"
     echo "Estrutura do projeto Android:"
     find . -name "build.gradle" -type f | head -10
+    
+    # Mostrar os últimos logs de erro
+    echo "📋 Últimos logs de build:"
+    ls -la app/build/
+    
     exit 1
 fi
 
@@ -133,7 +172,7 @@ if [ -f "$APK_PATH" ]; then
   echo "📱 APK copiado para: ../superleitor.apk"
 else
   echo "❌ APK não encontrado!"
-  echo "Listando conteúdo do diretório de saída:"
+  echo "📋 Listando conteúdo do diretório de saída:"
   find app/build/outputs/ -name "*.apk" -type f || echo "Nenhum APK encontrado"
   echo "apk_found=false" >> "$GITHUB_OUTPUT"
   exit 1

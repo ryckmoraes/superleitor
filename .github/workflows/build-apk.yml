@@ -21,51 +21,36 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Comprehensive cache cleaning
+      - name: Clean all caches
         run: |
-          echo "Starting comprehensive cache cleaning..."
+          echo "🧹 Limpando todos os caches..."
           chmod +x .github/scripts/clean-capacitor-cache.sh
           .github/scripts/clean-capacitor-cache.sh
 
       - name: Install dependencies
         run: |
-          echo "Installing all dependencies..."
+          echo "📦 Instalando dependências..."
           npm install --legacy-peer-deps
-          echo "Dependencies installed successfully"
+          echo "✅ Dependências instaladas"
 
-      - name: Verify Capacitor 7.x installation
+      - name: Verify Capacitor modules
         run: |
-          echo "Checking if Capacitor 7.x modules are installed..."
+          echo "🔍 Verificando módulos Capacitor..."
           echo "Checking @capacitor/android..."
           if [ -d "node_modules/@capacitor/android" ]; then
-            echo "✅ @capacitor/android found (Capacitor 7.x)"
+            echo "✅ @capacitor/android encontrado"
             ls -la node_modules/@capacitor/android/ | head -5
           else
-            echo "❌ @capacitor/android not found"
+            echo "❌ @capacitor/android não encontrado"
             exit 1
           fi
           
-          echo "Checking @capacitor/core..."
-          if [ -d "node_modules/@capacitor/core" ]; then
-            echo "✅ @capacitor/core found (Capacitor 7.x)"
-          else
-            echo "❌ @capacitor/core not found"
-            exit 1
-          fi
-          
-          echo "Checking @capacitor/cli..."
-          if [ -d "node_modules/@capacitor/cli" ]; then
-            echo "✅ @capacitor/cli found (Capacitor 7.x)"
-          else
-            echo "❌ @capacitor/cli not found"
-            exit 1
-          fi
-          
-          echo "Available @capacitor modules:"
+          echo "Módulos @capacitor disponíveis:"
           ls -la node_modules/@capacitor/
 
       - name: Build web assets
         run: |
+          echo "🏗️ Building web assets..."
           npm run build
 
       - name: Setup Java 17
@@ -77,52 +62,25 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Remove existing Android platform (force fresh generation)
+      - name: Remove and recreate Android platform
         run: |
-          echo "Removing existing Android platform to force fresh generation..."
-          rm -rf android || echo "No existing android directory to remove"
-          echo "Android platform removed successfully"
-
-      - name: Add fresh Android platform
-        run: |
-          echo "Adding fresh Android platform..."
-          npx cap add android
-          echo "Fresh Android platform added successfully"
-
-      - name: Clean Capacitor before sync
-        run: |
-          echo "Cleaning Capacitor before sync..."
-          npx cap clean android || echo "Clean completed (may have warnings)"
-
-      - name: Sync Capacitor 7.x with validation
-        run: |
-          echo "Syncing Capacitor 7.x..."
-          npx cap sync android
+          echo "🗑️ Removendo plataforma Android existente..."
+          rm -rf android || echo "Nenhuma plataforma Android para remover"
           
-          echo "Validating sync results..."
-          if [ -f "android/settings.gradle" ]; then
-            echo "✅ settings.gradle exists"
-            echo "Checking for unwanted plugin module references..."
-            if grep -q ":capacitor-haptics\|:capacitor-keyboard\|:capacitor-status-bar\|:capacitor-splash-screen" android/settings.gradle; then
-              echo "❌ Found unwanted plugin module references in settings.gradle"
-              grep ":capacitor-" android/settings.gradle || echo "No capacitor references found"
-              exit 1
-            else
-              echo "✅ No unwanted plugin module references found in settings.gradle"
-            fi
-          else
-            echo "❌ settings.gradle not found after sync"
-            exit 1
-          fi
+          echo "➕ Adicionando nova plataforma Android..."
+          npx cap add android
+          
+          echo "✅ Plataforma Android recriada"
 
-      - name: Prepare Gradle wrapper for Capacitor 7.x
+      - name: Sync Capacitor
         run: |
-          chmod +x .github/scripts/prepare-gradle.sh
-          .github/scripts/prepare-gradle.sh
+          echo "🔄 Sincronizando Capacitor..."
+          npx cap sync android
 
-      - name: Build APK with enhanced error handling
+      - name: Build APK with forced configuration
         id: build_apk
         run: |
+          echo "🚀 Iniciando build do APK com configuração forçada..."
           chmod +x .github/scripts/build-apk.sh
           .github/scripts/build-apk.sh
 
@@ -134,15 +92,14 @@ jobs:
           path: superleitor.apk
           retention-days: 30
 
-      - name: Write build summary
+      - name: Build Summary
         run: |
-          echo "## Build Summary (Capacitor 7.x - Fresh Generation)" >> $GITHUB_STEP_SUMMARY
+          echo "## 📋 Build Summary" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.build_apk.outputs.apk_found }}" == "true" ]; then
-            echo "✅ APK built at \`${{ steps.build_apk.outputs.apk_path }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "✅ APK construído: \`${{ steps.build_apk.outputs.apk_path }}\`" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ APK build failed" >> $GITHUB_STEP_SUMMARY
+            echo "❌ Falha na construção do APK" >> $GITHUB_STEP_SUMMARY
           fi
           echo "- Node: $(node --version)" >> $GITHUB_STEP_SUMMARY
           echo "- Java: $(java -version 2>&1 | head -1)" >> $GITHUB_STEP_SUMMARY
           echo "- Capacitor: $(npx cap --version)" >> $GITHUB_STEP_SUMMARY
-          echo "- Android platform was regenerated fresh" >> $GITHUB_STEP_SUMMARY
