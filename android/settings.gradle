@@ -1,18 +1,18 @@
 rootProject.name = 'superleitor'
 include ':app'
 
+// Função utilitária para verificar build.gradle válido
 def hasValidBuildGradle(File moduleDir) {
     return moduleDir.exists() && new File(moduleDir, 'build.gradle').exists()
 }
 
 println "=== Capacitor Module Detection ==="
 
-// Corrigir caminho relativo para voltar ao root do projeto
+// Corrigir caminho para node_modules fora da pasta android/
 def nodeModulesRoot = new File(rootDir, '../node_modules')
 
-// Capacitor Android (obrigatório)
+// Módulo obrigatório do Capacitor
 def capacitorAndroidDir = new File(nodeModulesRoot, '@capacitor/android')
-
 if (hasValidBuildGradle(capacitorAndroidDir)) {
     include ':capacitor-android'
     project(':capacitor-android').projectDir = capacitorAndroidDir
@@ -22,7 +22,7 @@ if (hasValidBuildGradle(capacitorAndroidDir)) {
     throw new GradleException("Essential Capacitor Android module not found or invalid at: ${capacitorAndroidDir.absolutePath}")
 }
 
-// Módulos opcionais
+// Módulos opcionais do Capacitor
 def optionalModules = [
     [name: ':capacitor-app', path: new File(nodeModulesRoot, '@capacitor/app/android')],
     [name: ':capacitor-haptics', path: new File(nodeModulesRoot, '@capacitor/haptics/android')],
@@ -37,7 +37,7 @@ optionalModules.each { module ->
         project(module.name).projectDir = module.path
         println "✅ Included ${module.name}"
     } else {
-        println "⚠️  Skipped ${module.name} (not found or invalid build.gradle)"
+        println "⚠️ Skipped ${module.name} (not found or invalid build.gradle)"
     }
 }
 
