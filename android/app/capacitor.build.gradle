@@ -12,10 +12,10 @@ android {
 apply from: '../capacitor-cordova-android-plugins/cordova.variables.gradle'
 
 dependencies {
-    // Capacitor Core - sempre necessário
+    // Capacitor Core - always required
     implementation project(':capacitor-android')
     
-    // Módulos opcionais - apenas se existirem
+    // Optional modules - only if they exist
     def capacitorAppDir = new File('../node_modules/@capacitor/app/android')
     if (capacitorAppDir.exists()) {
         implementation project(':capacitor-app')
