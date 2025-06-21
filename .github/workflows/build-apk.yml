@@ -1,105 +1,55 @@
-
-name: Build APK
+name: Android Build
 
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  build-apk:
+  build:
+    name: Build Android APK
     runs-on: ubuntu-latest
 
+    env:
+      JAVA_HOME: /usr/lib/jvm/temurin-17-jdk-amd64
+
     steps:
-      - name: Checkout code
+      - name: ⬇️ Checkout código
         uses: actions/checkout@v4
 
-      - name: Use Node.js 20
+      - name: 🟢 Instalar Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
-      - name: Clean all caches
-        run: |
-          echo "🧹 Limpando todos os caches..."
-          chmod +x .github/scripts/clean-capacitor-cache.sh
-          .github/scripts/clean-capacitor-cache.sh
+      - name: 📦 Instalar dependências Node
+        run: npm ci
 
-      - name: Install dependencies
-        run: |
-          echo "📦 Instalando dependências..."
-          npm install --legacy-peer-deps
-          echo "✅ Dependências instaladas"
-
-      - name: Verify Capacitor modules
-        run: |
-          echo "🔍 Verificando módulos Capacitor..."
-          echo "Checking @capacitor/android..."
-          if [ -d "node_modules/@capacitor/android" ]; then
-            echo "✅ @capacitor/android encontrado"
-            ls -la node_modules/@capacitor/android/ | head -5
-          else
-            echo "❌ @capacitor/android não encontrado"
-            exit 1
-          fi
-          
-          echo "Módulos @capacitor disponíveis:"
-          ls -la node_modules/@capacitor/
-
-      - name: Build web assets
-        run: |
-          echo "🏗️ Building web assets..."
-          npm run build
-
-      - name: Setup Java 17
+      - name: ☕ Instalar JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: 17
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: 📂 Mostrar estrutura node_modules/@capacitor
+        run: ls -R node_modules/@capacitor || echo "⚠️ node_modules/@capacitor não encontrado"
 
-      - name: Remove and recreate Android platform
-        run: |
-          echo "🗑️ Removendo plataforma Android existente..."
-          rm -rf android || echo "Nenhuma plataforma Android para remover"
-          
-          echo "➕ Adicionando nova plataforma Android..."
-          npx cap add android
-          
-          echo "✅ Plataforma Android recriada"
+      - name: 🧹 Limpar build anterior
+        run: ./gradlew clean
+        working-directory: android
 
-      - name: Sync Capacitor
-        run: |
-          echo "🔄 Sincronizando Capacitor..."
-          npx cap sync android
+      - name: 🛠️ Preparar ambiente Gradle
+        run: chmod +x .github/scripts/prepare-gradle.sh && .github/scripts/prepare-gradle.sh
+        working-directory: android
 
-      - name: Build APK with forced configuration
-        id: build_apk
-        run: |
-          echo "🚀 Iniciando build do APK com configuração forçada..."
-          chmod +x .github/scripts/build-apk.sh
-          .github/scripts/build-apk.sh
+      - name: 🔨 Build do APK
+        run: chmod +x .github/scripts/build-apk.sh && .github/scripts/build-apk.sh
+        working-directory: android
 
-      - name: Upload APK
-        if: steps.build_apk.outputs.apk_found == 'true'
+      - name: 📤 Upload APK (opcional)
+        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: superleitor-apk
-          path: superleitor.apk
-          retention-days: 30
-
-      - name: Build Summary
-        run: |
-          echo "## 📋 Build Summary" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.build_apk.outputs.apk_found }}" == "true" ]; then
-            echo "✅ APK construído: \`${{ steps.build_apk.outputs.apk_path }}\`" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ Falha na construção do APK" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "- Node: $(node --version)" >> $GITHUB_STEP_SUMMARY
-          echo "- Java: $(java -version 2>&1 | head -1)" >> $GITHUB_STEP_SUMMARY
-          echo "- Capacitor: $(npx cap --version)" >> $GITHUB_STEP_SUMMARY
+          name: app-release.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
