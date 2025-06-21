@@ -21,8 +21,11 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Clean npm cache
-        run: npm cache clean --force
+      - name: Comprehensive cache cleaning
+        run: |
+          echo "Starting comprehensive cache cleaning..."
+          chmod +x .github/scripts/clean-capacitor-cache.sh
+          .github/scripts/clean-capacitor-cache.sh
 
       - name: Install dependencies
         run: |
@@ -74,21 +77,50 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Add Android platform (se necessário)
+      - name: Remove existing Android platform (force fresh generation)
         run: |
-          npx cap add android || echo "Android platform already exists"
+          echo "Removing existing Android platform to force fresh generation..."
+          rm -rf android || echo "No existing android directory to remove"
+          echo "Android platform removed successfully"
 
-      - name: Sync Capacitor 7.x
+      - name: Add fresh Android platform
+        run: |
+          echo "Adding fresh Android platform..."
+          npx cap add android
+          echo "Fresh Android platform added successfully"
+
+      - name: Clean Capacitor before sync
+        run: |
+          echo "Cleaning Capacitor before sync..."
+          npx cap clean android || echo "Clean completed (may have warnings)"
+
+      - name: Sync Capacitor 7.x with validation
         run: |
           echo "Syncing Capacitor 7.x..."
           npx cap sync android
+          
+          echo "Validating sync results..."
+          if [ -f "android/settings.gradle" ]; then
+            echo "✅ settings.gradle exists"
+            echo "Checking for unwanted plugin module references..."
+            if grep -q ":capacitor-haptics\|:capacitor-keyboard\|:capacitor-status-bar\|:capacitor-splash-screen" android/settings.gradle; then
+              echo "❌ Found unwanted plugin module references in settings.gradle"
+              grep ":capacitor-" android/settings.gradle || echo "No capacitor references found"
+              exit 1
+            else
+              echo "✅ No unwanted plugin module references found in settings.gradle"
+            fi
+          else
+            echo "❌ settings.gradle not found after sync"
+            exit 1
+          fi
 
       - name: Prepare Gradle wrapper for Capacitor 7.x
         run: |
           chmod +x .github/scripts/prepare-gradle.sh
           .github/scripts/prepare-gradle.sh
 
-      - name: Build APK
+      - name: Build APK with enhanced error handling
         id: build_apk
         run: |
           chmod +x .github/scripts/build-apk.sh
@@ -104,7 +136,7 @@ jobs:
 
       - name: Write build summary
         run: |
-          echo "## Build Summary (Capacitor 7.x)" >> $GITHUB_STEP_SUMMARY
+          echo "## Build Summary (Capacitor 7.x - Fresh Generation)" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.build_apk.outputs.apk_found }}" == "true" ]; then
             echo "✅ APK built at \`${{ steps.build_apk.outputs.apk_path }}\`" >> $GITHUB_STEP_SUMMARY
           else
@@ -113,3 +145,4 @@ jobs:
           echo "- Node: $(node --version)" >> $GITHUB_STEP_SUMMARY
           echo "- Java: $(java -version 2>&1 | head -1)" >> $GITHUB_STEP_SUMMARY
           echo "- Capacitor: $(npx cap --version)" >> $GITHUB_STEP_SUMMARY
+          echo "- Android platform was regenerated fresh" >> $GITHUB_STEP_SUMMARY
