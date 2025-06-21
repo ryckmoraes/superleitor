@@ -1,4 +1,6 @@
+
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
 
 android {
     namespace 'com.superleitor.app'
@@ -31,6 +33,10 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
+    }
+    
+    kotlinOptions {
+        jvmTarget = '17'
     }
     
     lintOptions {
@@ -67,23 +73,3 @@ dependencies {
 }
 
 apply from: file('capacitor.build.gradle')
-
-// Ensure APK generation
-tasks.whenTaskAdded { task ->
-    if (task.name == 'assembleDebug') {
-        task.doLast {
-            println "=== DEBUG APK BUILD COMPLETED ==="
-            def apkDir = file("$buildDir/outputs/apk/debug")
-            if (apkDir.exists()) {
-                apkDir.listFiles().each { file ->
-                    if (file.name.endsWith('.apk')) {
-                        println "APK generated: ${file.absolutePath}"
-                        println "APK size: ${file.length()} bytes"
-                    }
-                }
-            } else {
-                println "APK directory not found: ${apkDir.absolutePath}"
-            }
-        }
-    }
-}
