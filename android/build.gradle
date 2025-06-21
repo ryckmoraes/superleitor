@@ -3,6 +3,8 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+        // Repositório necessário para plugins do Capacitor
+        maven { url 'https://ionic.io/assets/native' }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.1.4'
@@ -17,6 +19,9 @@ allprojects {
         google()
         mavenCentral()
         maven { url 'https://www.jitpack.io' }
+
+        // Repositório necessário para o Capacitor 4.6.0
+        maven { url 'https://ionic.io/assets/native' }
     }
 }
 
