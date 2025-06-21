@@ -1,18 +1,21 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -e
 
-echo "=== Starting APK Build ==="
+echo "🔨 Iniciando build do APK..."
+
 cd android
+./gradlew assembleRelease
 
-./gradlew assembleDebug
-
-APK_PATH=$(find app/build/outputs/apk/debug -name "*.apk" | head -n 1)
+APK_PATH="app/build/outputs/apk/release/app-release.apk"
 
 if [ -f "$APK_PATH" ]; then
-  echo "✅ APK built: $APK_PATH"
+  echo "✅ APK gerado com sucesso em $APK_PATH"
+
   cp "$APK_PATH" ../superleitor.apk
-  echo "apk_found=true" >> $GITHUB_OUTPUT
-  echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
+
+  echo "apk_found=true" >> "$GITHUB_OUTPUT"
+  echo "apk_path=superleitor.apk" >> "$GITHUB_OUTPUT"
 else
-  echo "❌ APK not found"
-  echo "apk_found=false" >> $GITHUB_OUTPUT
+  echo "❌ APK não encontrado!"
+  echo "apk_found=false" >> "$GITHUB_OUTPUT"
 fi
