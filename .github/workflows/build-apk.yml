@@ -1,12 +1,87 @@
-- name: Add Android platform (Capacitor)
-        run: |
-          npx cap add android || echo "already added"
+name: Build APK
 
-      - name: Reinstall dependencies after adding android
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install web dependencies with Capacitor
         run: |
-          rm -rf node_modules
+          echo "Installing dependencies..."
           npm install --legacy-peer-deps
 
-      - name: Sync Capacitor
+          echo "Ensuring required Capacitor packages..."
+          npm install @capacitor/core @capacitor/android @capacitor/cli --legacy-peer-deps
+
+          echo "Verifying Capacitor structure..."
+          ls -la node_modules/@capacitor/android || echo "Capacitor Android module not found"
+
+      - name: Build web assets
+        run: npm run build
+
+      - name: Setup Java 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Android env scripts
         run: |
-          npx cap sync android
+          chmod +x .github/scripts/setup-android.sh
+          .github/scripts/setup-android.sh
+
+      - name: Add Android platform (Capacitor)
+        run: npx cap add android || echo "Already added"
+
+      - name: Sync Capacitor with Android
+        run: npx cap sync android
+
+      - name: Prepare Gradle wrapper and environment
+        run: |
+          chmod +x .github/scripts/prepare-gradle.sh
+          .github/scripts/prepare-gradle.sh
+
+      - name: Build APK
+        id: build_apk
+        run: |
+          chmod +x .github/scripts/build-apk.sh
+          .github/scripts/build-apk.sh
+        continue-on-error: true
+
+      - name: Upload APK
+        if: steps.build_apk.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: superleitor-apk
+          path: superleitor.apk
+          retention-days: 30
+
+      - name: Write build summary
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.build_apk.outcome }}" == "success" ]; then
+            echo "✅ APK built successfully!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ APK build failed." >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "- Node: $(node --version)" >> $GITHUB_STEP_SUMMARY
+          echo "- Java: $(java -version 2>&1 | head -1)" >> $GITHUB_STEP_SUMMARY
+          echo "- Capacitor: $(npx cap --version)" >> $GITHUB_STEP_SUMMARY
