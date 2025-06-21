@@ -15,29 +15,34 @@ dependencies {
     // Capacitor Core - always required
     implementation project(':capacitor-android')
     
-    // Optional modules - only if they exist
+    // Optional modules - only if they exist and have valid build.gradle
     def capacitorAppDir = new File('../node_modules/@capacitor/app/android')
-    if (capacitorAppDir.exists()) {
+    def capacitorAppBuildGradle = new File(capacitorAppDir, 'build.gradle')
+    if (capacitorAppDir.exists() && capacitorAppBuildGradle.exists()) {
         implementation project(':capacitor-app')
     }
     
     def capacitorHapticsDir = new File('../node_modules/@capacitor/haptics/android')
-    if (capacitorHapticsDir.exists()) {
+    def capacitorHapticsBuildGradle = new File(capacitorHapticsDir, 'build.gradle')
+    if (capacitorHapticsDir.exists() && capacitorHapticsBuildGradle.exists()) {
         implementation project(':capacitor-haptics')
     }
     
     def capacitorKeyboardDir = new File('../node_modules/@capacitor/keyboard/android')
-    if (capacitorKeyboardDir.exists()) {
+    def capacitorKeyboardBuildGradle = new File(capacitorKeyboardDir, 'build.gradle')
+    if (capacitorKeyboardDir.exists() && capacitorKeyboardBuildGradle.exists()) {
         implementation project(':capacitor-keyboard')
     }
     
     def capacitorStatusBarDir = new File('../node_modules/@capacitor/status-bar/android')
-    if (capacitorStatusBarDir.exists()) {
+    def capacitorStatusBarBuildGradle = new File(capacitorStatusBarDir, 'build.gradle')
+    if (capacitorStatusBarDir.exists() && capacitorStatusBarBuildGradle.exists()) {
         implementation project(':capacitor-status-bar')
     }
     
     def capacitorSplashScreenDir = new File('../node_modules/@capacitor/splash-screen/android')
-    if (capacitorSplashScreenDir.exists()) {
+    def capacitorSplashScreenBuildGradle = new File(capacitorSplashScreenDir, 'build.gradle')
+    if (capacitorSplashScreenDir.exists() && capacitorSplashScreenBuildGradle.exists()) {
         implementation project(':capacitor-splash-screen')
     }
 }

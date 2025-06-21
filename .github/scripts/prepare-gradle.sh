@@ -13,6 +13,26 @@ if [ ! -d "android" ]; then
   exit 1
 fi
 
+# Verificar se node_modules existe e tem Capacitor
+echo "Verifying Capacitor modules availability..."
+if [ ! -d "node_modules/@capacitor" ]; then
+  echo "❌ Capacitor modules not found in node_modules"
+  echo "Attempting to install missing dependencies..."
+  
+  npm install @capacitor/core @capacitor/android @capacitor/cli --legacy-peer-deps || {
+    echo "❌ Failed to install Capacitor dependencies"
+    exit 1
+  }
+  
+  echo "Re-checking Capacitor modules after installation..."
+  if [ ! -d "node_modules/@capacitor" ]; then
+    echo "❌ Capacitor modules still not available after installation"
+    exit 1
+  fi
+fi
+
+echo "✅ Capacitor modules found in node_modules"
+
 cd android
 
 echo "Checking Android project structure..."

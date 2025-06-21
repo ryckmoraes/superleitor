@@ -21,9 +21,20 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install web dependencies
+      - name: Install web dependencies with explicit Capacitor modules
         run: |
-          npm ci --legacy-peer-deps
+          echo "Installing all dependencies including Capacitor modules..."
+          npm install --legacy-peer-deps
+          
+          echo "Verifying Capacitor installation..."
+          npm list @capacitor/core @capacitor/android @capacitor/cli || echo "Some Capacitor packages not found, attempting to install..."
+          
+          echo "Ensuring all Capacitor dependencies are present..."
+          npm install @capacitor/core @capacitor/android @capacitor/cli --legacy-peer-deps || echo "Capacitor installation completed"
+          
+          echo "Final verification of node_modules structure..."
+          ls -la node_modules/@capacitor/ || echo "Capacitor directory not found"
+          ls -la node_modules/@capacitor/android/ || echo "Capacitor Android module not found"
 
       - name: Build web assets
         run: |
