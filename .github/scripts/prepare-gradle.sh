@@ -2,7 +2,7 @@
 #!/bin/bash
 set -e
 
-echo "=== Preparing Gradle Environment (Complete Clean + No Capacitor Regeneration) ==="
+echo "=== Preparing Gradle Environment (Local Capacitor Modules) ==="
 
 echo "Checking project structure in root..."
 ls -la
@@ -27,10 +27,6 @@ rm -rf app/build/ || echo "No app build directory to clean"
 # Limpar arquivos temporários do Capacitor
 echo "Cleaning Capacitor temp files..."
 rm -rf capacitor-cordova-android-plugins/build/ || echo "No capacitor plugins build to clean"
-
-# IMPORTANTE: Remover qualquer capacitor.build.gradle que possa ter sido regenerado
-echo "Removing any auto-generated capacitor.build.gradle..."
-rm -f app/capacitor.build.gradle || echo "No capacitor.build.gradle to remove"
 
 echo "Checking Android project structure..."
 ls -la
@@ -99,9 +95,14 @@ if [ ! -x "./gradlew" ]; then
   exit 1
 fi
 
-echo "=== SKIPPING CAPACITOR SYNC TO PREVENT REGENERATION ==="
-echo "⚠️  Skipping 'npx cap sync android' to prevent capacitor.build.gradle regeneration"
-echo "All Capacitor dependencies are now directly in app/build.gradle"
+echo "=== FORCING CAPACITOR SYNC TO REGENERATE LOCAL MODULES ==="
+cd ..
+echo "Running npx cap sync android to regenerate local module configuration..."
+npx cap sync android || {
+  echo "❌ Capacitor sync failed"
+  exit 1
+}
+cd android
 
 echo "Testing gradlew connectivity with clean cache..."
 ./gradlew --version --no-daemon || {
@@ -127,19 +128,31 @@ echo "Testing gradlew connectivity with clean cache..."
 
 echo "Gradle Wrapper is working correctly with clean cache"
 
-# Verificar se app/build.gradle contém as dependências do Capacitor
-echo "Checking if app/build.gradle contains Capacitor dependencies..."
-if grep -q "capacitor-android" app/build.gradle; then
-  echo "✅ Capacitor dependencies found in app/build.gradle"
-else
-  echo "❌ Capacitor dependencies missing from app/build.gradle"
+# Verificar se os módulos locais do Capacitor existem
+echo "Checking if Capacitor local modules exist..."
+CAPACITOR_MODULES_MISSING=false
+
+REQUIRED_MODULES=(
+  "../node_modules/@capacitor/android"
+  "../node_modules/@capacitor/app/android"
+  "../node_modules/@capacitor/haptics/android"
+  "../node_modules/@capacitor/keyboard/android"
+  "../node_modules/@capacitor/status-bar/android"
+  "../node_modules/@capacitor/splash-screen/android"
+)
+
+for module in "${REQUIRED_MODULES[@]}"; do
+  if [ ! -d "$module" ]; then
+    echo "❌ Missing Capacitor module: $module"
+    CAPACITOR_MODULES_MISSING=true
+  else
+    echo "✅ Found Capacitor module: $module"
+  fi
+done
+
+if [ "$CAPACITOR_MODULES_MISSING" = true ]; then
+  echo "❌ Some Capacitor modules are missing from node_modules"
   exit 1
 fi
 
-# Confirmar que não há capacitor.build.gradle
-if [ -f "app/capacitor.build.gradle" ]; then
-  echo "❌ Found capacitor.build.gradle - removing it again"
-  rm -f app/capacitor.build.gradle
-fi
-
-echo "=== Gradle preparation completed successfully with embedded Capacitor deps ==="
+echo "=== Gradle preparation completed successfully with local Capacitor modules ==="

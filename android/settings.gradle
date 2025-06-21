@@ -3,9 +3,7 @@ rootProject.name = 'superleitor'
 
 include ':app'
 
-// Capacitor plugins são resolvidos via Maven, não como projetos locais
-// Removido todas as referências a projetos capacitor-* locais
-
+// Capacitor plugins como projetos locais do node_modules
 def capacitorPropertiesFile = new File(settingsDir, '../capacitor.properties')
 def properties = new Properties()
 
@@ -13,4 +11,21 @@ if (capacitorPropertiesFile.exists()) {
     capacitorPropertiesFile.withInputStream { properties.load(it) }
 }
 
-// Plugin dependencies são gerenciadas via Maven no capacitor.build.gradle
+// Incluir projetos Capacitor locais
+include ':capacitor-android'
+project(':capacitor-android').projectDir = new File('../node_modules/@capacitor/android')
+
+include ':capacitor-app'
+project(':capacitor-app').projectDir = new File('../node_modules/@capacitor/app/android')
+
+include ':capacitor-haptics'
+project(':capacitor-haptics').projectDir = new File('../node_modules/@capacitor/haptics/android')
+
+include ':capacitor-keyboard'
+project(':capacitor-keyboard').projectDir = new File('../node_modules/@capacitor/keyboard/android')
+
+include ':capacitor-status-bar'
+project(':capacitor-status-bar').projectDir = new File('../node_modules/@capacitor/status-bar/android')
+
+include ':capacitor-splash-screen'
+project(':capacitor-splash-screen').projectDir = new File('../node_modules/@capacitor/splash-screen/android')

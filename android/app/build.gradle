@@ -75,16 +75,13 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     
-    // Capacitor Core - Maven dependencies only
-    implementation 'com.getcapacitor:capacitor-android:7.0.1'
-    
-    // Capacitor Plugins - Maven dependencies only
-    implementation 'com.getcapacitor:capacitor-app:7.0.1'
-    implementation 'com.getcapacitor:capacitor-haptics:7.0.1'
-    implementation 'com.getcapacitor:capacitor-keyboard:7.0.1'
-    implementation 'com.getcapacitor:capacitor-status-bar:7.0.1'
-    implementation 'com.getcapacitor:capacitor-splash-screen:7.0.1'
+    // Capacitor Core e Plugins - como projetos locais
+    implementation project(':capacitor-android')
+    implementation project(':capacitor-app')
+    implementation project(':capacitor-haptics')
+    implementation project(':capacitor-keyboard')
+    implementation project(':capacitor-status-bar')
+    implementation project(':capacitor-splash-screen')
 }
 
-// Removi completamente a linha: apply from: file('capacitor.build.gradle')
-// Todas as dependências do Capacitor estão agora definidas diretamente acima
+apply from: file('capacitor.build.gradle')
