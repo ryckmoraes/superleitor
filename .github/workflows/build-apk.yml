@@ -41,12 +41,7 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Setup Android env scripts
-        run: |
-          chmod +x .github/scripts/setup-android.sh
-          .github/scripts/setup-android.sh
-
-      - name: Add Android platform
+      - name: Add Android platform (se necessário)
         run: |
           npx cap add android || echo "Android platform already exists"
 
