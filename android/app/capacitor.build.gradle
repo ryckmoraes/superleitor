@@ -12,9 +12,22 @@ android {
 apply from: '../capacitor-cordova-android-plugins/cordova.variables.gradle'
 
 dependencies {
-    // Capacitor Core - the only required dependency for Capacitor 7.x
-    // Individual plugins are loaded by Capacitor's plugin system at runtime
+    // Capacitor Core - required for all Capacitor apps
     implementation project(':capacitor-android')
+    
+    // Capacitor plugins that the app uses
+    if (findProject(':capacitor-haptics') != null) {
+        implementation project(':capacitor-haptics')
+    }
+    if (findProject(':capacitor-keyboard') != null) {
+        implementation project(':capacitor-keyboard')
+    }
+    if (findProject(':capacitor-status-bar') != null) {
+        implementation project(':capacitor-status-bar')
+    }
+    if (findProject(':capacitor-splash-screen') != null) {
+        implementation project(':capacitor-splash-screen')
+    }
 }
 
 if (hasProperty('postBuildExtras')) {

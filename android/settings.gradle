@@ -2,7 +2,7 @@
 rootProject.name = 'superleitor'
 include ':app'
 
-println "=== Capacitor 7.x Core Module Detection ==="
+println "=== Capacitor 7.x Module Detection ==="
 
 // Caminho correto para node_modules fora da pasta android/
 def nodeModulesRoot = new File(rootDir, '../node_modules')
@@ -15,7 +15,7 @@ if (!nodeModulesRoot.exists()) {
     throw new GradleException("node_modules directory not found. Please run 'npm install' first.")
 }
 
-// Only include the core Capacitor Android module - plugins are handled by Capacitor's plugin system
+// Include the core Capacitor Android module
 def capacitorAndroidDir = new File(nodeModulesRoot, '@capacitor/android')
 println "Looking for Capacitor Android at: ${capacitorAndroidDir.absolutePath}"
 println "Capacitor Android exists: ${capacitorAndroidDir.exists()}"
@@ -29,5 +29,26 @@ if (capacitorAndroidDir.exists()) {
     throw new GradleException("Essential Capacitor Android module not found at: ${capacitorAndroidDir.absolutePath}")
 }
 
-println "=== Capacitor 7.x Core Module Detection Complete ==="
-println "ℹ️  Individual plugins will be loaded by Capacitor's plugin system at runtime"
+// Include individual Capacitor plugin modules that the app uses
+def pluginModules = [
+    [name: ':capacitor-haptics', path: '@capacitor/haptics/android'],
+    [name: ':capacitor-keyboard', path: '@capacitor/keyboard/android'],
+    [name: ':capacitor-status-bar', path: '@capacitor/status-bar/android'],
+    [name: ':capacitor-splash-screen', path: '@capacitor/splash-screen/android']
+]
+
+pluginModules.each { plugin ->
+    def pluginDir = new File(nodeModulesRoot, plugin.path)
+    println "Looking for ${plugin.name} at: ${pluginDir.absolutePath}"
+    println "${plugin.name} exists: ${pluginDir.exists()}"
+    
+    if (pluginDir.exists()) {
+        include plugin.name
+        project(plugin.name).projectDir = pluginDir
+        println "✅ Included ${plugin.name}"
+    } else {
+        println "⚠️  Plugin ${plugin.name} not found at ${pluginDir.absolutePath} (will be skipped)"
+    }
+}
+
+println "=== Capacitor 7.x Module Detection Complete ==="
