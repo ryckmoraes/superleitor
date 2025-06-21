@@ -10,6 +10,16 @@ echo "Checking Android project structure..."
 echo "Contents of android directory:"
 ls -la
 
+echo "Installing Capacitor dependencies..."
+cd ..
+echo "Running npm install to ensure Capacitor dependencies are available..."
+npm install --legacy-peer-deps || echo "npm install failed, continuing..."
+
+echo "Syncing Capacitor..."
+npx cap sync android || echo "Capacitor sync failed, continuing with manual setup..."
+
+cd android
+
 echo "Looking for existing gradlew..."
 if [ -f "./gradlew" ]; then
   echo "✅ gradlew already exists, making it executable..."
@@ -32,18 +42,13 @@ echo "Creating Gradle wrapper..."
 # Create gradle wrapper directory
 mkdir -p gradle/wrapper
 
-# Create gradle-wrapper.properties with Gradle 7.6.3 (compatible with AGP 7.4.2)
-cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
-distributionBase=GRADLE_USER_HOME
-distributionPath=wrapper/dists
-distributionUrl=https\://services.gradle.org/distributions/gradle-7.6.3-all.zip
-networkTimeout=10000
-validateDistributionUrl=true
-zipStoreBase=GRADLE_USER_HOME
-zipStorePath=wrapper/dists
-EOF
+# Use the gradle-wrapper.properties we already have
+if [ ! -f "gradle/wrapper/gradle-wrapper.properties" ]; then
+  echo "Creating gradle-wrapper.properties..."
+  cp ../android/gradle/wrapper/gradle-wrapper.properties gradle/wrapper/gradle-wrapper.properties
+fi
 
-# Download gradle-wrapper.jar
+# Download gradle-wrapper.jar for Gradle 7.6.3
 echo "Downloading gradle-wrapper.jar..."
 WRAPPER_JAR_URL="https://github.com/gradle/gradle/raw/v7.6.3/gradle/wrapper/gradle-wrapper.jar"
 curl -L "$WRAPPER_JAR_URL" -o gradle/wrapper/gradle-wrapper.jar
