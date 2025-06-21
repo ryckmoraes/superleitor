@@ -50,7 +50,7 @@ if [ "$WRAPPER_FILES_MISSING" = true ]; then
   # Tentar usar Gradle instalado do sistema para gerar wrapper
   if command -v gradle >/dev/null 2>&1; then
     echo "Found system Gradle, generating wrapper..."
-    gradle wrapper --gradle-version 8.4 --distribution-type bin
+    gradle wrapper --gradle-version 8.2.1 --distribution-type bin
   else
     echo "System Gradle not found, downloading wrapper manually..."
     
@@ -60,7 +60,7 @@ if [ "$WRAPPER_FILES_MISSING" = true ]; then
     # Baixar gradle-wrapper.jar
     echo "Downloading gradle-wrapper.jar..."
     curl -L -o gradle/wrapper/gradle-wrapper.jar \
-      "https://github.com/gradle/gradle/raw/v8.4.0/gradle/wrapper/gradle-wrapper.jar" || {
+      "https://github.com/gradle/gradle/raw/v8.2.1/gradle/wrapper/gradle-wrapper.jar" || {
       echo "❌ Failed to download gradle-wrapper.jar"
       exit 1
     }

@@ -3,7 +3,7 @@
 # Script para baixar o gradle-wrapper.jar
 # Este arquivo será baixado automaticamente durante o build
 
-GRADLE_VERSION="8.4"
+GRADLE_VERSION="8.2.1"
 WRAPPER_URL="https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip"
 
 echo "Downloading Gradle Wrapper JAR for version ${GRADLE_VERSION}..."
