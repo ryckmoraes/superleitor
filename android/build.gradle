@@ -1,3 +1,4 @@
+
 buildscript {
     ext.kotlin_version = '1.9.10'
     repositories {
@@ -20,6 +21,36 @@ allprojects {
         mavenCentral()
         maven { url 'https://www.jitpack.io' }
         maven { url 'https://ionic.io/assets/native' }
+    }
+    
+    // Force JDK 17 for all modules including Capacitor
+    tasks.withType(JavaCompile).configureEach {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+        options.release = 17
+    }
+    
+    // Force Kotlin to use JDK 17
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions {
+            jvmTarget = "17"
+        }
+    }
+}
+
+// Specific configuration for Capacitor modules
+subprojects {
+    if (project.name.contains('capacitor')) {
+        afterEvaluate {
+            if (project.hasProperty('android')) {
+                android {
+                    compileOptions {
+                        sourceCompatibility JavaVersion.VERSION_17
+                        targetCompatibility JavaVersion.VERSION_17
+                    }
+                }
+            }
+        }
     }
 }
 
