@@ -30,23 +30,21 @@ jobs:
           npm install --legacy-peer-deps
           echo "Dependencies installed successfully"
 
-      - name: Verify Capacitor installation
+      - name: Verify Capacitor 7.x installation
         run: |
-          echo "Checking if Capacitor modules are installed..."
+          echo "Checking if Capacitor 7.x modules are installed..."
           echo "Checking @capacitor/android..."
           if [ -d "node_modules/@capacitor/android" ]; then
-            echo "✅ @capacitor/android found"
-            ls -la node_modules/@capacitor/android/
+            echo "✅ @capacitor/android found (Capacitor 7.x)"
+            ls -la node_modules/@capacitor/android/ | head -5
           else
             echo "❌ @capacitor/android not found"
-            echo "Available @capacitor modules:"
-            ls -la node_modules/@capacitor/ || echo "No @capacitor directory found"
             exit 1
           fi
           
           echo "Checking @capacitor/core..."
           if [ -d "node_modules/@capacitor/core" ]; then
-            echo "✅ @capacitor/core found"
+            echo "✅ @capacitor/core found (Capacitor 7.x)"
           else
             echo "❌ @capacitor/core not found"
             exit 1
@@ -54,11 +52,14 @@ jobs:
           
           echo "Checking @capacitor/cli..."
           if [ -d "node_modules/@capacitor/cli" ]; then
-            echo "✅ @capacitor/cli found"
+            echo "✅ @capacitor/cli found (Capacitor 7.x)"
           else
             echo "❌ @capacitor/cli not found"
             exit 1
           fi
+          
+          echo "Available @capacitor modules:"
+          ls -la node_modules/@capacitor/
 
       - name: Build web assets
         run: |
@@ -77,11 +78,12 @@ jobs:
         run: |
           npx cap add android || echo "Android platform already exists"
 
-      - name: Sync Capacitor
+      - name: Sync Capacitor 7.x
         run: |
+          echo "Syncing Capacitor 7.x..."
           npx cap sync android
 
-      - name: Prepare Gradle wrapper
+      - name: Prepare Gradle wrapper for Capacitor 7.x
         run: |
           chmod +x .github/scripts/prepare-gradle.sh
           .github/scripts/prepare-gradle.sh
@@ -102,7 +104,7 @@ jobs:
 
       - name: Write build summary
         run: |
-          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## Build Summary (Capacitor 7.x)" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.build_apk.outputs.apk_found }}" == "true" ]; then
             echo "✅ APK built at \`${{ steps.build_apk.outputs.apk_path }}\`" >> $GITHUB_STEP_SUMMARY
           else

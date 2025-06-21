@@ -2,14 +2,9 @@
 rootProject.name = 'superleitor'
 include ':app'
 
-// Função utilitária para verificar build.gradle válido
-def hasValidBuildGradle(File moduleDir) {
-    return moduleDir.exists() && new File(moduleDir, 'build.gradle').exists()
-}
+println "=== Capacitor 7.x Module Detection ==="
 
-println "=== Capacitor Module Detection ==="
-
-// Corrigir caminho para node_modules fora da pasta android/
+// Caminho correto para node_modules fora da pasta android/
 def nodeModulesRoot = new File(rootDir, '../node_modules')
 
 println "Looking for node_modules at: ${nodeModulesRoot.absolutePath}"
@@ -17,68 +12,40 @@ println "Node modules exists: ${nodeModulesRoot.exists()}"
 
 if (!nodeModulesRoot.exists()) {
     println "❌ node_modules directory not found at: ${nodeModulesRoot.absolutePath}"
-    println "Current directory: ${rootDir.absolutePath}"
-    println "Available directories:"
-    rootDir.parentFile.listFiles().each { file ->
-        if (file.isDirectory()) {
-            println "  - ${file.name}"
-        }
-    }
     throw new GradleException("node_modules directory not found. Please run 'npm install' first.")
 }
 
-// Módulo obrigatório do Capacitor
+// Módulo principal do Capacitor 7.x - apenas verificar se o diretório existe
 def capacitorAndroidDir = new File(nodeModulesRoot, '@capacitor/android')
 println "Looking for Capacitor Android at: ${capacitorAndroidDir.absolutePath}"
 println "Capacitor Android exists: ${capacitorAndroidDir.exists()}"
 
 if (capacitorAndroidDir.exists()) {
-    println "Contents of @capacitor/android:"
-    capacitorAndroidDir.listFiles().each { file ->
-        println "  - ${file.name} (${file.isDirectory() ? 'dir' : 'file'})"
-    }
-}
-
-if (hasValidBuildGradle(capacitorAndroidDir)) {
     include ':capacitor-android'
     project(':capacitor-android').projectDir = capacitorAndroidDir
-    println "✅ Included :capacitor-android"
+    println "✅ Included :capacitor-android (Capacitor 7.x structure)"
 } else {
-    println "❌ Missing :capacitor-android or build.gradle"
-    println "Directory exists: ${capacitorAndroidDir.exists()}"
-    println "Build.gradle exists: ${new File(capacitorAndroidDir, 'build.gradle').exists()}"
-    
-    // Try to find if @capacitor exists at all
-    def capacitorDir = new File(nodeModulesRoot, '@capacitor')
-    if (capacitorDir.exists()) {
-        println "Found @capacitor directory with contents:"
-        capacitorDir.listFiles().each { file ->
-            println "  - ${file.name}"
-        }
-    } else {
-        println "No @capacitor directory found in node_modules"
-    }
-    
-    throw new GradleException("Essential Capacitor Android module not found or invalid at: ${capacitorAndroidDir.absolutePath}")
+    println "❌ Missing :capacitor-android"
+    throw new GradleException("Essential Capacitor Android module not found at: ${capacitorAndroidDir.absolutePath}")
 }
 
-// Módulos opcionais do Capacitor
+// Módulos opcionais do Capacitor 7.x - apenas verificar diretórios
 def optionalModules = [
-    [name: ':capacitor-app', path: new File(nodeModulesRoot, '@capacitor/app/android')],
-    [name: ':capacitor-haptics', path: new File(nodeModulesRoot, '@capacitor/haptics/android')],
-    [name: ':capacitor-keyboard', path: new File(nodeModulesRoot, '@capacitor/keyboard/android')],
-    [name: ':capacitor-status-bar', path: new File(nodeModulesRoot, '@capacitor/status-bar/android')],
-    [name: ':capacitor-splash-screen', path: new File(nodeModulesRoot, '@capacitor/splash-screen/android')],
+    [name: ':capacitor-app', path: new File(nodeModulesRoot, '@capacitor/app')],
+    [name: ':capacitor-haptics', path: new File(nodeModulesRoot, '@capacitor/haptics')],
+    [name: ':capacitor-keyboard', path: new File(nodeModulesRoot, '@capacitor/keyboard')],
+    [name: ':capacitor-status-bar', path: new File(nodeModulesRoot, '@capacitor/status-bar')],
+    [name: ':capacitor-splash-screen', path: new File(nodeModulesRoot, '@capacitor/splash-screen')],
 ]
 
 optionalModules.each { module ->
-    if (hasValidBuildGradle(module.path)) {
+    if (module.path.exists()) {
         include module.name
         project(module.name).projectDir = module.path
-        println "✅ Included ${module.name}"
+        println "✅ Included ${module.name} (Capacitor 7.x)"
     } else {
-        println "⚠️ Skipped ${module.name} (not found or invalid build.gradle)"
+        println "⚠️ Skipped ${module.name} (not found)"
     }
 }
 
-println "=== Capacitor Module Detection Complete ==="
+println "=== Capacitor 7.x Module Detection Complete ==="

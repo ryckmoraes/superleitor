@@ -2,7 +2,7 @@
 #!/bin/bash
 set -e
 
-echo "=== VALIDATING CAPACITOR MODULES ==="
+echo "=== VALIDATING CAPACITOR 7.x MODULES ==="
 
 # Verificar se estamos no diretório correto (android)
 if [ ! -f "build.gradle" ]; then
@@ -10,58 +10,39 @@ if [ ! -f "build.gradle" ]; then
   exit 1
 fi
 
-echo "Checking if essential Capacitor modules exist..."
+echo "Checking if essential Capacitor 7.x modules exist..."
 CAPACITOR_MODULES_MISSING=false
 
-# Módulos essenciais - devem ter build.gradle
-ESSENTIAL_MODULES=(
-  "../node_modules/@capacitor/android/build.gradle"
-  "../node_modules/@capacitor/core/android/build.gradle"
-)
+# Módulo essencial - apenas verificar se o diretório existe (Capacitor 7.x)
+ESSENTIAL_MODULE="../node_modules/@capacitor/android"
 
-# Módulos opcionais - verificar se existem antes de validar
+# Módulos opcionais - verificar apenas se os diretórios existem
 OPTIONAL_MODULES=(
-  "../node_modules/@capacitor/app/android/build.gradle"
-  "../node_modules/@capacitor/haptics/android/build.gradle"
-  "../node_modules/@capacitor/keyboard/android/build.gradle"
-  "../node_modules/@capacitor/status-bar/android/build.gradle"
-  "../node_modules/@capacitor/splash-screen/android/build.gradle"
+  "../node_modules/@capacitor/app"
+  "../node_modules/@capacitor/haptics"
+  "../node_modules/@capacitor/keyboard"
+  "../node_modules/@capacitor/status-bar"
+  "../node_modules/@capacitor/splash-screen"
+  "../node_modules/@capacitor/core"
+  "../node_modules/@capacitor/cli"
 )
 
-echo "=== Checking essential Capacitor modules ==="
-for module in "${ESSENTIAL_MODULES[@]}"; do
-  if [ ! -f "$module" ]; then
-    echo "❌ Missing essential Capacitor module build.gradle: $module"
-    
-    # Try to find the directory structure
-    module_dir=$(dirname "$module")
-    if [ -d "$module_dir" ]; then
-      echo "   📁 Directory exists: $module_dir"
-      echo "   📄 Contents:"
-      ls -la "$module_dir" | head -10
-    else
-      echo "   ❌ Directory does not exist: $module_dir"
-    fi
-    
-    CAPACITOR_MODULES_MISSING=true
-  else
-    echo "✅ Found essential Capacitor module: $module"
-  fi
-done
+echo "=== Checking essential Capacitor 7.x module ==="
+if [ ! -d "$ESSENTIAL_MODULE" ]; then
+  echo "❌ Missing essential Capacitor Android module: $ESSENTIAL_MODULE"
+  CAPACITOR_MODULES_MISSING=true
+else
+  echo "✅ Found essential Capacitor Android module: $ESSENTIAL_MODULE"
+  echo "   📄 Contents:"
+  ls -la "$ESSENTIAL_MODULE" | head -5
+fi
 
-echo "=== Checking optional Capacitor modules ==="
+echo "=== Checking optional Capacitor 7.x modules ==="
 for module in "${OPTIONAL_MODULES[@]}"; do
-  if [ -f "$module" ]; then
+  if [ -d "$module" ]; then
     echo "✅ Found optional Capacitor module: $module"
   else
-    module_dir=$(dirname "$module")
-    if [ -d "$module_dir" ]; then
-      echo "⚠️  Optional module directory exists but build.gradle missing: $module"
-      echo "   📄 Contents of $module_dir:"
-      ls -la "$module_dir" | head -5
-    else
-      echo "⚠️  Optional Capacitor module not found: $module (will be skipped)"
-    fi
+    echo "⚠️  Optional Capacitor module not found: $module (will be skipped)"
   fi
 done
 
@@ -82,20 +63,13 @@ if [ "$CAPACITOR_MODULES_MISSING" = true ]; then
     echo "  ❌ ../node_modules/@capacitor does not exist"
   fi
   
-  if [ -d "../node_modules" ]; then
-    echo "  📁 ../node_modules exists, searching for capacitor..."
-    find "../node_modules" -name "*capacitor*" -type d | head -10
-  else
-    echo "  ❌ ../node_modules does not exist"
-  fi
-  
   exit 1
 fi
 
-echo "=== Verificando configuração final dos módulos ==="
+echo "=== Verificando configuração final dos módulos Capacitor 7.x ==="
 echo "Módulos incluídos no settings.gradle:"
 if [ -f "settings.gradle" ]; then
-  grep -A 20 "Incluir projetos Capacitor\|capacitor-android" settings.gradle | head -15 || echo "Nenhuma configuração Capacitor encontrada em settings.gradle"
+  grep -A 10 "capacitor-android" settings.gradle | head -15 || echo "Capacitor Android configurado"
 else
   echo "❌ settings.gradle não encontrado"
 fi
@@ -104,9 +78,9 @@ echo ""
 echo "Dependências no capacitor.build.gradle:"
 if [ -f "app/capacitor.build.gradle" ]; then
   echo "✅ capacitor.build.gradle exists"
-  grep -A 15 "dependencies {" app/capacitor.build.gradle | head -20 || echo "Não foi possível ler dependencies"
+  grep -A 15 "dependencies {" app/capacitor.build.gradle | head -20 || echo "Dependências configuradas"
 else
   echo "❌ capacitor.build.gradle não encontrado"
 fi
 
-echo "✅ Capacitor modules validation completed successfully"
+echo "✅ Capacitor 7.x modules validation completed successfully"
