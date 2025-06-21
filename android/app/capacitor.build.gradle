@@ -12,34 +12,9 @@ android {
 apply from: '../capacitor-cordova-android-plugins/cordova.variables.gradle'
 
 dependencies {
-    // Capacitor Core - always required for Capacitor 7.x
+    // Capacitor Core - the only required dependency for Capacitor 7.x
+    // Individual plugins are loaded by Capacitor's plugin system at runtime
     implementation project(':capacitor-android')
-    
-    // Optional modules for Capacitor 7.x - only if they exist as directories
-    def capacitorAppDir = new File('../node_modules/@capacitor/app')
-    if (capacitorAppDir.exists()) {
-        implementation project(':capacitor-app')
-    }
-    
-    def capacitorHapticsDir = new File('../node_modules/@capacitor/haptics')
-    if (capacitorHapticsDir.exists()) {
-        implementation project(':capacitor-haptics')
-    }
-    
-    def capacitorKeyboardDir = new File('../node_modules/@capacitor/keyboard')
-    if (capacitorKeyboardDir.exists()) {
-        implementation project(':capacitor-keyboard')
-    }
-    
-    def capacitorStatusBarDir = new File('../node_modules/@capacitor/status-bar')
-    if (capacitorStatusBarDir.exists()) {
-        implementation project(':capacitor-status-bar')
-    }
-    
-    def capacitorSplashScreenDir = new File('../node_modules/@capacitor/splash-screen')
-    if (capacitorSplashScreenDir.exists()) {
-        implementation project(':capacitor-splash-screen')
-    }
 }
 
 if (hasProperty('postBuildExtras')) {

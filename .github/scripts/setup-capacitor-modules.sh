@@ -2,7 +2,7 @@
 #!/bin/bash
 set -e
 
-echo "=== SETTING UP CAPACITOR 7.x MODULES ==="
+echo "=== SETTING UP CAPACITOR 7.x CORE MODULE ==="
 
 echo "Creating/updating capacitor.build.gradle for Capacitor 7.x..."
 
@@ -20,34 +20,9 @@ android {
 apply from: '../capacitor-cordova-android-plugins/cordova.variables.gradle'
 
 dependencies {
-    // Capacitor Core - always required for Capacitor 7.x
+    // Capacitor Core - the only required dependency for Capacitor 7.x
+    // Individual plugins are loaded by Capacitor's plugin system at runtime
     implementation project(':capacitor-android')
-    
-    // Optional modules for Capacitor 7.x - only if they exist as directories
-    def capacitorAppDir = new File('../node_modules/@capacitor/app')
-    if (capacitorAppDir.exists()) {
-        implementation project(':capacitor-app')
-    }
-    
-    def capacitorHapticsDir = new File('../node_modules/@capacitor/haptics')
-    if (capacitorHapticsDir.exists()) {
-        implementation project(':capacitor-haptics')
-    }
-    
-    def capacitorKeyboardDir = new File('../node_modules/@capacitor/keyboard')
-    if (capacitorKeyboardDir.exists()) {
-        implementation project(':capacitor-keyboard')
-    }
-    
-    def capacitorStatusBarDir = new File('../node_modules/@capacitor/status-bar')
-    if (capacitorStatusBarDir.exists()) {
-        implementation project(':capacitor-status-bar')
-    }
-    
-    def capacitorSplashScreenDir = new File('../node_modules/@capacitor/splash-screen')
-    if (capacitorSplashScreenDir.exists()) {
-        implementation project(':capacitor-splash-screen')
-    }
 }
 
 if (hasProperty('postBuildExtras')) {
@@ -55,7 +30,7 @@ if (hasProperty('postBuildExtras')) {
 }
 EOF
 
-echo "✅ capacitor.build.gradle created for Capacitor 7.x"
+echo "✅ capacitor.build.gradle created for Capacitor 7.x (core module only)"
 
 echo "Running npx cap sync android to regenerate Capacitor 7.x configuration..."
 cd ..
@@ -83,34 +58,9 @@ android {
 apply from: '../capacitor-cordova-android-plugins/cordova.variables.gradle'
 
 dependencies {
-    // Capacitor Core - always required for Capacitor 7.x
+    // Capacitor Core - the only required dependency for Capacitor 7.x
+    // Individual plugins are loaded by Capacitor's plugin system at runtime
     implementation project(':capacitor-android')
-    
-    // Optional modules for Capacitor 7.x - only if they exist as directories
-    def capacitorAppDir = new File('../node_modules/@capacitor/app')
-    if (capacitorAppDir.exists()) {
-        implementation project(':capacitor-app')
-    }
-    
-    def capacitorHapticsDir = new File('../node_modules/@capacitor/haptics')
-    if (capacitorHapticsDir.exists()) {
-        implementation project(':capacitor-haptics')
-    }
-    
-    def capacitorKeyboardDir = new File('../node_modules/@capacitor/keyboard')
-    if (capacitorKeyboardDir.exists()) {
-        implementation project(':capacitor-keyboard')
-    }
-    
-    def capacitorStatusBarDir = new File('../node_modules/@capacitor/status-bar')
-    if (capacitorStatusBarDir.exists()) {
-        implementation project(':capacitor-status-bar')
-    }
-    
-    def capacitorSplashScreenDir = new File('../node_modules/@capacitor/splash-screen')
-    if (capacitorSplashScreenDir.exists()) {
-        implementation project(':capacitor-splash-screen')
-    }
 }
 
 if (hasProperty('postBuildExtras')) {
@@ -118,7 +68,10 @@ if (hasProperty('postBuildExtras')) {
 }
 EOF
   
-  echo "✅ capacitor.build.gradle recreated after sync for Capacitor 7.x"
+  echo "✅ capacitor.build.gradle recreated after sync for Capacitor 7.x (core module only)"
 fi
 
-echo "✅ Capacitor 7.x modules setup completed"
+echo ""
+echo "ℹ️  Capacitor 7.x uses a plugin system that loads plugins at runtime"
+echo "ℹ️  Individual plugins don't need to be included as separate Gradle projects"
+echo "✅ Capacitor 7.x core module setup completed"

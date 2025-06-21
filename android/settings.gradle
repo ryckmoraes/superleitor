@@ -2,7 +2,7 @@
 rootProject.name = 'superleitor'
 include ':app'
 
-println "=== Capacitor 7.x Module Detection ==="
+println "=== Capacitor 7.x Core Module Detection ==="
 
 // Caminho correto para node_modules fora da pasta android/
 def nodeModulesRoot = new File(rootDir, '../node_modules')
@@ -15,7 +15,7 @@ if (!nodeModulesRoot.exists()) {
     throw new GradleException("node_modules directory not found. Please run 'npm install' first.")
 }
 
-// Módulo principal do Capacitor 7.x - apenas verificar se o diretório existe
+// Only include the core Capacitor Android module - plugins are handled by Capacitor's plugin system
 def capacitorAndroidDir = new File(nodeModulesRoot, '@capacitor/android')
 println "Looking for Capacitor Android at: ${capacitorAndroidDir.absolutePath}"
 println "Capacitor Android exists: ${capacitorAndroidDir.exists()}"
@@ -23,29 +23,11 @@ println "Capacitor Android exists: ${capacitorAndroidDir.exists()}"
 if (capacitorAndroidDir.exists()) {
     include ':capacitor-android'
     project(':capacitor-android').projectDir = capacitorAndroidDir
-    println "✅ Included :capacitor-android (Capacitor 7.x structure)"
+    println "✅ Included :capacitor-android (Capacitor 7.x core module)"
 } else {
     println "❌ Missing :capacitor-android"
     throw new GradleException("Essential Capacitor Android module not found at: ${capacitorAndroidDir.absolutePath}")
 }
 
-// Módulos opcionais do Capacitor 7.x - apenas verificar diretórios
-def optionalModules = [
-    [name: ':capacitor-app', path: new File(nodeModulesRoot, '@capacitor/app')],
-    [name: ':capacitor-haptics', path: new File(nodeModulesRoot, '@capacitor/haptics')],
-    [name: ':capacitor-keyboard', path: new File(nodeModulesRoot, '@capacitor/keyboard')],
-    [name: ':capacitor-status-bar', path: new File(nodeModulesRoot, '@capacitor/status-bar')],
-    [name: ':capacitor-splash-screen', path: new File(nodeModulesRoot, '@capacitor/splash-screen')],
-]
-
-optionalModules.each { module ->
-    if (module.path.exists()) {
-        include module.name
-        project(module.name).projectDir = module.path
-        println "✅ Included ${module.name} (Capacitor 7.x)"
-    } else {
-        println "⚠️ Skipped ${module.name} (not found)"
-    }
-}
-
-println "=== Capacitor 7.x Module Detection Complete ==="
+println "=== Capacitor 7.x Core Module Detection Complete ==="
+println "ℹ️  Individual plugins will be loaded by Capacitor's plugin system at runtime"
