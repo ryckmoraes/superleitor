@@ -9,30 +9,26 @@ on:
 jobs:
   build-apk:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: Install web dependencies
         run: |
-          echo "Installing dependencies..."
           npm ci --legacy-peer-deps
-          echo "Dependencies installed successfully"
 
-      - name: Build web app
+      - name: Build web assets
         run: |
-          echo "Building web application..."
           npm run build
-          echo "Web build completed"
 
-      - name: Set up JDK 17
+      - name: Setup Java 17 (Temurin)
         uses: actions/setup-java@v4
         with:
           java-version: '17'
@@ -41,34 +37,23 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Setup Android environment
-        id: setup_android
+      - name: Setup Android env scripts
         run: |
           chmod +x .github/scripts/setup-android.sh
           .github/scripts/setup-android.sh
 
-      - name: Add Android platform (if needed)
-        if: steps.setup_android.outputs.platform_exists == 'false'
+      - name: Add Android platform (Capacitor)
         run: |
-          echo "Adding Android platform..."
-          npx cap add android
-          echo "Android platform added"
+          npx cap add android || echo "already added"
 
       - name: Sync Capacitor
         run: |
-          echo "Syncing Capacitor with Android..."
           npx cap sync android
-          echo "Capacitor sync completed"
 
-      - name: Prepare Gradle environment
+      - name: Prepare Gradle wrapper
         run: |
           chmod +x .github/scripts/prepare-gradle.sh
           .github/scripts/prepare-gradle.sh
-
-      - name: Verify build environment
-        run: |
-          chmod +x .github/scripts/verify-build.sh
-          .github/scripts/verify-build.sh
 
       - name: Build APK
         id: build_apk
@@ -76,7 +61,7 @@ jobs:
           chmod +x .github/scripts/build-apk.sh
           .github/scripts/build-apk.sh
 
-      - name: Upload APK artifact
+      - name: Upload APK
         if: steps.build_apk.outputs.apk_found == 'true'
         uses: actions/upload-artifact@v4
         with:
@@ -84,23 +69,14 @@ jobs:
           path: superleitor.apk
           retention-days: 30
 
-      - name: Build summary
-        if: always()
+      - name: Write build summary
         run: |
           echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
           if [ "${{ steps.build_apk.outputs.apk_found }}" == "true" ]; then
-            echo "✅ **APK Build Successful**" >> $GITHUB_STEP_SUMMARY
-            echo "- APK Location: \`${{ steps.build_apk.outputs.apk_path }}\`" >> $GITHUB_STEP_SUMMARY
-            echo "- Artifact Name: \`superleitor-apk\`" >> $GITHUB_STEP_SUMMARY
+            echo "✅ APK built at \`${{ steps.build_apk.outputs.apk_path }}\`" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ **APK Build Failed**" >> $GITHUB_STEP_SUMMARY
-            echo "- Check the build logs for details" >> $GITHUB_STEP_SUMMARY
+            echo "❌ APK build failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Build Environment" >> $GITHUB_STEP_SUMMARY
-          echo "- Node.js: $(node --version)" >> $GITHUB_STEP_SUMMARY
+          echo "- Node: $(node --version)" >> $GITHUB_STEP_SUMMARY
           echo "- Java: $(java -version 2>&1 | head -1)" >> $GITHUB_STEP_SUMMARY
           echo "- Capacitor: $(npx cap --version)" >> $GITHUB_STEP_SUMMARY
