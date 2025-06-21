@@ -5,7 +5,7 @@ android {
     namespace 'com.superleitor.app'
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
-    
+
     defaultConfig {
         applicationId "com.superleitor.app"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -15,7 +15,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         archivesBaseName = "superleitor_01"
     }
-    
+
     buildTypes {
         debug {
             debuggable true
@@ -28,22 +28,22 @@ android {
             signingConfig signingConfigs.debug
         }
     }
-    
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-    
+
     kotlinOptions {
         jvmTarget = '17'
     }
-    
+
     lintOptions {
         abortOnError false
         checkReleaseBuilds false
         disable 'InvalidPackage'
     }
-    
+
     packagingOptions {
         pickFirst '**/libc++_shared.so'
         pickFirst '**/libjsc.so'
@@ -53,6 +53,10 @@ android {
         exclude 'META-INF/NOTICE'
         exclude 'META-INF/NOTICE.txt'
     }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
 }
 
 dependencies {
@@ -65,7 +69,7 @@ dependencies {
     implementation "androidx.webkit:webkit:$androidxWebkitVersion"
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
-    
+
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
