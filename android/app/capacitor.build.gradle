@@ -12,7 +12,7 @@ dependencies {
     // Core Capacitor dependencies
     implementation 'com.getcapacitor:capacitor-android:7.0.1'
 
-    // Plugins
+    // Plugins - using Maven dependencies instead of project references
     implementation 'com.getcapacitor:capacitor-app:7.0.1'
     implementation 'com.getcapacitor:capacitor-haptics:7.0.1'
     implementation 'com.getcapacitor:capacitor-keyboard:7.0.1'
