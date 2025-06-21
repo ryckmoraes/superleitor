@@ -2,7 +2,7 @@
 #!/bin/bash
 set -e
 
-echo "=== Building APK with Clean Cache ==="
+echo "=== Building APK with Embedded Capacitor Dependencies ==="
 
 cd android
 
@@ -11,6 +11,10 @@ echo "Removing any remaining cache..."
 rm -rf .gradle/ || echo "No local gradle cache to clean"
 rm -rf build/ || echo "No build directory to clean"
 rm -rf app/build/ || echo "No app build directory to clean"
+
+# Garantir que não há capacitor.build.gradle sendo regenerado
+echo "Ensuring no capacitor.build.gradle exists..."
+rm -f app/capacitor.build.gradle || echo "No capacitor.build.gradle to remove"
 
 echo "Verifying gradlew before build..."
 if [ ! -x "./gradlew" ]; then
@@ -32,10 +36,17 @@ echo "Testing gradlew connectivity with no daemon..."
   exit 1
 }
 
-echo "Final Capacitor sync before build..."
-cd ..
-npx cap sync android --force || echo "Final sync failed, but continuing..."
-cd android
+echo "=== SKIPPING CAPACITOR SYNC TO AVOID REGENERATION ==="
+echo "⚠️  NOT running 'npx cap sync android' to prevent capacitor.build.gradle regeneration"
+echo "Using embedded Capacitor dependencies in app/build.gradle"
+
+# Verificar se as dependências do Capacitor estão no build.gradle
+echo "Verifying Capacitor dependencies are embedded in app/build.gradle..."
+if ! grep -q "capacitor-android" app/build.gradle; then
+  echo "❌ Capacitor dependencies missing from app/build.gradle"
+  exit 1
+fi
+echo "✅ Capacitor dependencies confirmed in app/build.gradle"
 
 echo "Cleaning Android project with no daemon..."
 ./gradlew clean --no-daemon --stacktrace --warning-mode none || {
@@ -206,4 +217,4 @@ else
   exit 1
 fi
 
-echo "=== APK Build completed successfully ==="
+echo "=== APK Build completed successfully with embedded Capacitor deps ==="

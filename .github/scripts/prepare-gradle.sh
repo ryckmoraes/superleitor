@@ -2,7 +2,7 @@
 #!/bin/bash
 set -e
 
-echo "=== Preparing Gradle Environment (Complete Clean) ==="
+echo "=== Preparing Gradle Environment (Complete Clean + No Capacitor Regeneration) ==="
 
 echo "Checking project structure in root..."
 ls -la
@@ -27,6 +27,10 @@ rm -rf app/build/ || echo "No app build directory to clean"
 # Limpar arquivos temporários do Capacitor
 echo "Cleaning Capacitor temp files..."
 rm -rf capacitor-cordova-android-plugins/build/ || echo "No capacitor plugins build to clean"
+
+# IMPORTANTE: Remover qualquer capacitor.build.gradle que possa ter sido regenerado
+echo "Removing any auto-generated capacitor.build.gradle..."
+rm -f app/capacitor.build.gradle || echo "No capacitor.build.gradle to remove"
 
 echo "Checking Android project structure..."
 ls -la
@@ -95,15 +99,9 @@ if [ ! -x "./gradlew" ]; then
   exit 1
 fi
 
-echo "=== FORCING CAPACITOR REGENERATION ==="
-
-# Voltar para raiz para executar comandos do Capacitor
-cd ..
-
-echo "Forcing Capacitor Android sync..."
-npx cap sync android --force || echo "Capacitor sync failed, but continuing..."
-
-cd android
+echo "=== SKIPPING CAPACITOR SYNC TO PREVENT REGENERATION ==="
+echo "⚠️  Skipping 'npx cap sync android' to prevent capacitor.build.gradle regeneration"
+echo "All Capacitor dependencies are now directly in app/build.gradle"
 
 echo "Testing gradlew connectivity with clean cache..."
 ./gradlew --version --no-daemon || {
@@ -129,22 +127,19 @@ echo "Testing gradlew connectivity with clean cache..."
 
 echo "Gradle Wrapper is working correctly with clean cache"
 
-# Verificar dependências do Capacitor
-echo "Checking Capacitor dependencies..."
-cd ..
-if [ -f "package.json" ]; then
-  echo "✅ package.json found"
-  
-  # Verificar se as dependências do Capacitor estão instaladas
-  if [ -d "node_modules/@capacitor" ]; then
-    echo "✅ Capacitor dependencies found"
-  else
-    echo "⚠️  Capacitor dependencies not found in node_modules"
-  fi
+# Verificar se app/build.gradle contém as dependências do Capacitor
+echo "Checking if app/build.gradle contains Capacitor dependencies..."
+if grep -q "capacitor-android" app/build.gradle; then
+  echo "✅ Capacitor dependencies found in app/build.gradle"
 else
-  echo "❌ package.json not found in root"
+  echo "❌ Capacitor dependencies missing from app/build.gradle"
+  exit 1
 fi
 
-cd android
+# Confirmar que não há capacitor.build.gradle
+if [ -f "app/capacitor.build.gradle" ]; then
+  echo "❌ Found capacitor.build.gradle - removing it again"
+  rm -f app/capacitor.build.gradle
+fi
 
-echo "=== Gradle preparation completed successfully with clean cache ==="
+echo "=== Gradle preparation completed successfully with embedded Capacitor deps ==="
