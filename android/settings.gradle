@@ -1,3 +1,4 @@
+
 rootProject.name = 'superleitor'
 include ':app'
 
@@ -11,14 +12,53 @@ println "=== Capacitor Module Detection ==="
 // Corrigir caminho para node_modules fora da pasta android/
 def nodeModulesRoot = new File(rootDir, '../node_modules')
 
+println "Looking for node_modules at: ${nodeModulesRoot.absolutePath}"
+println "Node modules exists: ${nodeModulesRoot.exists()}"
+
+if (!nodeModulesRoot.exists()) {
+    println "❌ node_modules directory not found at: ${nodeModulesRoot.absolutePath}"
+    println "Current directory: ${rootDir.absolutePath}"
+    println "Available directories:"
+    rootDir.parentFile.listFiles().each { file ->
+        if (file.isDirectory()) {
+            println "  - ${file.name}"
+        }
+    }
+    throw new GradleException("node_modules directory not found. Please run 'npm install' first.")
+}
+
 // Módulo obrigatório do Capacitor
 def capacitorAndroidDir = new File(nodeModulesRoot, '@capacitor/android')
+println "Looking for Capacitor Android at: ${capacitorAndroidDir.absolutePath}"
+println "Capacitor Android exists: ${capacitorAndroidDir.exists()}"
+
+if (capacitorAndroidDir.exists()) {
+    println "Contents of @capacitor/android:"
+    capacitorAndroidDir.listFiles().each { file ->
+        println "  - ${file.name} (${file.isDirectory() ? 'dir' : 'file'})"
+    }
+}
+
 if (hasValidBuildGradle(capacitorAndroidDir)) {
     include ':capacitor-android'
     project(':capacitor-android').projectDir = capacitorAndroidDir
     println "✅ Included :capacitor-android"
 } else {
     println "❌ Missing :capacitor-android or build.gradle"
+    println "Directory exists: ${capacitorAndroidDir.exists()}"
+    println "Build.gradle exists: ${new File(capacitorAndroidDir, 'build.gradle').exists()}"
+    
+    // Try to find if @capacitor exists at all
+    def capacitorDir = new File(nodeModulesRoot, '@capacitor')
+    if (capacitorDir.exists()) {
+        println "Found @capacitor directory with contents:"
+        capacitorDir.listFiles().each { file ->
+            println "  - ${file.name}"
+        }
+    } else {
+        println "No @capacitor directory found in node_modules"
+    }
+    
     throw new GradleException("Essential Capacitor Android module not found or invalid at: ${capacitorAndroidDir.absolutePath}")
 }
 

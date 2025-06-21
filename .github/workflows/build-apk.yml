@@ -1,3 +1,4 @@
+
 name: Build APK
 
 on:
@@ -20,13 +21,44 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Clean npm cache
+        run: npm cache clean --force
+
       - name: Install dependencies
         run: |
+          echo "Installing all dependencies..."
           npm install --legacy-peer-deps
+          echo "Dependencies installed successfully"
 
-      - name: Ensure Capacitor modules are installed
+      - name: Verify Capacitor installation
         run: |
-          npm install @capacitor/core @capacitor/android @capacitor/cli --legacy-peer-deps
+          echo "Checking if Capacitor modules are installed..."
+          echo "Checking @capacitor/android..."
+          if [ -d "node_modules/@capacitor/android" ]; then
+            echo "✅ @capacitor/android found"
+            ls -la node_modules/@capacitor/android/
+          else
+            echo "❌ @capacitor/android not found"
+            echo "Available @capacitor modules:"
+            ls -la node_modules/@capacitor/ || echo "No @capacitor directory found"
+            exit 1
+          fi
+          
+          echo "Checking @capacitor/core..."
+          if [ -d "node_modules/@capacitor/core" ]; then
+            echo "✅ @capacitor/core found"
+          else
+            echo "❌ @capacitor/core not found"
+            exit 1
+          fi
+          
+          echo "Checking @capacitor/cli..."
+          if [ -d "node_modules/@capacitor/cli" ]; then
+            echo "✅ @capacitor/cli found"
+          else
+            echo "❌ @capacitor/cli not found"
+            exit 1
+          fi
 
       - name: Build web assets
         run: |
