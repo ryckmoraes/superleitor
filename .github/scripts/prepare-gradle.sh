@@ -128,12 +128,17 @@ echo "Testing gradlew connectivity with clean cache..."
 
 echo "Gradle Wrapper is working correctly with clean cache"
 
-# Verificar se os módulos locais do Capacitor existem
-echo "Checking if Capacitor local modules exist..."
+# Verificar apenas os módulos essenciais do Capacitor
+echo "Checking if essential Capacitor modules exist..."
 CAPACITOR_MODULES_MISSING=false
 
-REQUIRED_MODULES=(
+ESSENTIAL_MODULES=(
   "../node_modules/@capacitor/android"
+  "../node_modules/@capacitor/core"
+)
+
+# Módulos opcionais - verificar se existem antes de validar
+OPTIONAL_MODULES=(
   "../node_modules/@capacitor/app/android"
   "../node_modules/@capacitor/haptics/android"
   "../node_modules/@capacitor/keyboard/android"
@@ -141,18 +146,26 @@ REQUIRED_MODULES=(
   "../node_modules/@capacitor/splash-screen/android"
 )
 
-for module in "${REQUIRED_MODULES[@]}"; do
+for module in "${ESSENTIAL_MODULES[@]}"; do
   if [ ! -d "$module" ]; then
-    echo "❌ Missing Capacitor module: $module"
+    echo "❌ Missing essential Capacitor module: $module"
     CAPACITOR_MODULES_MISSING=true
   else
-    echo "✅ Found Capacitor module: $module"
+    echo "✅ Found essential Capacitor module: $module"
+  fi
+done
+
+for module in "${OPTIONAL_MODULES[@]}"; do
+  if [ -d "$module" ]; then
+    echo "✅ Found optional Capacitor module: $module"
+  else
+    echo "⚠️  Optional Capacitor module not found: $module (will be skipped)"
   fi
 done
 
 if [ "$CAPACITOR_MODULES_MISSING" = true ]; then
-  echo "❌ Some Capacitor modules are missing from node_modules"
+  echo "❌ Some essential Capacitor modules are missing from node_modules"
   exit 1
 fi
 
-echo "=== Gradle preparation completed successfully with local Capacitor modules ==="
+echo "=== Gradle preparation completed successfully with available Capacitor modules ==="

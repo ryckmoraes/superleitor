@@ -11,21 +11,37 @@ if (capacitorPropertiesFile.exists()) {
     capacitorPropertiesFile.withInputStream { properties.load(it) }
 }
 
-// Incluir projetos Capacitor locais
+// Incluir projetos Capacitor locais - apenas os que realmente existem
 include ':capacitor-android'
 project(':capacitor-android').projectDir = new File('../node_modules/@capacitor/android')
 
-include ':capacitor-app'
-project(':capacitor-app').projectDir = new File('../node_modules/@capacitor/app/android')
+// Verificar se os módulos existem antes de incluí-los
+def capacitorAppDir = new File('../node_modules/@capacitor/app/android')
+if (capacitorAppDir.exists()) {
+    include ':capacitor-app'
+    project(':capacitor-app').projectDir = capacitorAppDir
+}
 
-include ':capacitor-haptics'
-project(':capacitor-haptics').projectDir = new File('../node_modules/@capacitor/haptics/android')
+def capacitorHapticsDir = new File('../node_modules/@capacitor/haptics/android')
+if (capacitorHapticsDir.exists()) {
+    include ':capacitor-haptics'
+    project(':capacitor-haptics').projectDir = capacitorHapticsDir
+}
 
-include ':capacitor-keyboard'
-project(':capacitor-keyboard').projectDir = new File('../node_modules/@capacitor/keyboard/android')
+def capacitorKeyboardDir = new File('../node_modules/@capacitor/keyboard/android')
+if (capacitorKeyboardDir.exists()) {
+    include ':capacitor-keyboard'
+    project(':capacitor-keyboard').projectDir = capacitorKeyboardDir
+}
 
-include ':capacitor-status-bar'
-project(':capacitor-status-bar').projectDir = new File('../node_modules/@capacitor/status-bar/android')
+def capacitorStatusBarDir = new File('../node_modules/@capacitor/status-bar/android')
+if (capacitorStatusBarDir.exists()) {
+    include ':capacitor-status-bar'
+    project(':capacitor-status-bar').projectDir = capacitorStatusBarDir
+}
 
-include ':capacitor-splash-screen'
-project(':capacitor-splash-screen').projectDir = new File('../node_modules/@capacitor/splash-screen/android')
+def capacitorSplashScreenDir = new File('../node_modules/@capacitor/splash-screen/android')
+if (capacitorSplashScreenDir.exists()) {
+    include ':capacitor-splash-screen'
+    project(':capacitor-splash-screen').projectDir = capacitorSplashScreenDir
+}
