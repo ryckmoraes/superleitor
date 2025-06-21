@@ -1,3 +1,4 @@
+
 name: Build APK
 
 on:
@@ -28,10 +29,10 @@ jobs:
         run: |
           npm run build
 
-      - name: Setup Java 17 (Temurin)
+      - name: Setup Java 21 (Temurin)
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
 
       - name: Setup Android SDK
