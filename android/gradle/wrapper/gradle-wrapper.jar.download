@@ -1,0 +1,24 @@
+
+#!/bin/bash
+# Script para baixar o gradle-wrapper.jar
+# Este arquivo será baixado automaticamente durante o build
+
+GRADLE_VERSION="8.4"
+WRAPPER_URL="https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip"
+
+echo "Downloading Gradle Wrapper JAR for version ${GRADLE_VERSION}..."
+
+# Criar diretório se não existir
+mkdir -p "$(dirname "$0")"
+
+# Baixar usando curl ou wget
+if command -v curl >/dev/null 2>&1; then
+    curl -L -o gradle-wrapper.jar "https://github.com/gradle/gradle/raw/v${GRADLE_VERSION}/gradle/wrapper/gradle-wrapper.jar"
+elif command -v wget >/dev/null 2>&1; then
+    wget -O gradle-wrapper.jar "https://github.com/gradle/gradle/raw/v${GRADLE_VERSION}/gradle/wrapper/gradle-wrapper.jar"
+else
+    echo "Neither curl nor wget found. Please install one of them."
+    exit 1
+fi
+
+echo "Gradle Wrapper JAR downloaded successfully."
