@@ -2,9 +2,15 @@
 #!/bin/bash
 set -e
 
-echo "=== Building APK ==="
+echo "=== Building APK with Clean Cache ==="
 
 cd android
+
+echo "=== FINAL CACHE CLEAN BEFORE BUILD ==="
+echo "Removing any remaining cache..."
+rm -rf .gradle/ || echo "No local gradle cache to clean"
+rm -rf build/ || echo "No build directory to clean"
+rm -rf app/build/ || echo "No app build directory to clean"
 
 echo "Verifying gradlew before build..."
 if [ ! -x "./gradlew" ]; then
@@ -13,8 +19,8 @@ if [ ! -x "./gradlew" ]; then
   exit 1
 fi
 
-echo "Testing gradlew connectivity..."
-./gradlew --version || {
+echo "Testing gradlew connectivity with no daemon..."
+./gradlew --version --no-daemon || {
   echo "❌ gradlew test failed"
   echo "Checking environment..."
   echo "JAVA_HOME: $JAVA_HOME"
@@ -26,7 +32,12 @@ echo "Testing gradlew connectivity..."
   exit 1
 }
 
-echo "Cleaning Android project..."
+echo "Final Capacitor sync before build..."
+cd ..
+npx cap sync android --force || echo "Final sync failed, but continuing..."
+cd android
+
+echo "Cleaning Android project with no daemon..."
 ./gradlew clean --no-daemon --stacktrace --warning-mode none || {
   echo "❌ Clean failed"
   exit 1
@@ -40,7 +51,7 @@ echo "Checking project dependencies..."
   tail -20 deps.log || echo "No deps.log available"
 }
 
-echo "Building APK with detailed logging..."
+echo "Building APK with detailed logging and no cache..."
 set +e  # Temporarily disable exit on error to capture build output
 ./gradlew assembleDebug \
   --stacktrace \
@@ -48,6 +59,7 @@ set +e  # Temporarily disable exit on error to capture build output
   --no-daemon \
   --warning-mode none \
   --no-build-cache \
+  --no-configuration-cache \
   --gradle-user-home ~/.gradle > build.log 2>&1
 
 BUILD_EXIT_CODE=$?

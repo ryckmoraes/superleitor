@@ -1,12 +1,10 @@
 
-
-
-
 rootProject.name = 'superleitor'
 
 include ':app'
-include ':capacitor-cordova-android-plugins'
-project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
+
+// Capacitor plugins são resolvidos via Maven, não como projetos locais
+// Removido todas as referências a projetos capacitor-* locais
 
 def capacitorPropertiesFile = new File(settingsDir, '../capacitor.properties')
 def properties = new Properties()
@@ -15,8 +13,4 @@ if (capacitorPropertiesFile.exists()) {
     capacitorPropertiesFile.withInputStream { properties.load(it) }
 }
 
-// Removed manual plugin inclusions - let Capacitor handle dependencies via Maven
-// This prevents configuration conflicts with debugRuntimeClasspath and other configurations
-
-
-
+// Plugin dependencies são gerenciadas via Maven no capacitor.build.gradle

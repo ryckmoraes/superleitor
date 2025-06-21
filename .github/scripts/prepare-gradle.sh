@@ -2,7 +2,7 @@
 #!/bin/bash
 set -e
 
-echo "=== Preparing Gradle Environment ==="
+echo "=== Preparing Gradle Environment (Complete Clean) ==="
 
 echo "Checking project structure in root..."
 ls -la
@@ -14,6 +14,19 @@ if [ ! -d "android" ]; then
 fi
 
 cd android
+
+echo "=== CLEANING ALL CACHES AND TEMP FILES ==="
+
+# Limpar cache do Gradle completamente
+echo "Cleaning Gradle cache..."
+rm -rf ~/.gradle/caches/ || echo "No gradle cache to clean"
+rm -rf .gradle/ || echo "No local gradle cache to clean"
+rm -rf build/ || echo "No build directory to clean"
+rm -rf app/build/ || echo "No app build directory to clean"
+
+# Limpar arquivos temporários do Capacitor
+echo "Cleaning Capacitor temp files..."
+rm -rf capacitor-cordova-android-plugins/build/ || echo "No capacitor plugins build to clean"
 
 echo "Checking Android project structure..."
 ls -la
@@ -82,8 +95,18 @@ if [ ! -x "./gradlew" ]; then
   exit 1
 fi
 
-echo "Testing gradlew connectivity..."
-./gradlew --version || {
+echo "=== FORCING CAPACITOR REGENERATION ==="
+
+# Voltar para raiz para executar comandos do Capacitor
+cd ..
+
+echo "Forcing Capacitor Android sync..."
+npx cap sync android --force || echo "Capacitor sync failed, but continuing..."
+
+cd android
+
+echo "Testing gradlew connectivity with clean cache..."
+./gradlew --version --no-daemon || {
   echo "❌ gradlew test failed - checking detailed error..."
   
   # Tentar diagnosticar o problema
@@ -104,7 +127,7 @@ echo "Testing gradlew connectivity..."
   exit 1
 }
 
-echo "Gradle Wrapper is working correctly"
+echo "Gradle Wrapper is working correctly with clean cache"
 
 # Verificar dependências do Capacitor
 echo "Checking Capacitor dependencies..."
@@ -124,4 +147,4 @@ fi
 
 cd android
 
-echo "=== Gradle preparation completed successfully ==="
+echo "=== Gradle preparation completed successfully with clean cache ==="
