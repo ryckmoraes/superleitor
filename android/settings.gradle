@@ -1,25 +1,16 @@
 rootProject.name = 'superleitor'
-
 include ':app'
-
-// Capacitor plugins como projetos locais do node_modules
-def capacitorPropertiesFile = new File(settingsDir, '../capacitor.properties')
-def properties = new Properties()
-
-if (capacitorPropertiesFile.exists()) {
-    capacitorPropertiesFile.withInputStream { properties.load(it) }
-}
 
 // Função auxiliar para verificar se o módulo tem build.gradle válido
 def hasValidBuildGradle(File moduleDir) {
     return moduleDir.exists() && new File(moduleDir, 'build.gradle').exists()
 }
 
-// Incluir projetos Capacitor locais - apenas os que realmente existem e têm build.gradle
 println "=== Capacitor Module Detection ==="
 
 // Capacitor Core Android - essencial
-def capacitorAndroidDir = new File('../node_modules/@capacitor/android')
+def capacitorAndroidDir = new File(rootDir, 'node_modules/@capacitor/android')
+
 if (hasValidBuildGradle(capacitorAndroidDir)) {
     include ':capacitor-android'
     project(':capacitor-android').projectDir = capacitorAndroidDir
@@ -29,20 +20,19 @@ if (hasValidBuildGradle(capacitorAndroidDir)) {
     throw new GradleException("Essential Capacitor Android module not found or invalid at: ${capacitorAndroidDir.absolutePath}")
 }
 
-// Módulos opcionais - verificar se existem e têm build.gradle antes de incluí-los
+// Módulos opcionais
 def optionalModules = [
-    [name: ':capacitor-app', path: '../node_modules/@capacitor/app/android'],
-    [name: ':capacitor-haptics', path: '../node_modules/@capacitor/haptics/android'],
-    [name: ':capacitor-keyboard', path: '../node_modules/@capacitor/keyboard/android'],
-    [name: ':capacitor-status-bar', path: '../node_modules/@capacitor/status-bar/android'],
-    [name: ':capacitor-splash-screen', path: '../node_modules/@capacitor/splash-screen/android']
+    [name: ':capacitor-app', path: new File(rootDir, 'node_modules/@capacitor/app/android')],
+    [name: ':capacitor-haptics', path: new File(rootDir, 'node_modules/@capacitor/haptics/android')],
+    [name: ':capacitor-keyboard', path: new File(rootDir, 'node_modules/@capacitor/keyboard/android')],
+    [name: ':capacitor-status-bar', path: new File(rootDir, 'node_modules/@capacitor/status-bar/android')],
+    [name: ':capacitor-splash-screen', path: new File(rootDir, 'node_modules/@capacitor/splash-screen/android')],
 ]
 
 optionalModules.each { module ->
-    def moduleDir = new File(module.path)
-    if (hasValidBuildGradle(moduleDir)) {
+    if (hasValidBuildGradle(module.path)) {
         include module.name
-        project(module.name).projectDir = moduleDir
+        project(module.name).projectDir = module.path
         println "✅ Included ${module.name}"
     } else {
         println "⚠️  Skipped ${module.name} (not found or invalid build.gradle)"
