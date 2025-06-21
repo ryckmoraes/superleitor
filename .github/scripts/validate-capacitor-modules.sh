@@ -2,7 +2,7 @@
 #!/bin/bash
 set -e
 
-echo "=== VALIDATING CAPACITOR 7.x CORE MODULE ==="
+echo "=== VALIDATING CAPACITOR 7.x MODULES ==="
 
 # Verificar se estamos no diretório correto (android)
 if [ ! -f "build.gradle" ]; then
@@ -10,7 +10,7 @@ if [ ! -f "build.gradle" ]; then
   exit 1
 fi
 
-echo "Checking if essential Capacitor 7.x core module exists..."
+echo "Checking if essential Capacitor 7.x modules exist in node_modules..."
 
 # Módulo essencial - apenas verificar se o diretório existe (Capacitor 7.x)
 ESSENTIAL_MODULE="../node_modules/@capacitor/android"
@@ -38,7 +38,7 @@ else
   ls -la "$ESSENTIAL_MODULE" | head -5
 fi
 
-# Check if plugins are installed as npm packages (they don't need to be Gradle projects)
+# Check if plugins exist as npm packages
 echo "=== Checking Capacitor 7.x plugins as npm packages ==="
 PLUGIN_PACKAGES=(
   "../node_modules/@capacitor/app"
@@ -58,24 +58,65 @@ for plugin in "${PLUGIN_PACKAGES[@]}"; do
   fi
 done
 
-echo "=== Verificando configuração final dos módulos Capacitor 7.x ==="
-echo "Core module included in settings.gradle:"
+# Check plugin Android directories
+echo "=== Checking individual plugin Android directories ==="
+PLUGIN_ANDROID_DIRS=(
+  "../node_modules/@capacitor/haptics/android"
+  "../node_modules/@capacitor/keyboard/android"
+  "../node_modules/@capacitor/status-bar/android"
+  "../node_modules/@capacitor/splash-screen/android"
+)
+
+for plugin_dir in "${PLUGIN_ANDROID_DIRS[@]}"; do
+  if [ -d "$plugin_dir" ]; then
+    echo "✅ Found plugin Android directory: $plugin_dir"
+  else
+    echo "⚠️  Plugin Android directory not found: $plugin_dir"
+  fi
+done
+
+echo "=== Verificando se settings.gradle inclui os módulos necessários ==="
 if [ -f "settings.gradle" ]; then
-  grep -A 5 "capacitor-android" settings.gradle | head -10 || echo "Capacitor Android configured"
+  echo "Módulos incluídos no settings.gradle:"
+  grep "include " settings.gradle || echo "Nenhum include encontrado"
+  
+  # Check for core module
+  if grep -q ":capacitor-android" settings.gradle; then
+    echo "✅ Core module :capacitor-android incluído"
+  else
+    echo "❌ Core module :capacitor-android NÃO incluído"
+    exit 1
+  fi
+  
+  # Check for plugin modules (optional but recommended)
+  EXPECTED_PLUGINS=(":capacitor-haptics" ":capacitor-keyboard" ":capacitor-status-bar" ":capacitor-splash-screen")
+  for plugin in "${EXPECTED_PLUGINS[@]}"; do
+    if grep -q "$plugin" settings.gradle; then
+      echo "✅ Plugin module $plugin incluído"
+    else
+      echo "⚠️  Plugin module $plugin não incluído (pode ser opcional)"
+    fi
+  done
+  
 else
   echo "❌ settings.gradle não encontrado"
+  exit 1
 fi
 
 echo ""
-echo "Core dependency in capacitor.build.gradle:"
+echo "Verificando capacitor.build.gradle..."
 if [ -f "app/capacitor.build.gradle" ]; then
   echo "✅ capacitor.build.gradle exists"
-  grep -A 10 "dependencies {" app/capacitor.build.gradle | head -15 || echo "Core dependency configured"
+  if grep -q "implementation project(':capacitor-android')" app/capacitor.build.gradle; then
+    echo "✅ Core dependency configurada"
+  else
+    echo "❌ Core dependency não configurada"
+    exit 1
+  fi
 else
   echo "❌ capacitor.build.gradle não encontrado"
+  exit 1
 fi
 
 echo ""
-echo "ℹ️  Individual plugins will be loaded by Capacitor's plugin system at runtime"
-echo "ℹ️  No need to include them as separate Gradle projects in Capacitor 7.x"
-echo "✅ Capacitor 7.x core module validation completed successfully"
+echo "✅ Capacitor 7.x module validation completed successfully"
