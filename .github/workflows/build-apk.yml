@@ -20,22 +20,23 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install dependencies (including Capacitor)
+      - name: Install dependencies
         run: |
           npm install --legacy-peer-deps
-          npm install @capacitor/core @capacitor/cli @capacitor/android --legacy-peer-deps
-          ls -la node_modules/@capacitor/
-          ls -la node_modules/@capacitor/android/
+
+      - name: Ensure Capacitor modules are installed
+        run: |
+          npm install @capacitor/core @capacitor/android @capacitor/cli --legacy-peer-deps
 
       - name: Build web assets
         run: |
           npm run build
 
-      - name: Setup Java 17 (Temurin)
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
           distribution: 'temurin'
+          java-version: '17'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -45,9 +46,9 @@ jobs:
           chmod +x .github/scripts/setup-android.sh
           .github/scripts/setup-android.sh
 
-      - name: Add Android platform (Capacitor)
+      - name: Add Android platform
         run: |
-          npx cap add android || echo "already added"
+          npx cap add android || echo "Android platform already exists"
 
       - name: Sync Capacitor
         run: |
