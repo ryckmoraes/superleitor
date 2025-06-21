@@ -1,11 +1,12 @@
 
+
 rootProject.name = 'superleitor'
 
 include ':app'
 include ':capacitor-cordova-android-plugins'
 project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
 
-def capacitorPropertiesFile = new File(projectDir, '../capacitor.properties')
+def capacitorPropertiesFile = new File(settingsDir, '../capacitor.properties')
 def properties = new Properties()
 
 if (capacitorPropertiesFile.exists()) {
@@ -25,3 +26,4 @@ includePlugins.each { plugin ->
     settings.include(":$pluginProjectName")
     project(":$pluginProjectName").projectDir = new File("../node_modules/$plugin/android")
 }
+
