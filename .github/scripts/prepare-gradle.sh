@@ -1,4 +1,3 @@
-
 #!/bin/bash
 set -e
 
@@ -50,7 +49,7 @@ fi
 
 # Download gradle-wrapper.jar for Gradle 7.6.3
 echo "Downloading gradle-wrapper.jar..."
-WRAPPER_JAR_URL="https://github.com/gradle/gradle/raw/v7.6.3/gradle/wrapper/gradle-wrapper.jar"
+WRAPPER_JAR_URL="https://github.com/gradle/gradle/raw/v8.4/gradle/wrapper/gradle-wrapper.jar"
 curl -L "$WRAPPER_JAR_URL" -o gradle/wrapper/gradle-wrapper.jar
 
 # Verify jar was downloaded
