@@ -75,13 +75,7 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     
-    // Capacitor Core e Plugins - como projetos locais
-    implementation project(':capacitor-android')
-    implementation project(':capacitor-app')
-    implementation project(':capacitor-haptics')
-    implementation project(':capacitor-keyboard')
-    implementation project(':capacitor-status-bar')
-    implementation project(':capacitor-splash-screen')
+    // Capacitor dependencies will be added by capacitor.build.gradle
 }
 
 apply from: file('capacitor.build.gradle')

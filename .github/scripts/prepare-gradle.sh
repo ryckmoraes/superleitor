@@ -28,6 +28,10 @@ rm -rf app/build/ || echo "No app build directory to clean"
 echo "Cleaning Capacitor temp files..."
 rm -rf capacitor-cordova-android-plugins/build/ || echo "No capacitor plugins build to clean"
 
+# Remover capacitor.build.gradle antigo para forçar regeneração
+echo "Removing old capacitor.build.gradle to force regeneration..."
+rm -f app/capacitor.build.gradle || echo "No old capacitor.build.gradle to remove"
+
 echo "Checking Android project structure..."
 ls -la
 
@@ -104,6 +108,65 @@ npx cap sync android || {
 }
 cd android
 
+# Verificar se o capacitor.build.gradle foi regenerado corretamente
+if [ ! -f "app/capacitor.build.gradle" ]; then
+  echo "⚠️  capacitor.build.gradle not regenerated, creating manually..."
+  
+  # Criar o arquivo manualmente com lógica condicional
+  cat > app/capacitor.build.gradle << 'EOF'
+// IMPORTANT: Do not modify this file directly.
+// This file is managed by the 'npx cap sync' command.
+
+android {
+  compileOptions {
+      sourceCompatibility JavaVersion.VERSION_17
+      targetCompatibility JavaVersion.VERSION_17
+  }
+}
+
+apply from: '../capacitor-cordova-android-plugins/cordova.variables.gradle'
+
+dependencies {
+    // Capacitor Core - sempre necessário
+    implementation project(':capacitor-android')
+    
+    // Módulos opcionais - apenas se existirem
+    def capacitorAppDir = new File('../node_modules/@capacitor/app/android')
+    if (capacitorAppDir.exists()) {
+        implementation project(':capacitor-app')
+    }
+    
+    def capacitorHapticsDir = new File('../node_modules/@capacitor/haptics/android')
+    if (capacitorHapticsDir.exists()) {
+        implementation project(':capacitor-haptics')
+    }
+    
+    def capacitorKeyboardDir = new File('../node_modules/@capacitor/keyboard/android')
+    if (capacitorKeyboardDir.exists()) {
+        implementation project(':capacitor-keyboard')
+    }
+    
+    def capacitorStatusBarDir = new File('../node_modules/@capacitor/status-bar/android')
+    if (capacitorStatusBarDir.exists()) {
+        implementation project(':capacitor-status-bar')
+    }
+    
+    def capacitorSplashScreenDir = new File('../node_modules/@capacitor/splash-screen/android')
+    if (capacitorSplashScreenDir.exists()) {
+        implementation project(':capacitor-splash-screen')
+    }
+}
+
+if (hasProperty('postBuildExtras')) {
+  postBuildExtras()
+}
+EOF
+  
+  echo "✅ capacitor.build.gradle created manually with conditional logic"
+else
+  echo "✅ capacitor.build.gradle regenerated successfully"
+fi
+
 echo "Testing gradlew connectivity with clean cache..."
 ./gradlew --version --no-daemon || {
   echo "❌ gradlew test failed - checking detailed error..."
@@ -166,6 +229,18 @@ done
 if [ "$CAPACITOR_MODULES_MISSING" = true ]; then
   echo "❌ Some essential Capacitor modules are missing from node_modules"
   exit 1
+fi
+
+echo "=== Verificando configuração final dos módulos ==="
+echo "Módulos incluídos no settings.gradle:"
+grep -A 20 "Incluir projetos Capacitor" settings.gradle || echo "Não foi possível ler settings.gradle"
+
+echo ""
+echo "Dependências no capacitor.build.gradle:"
+if [ -f "app/capacitor.build.gradle" ]; then
+  grep -A 10 "dependencies {" app/capacitor.build.gradle || echo "Não foi possível ler dependencies"
+else
+  echo "❌ capacitor.build.gradle não encontrado"
 fi
 
 echo "=== Gradle preparation completed successfully with available Capacitor modules ==="
