@@ -70,7 +70,7 @@ dependencies {
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
 
-    // ✅ Dependência essencial do Capacitor
+    // Capacitor Android (adiciona se faltar no capacitor.build.gradle)
     implementation 'com.getcapacitor:capacitor-android:4.6.0'
 
     testImplementation "junit:junit:$junitVersion"
