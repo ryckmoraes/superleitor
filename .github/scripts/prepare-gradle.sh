@@ -3,9 +3,7 @@ set -e
 
 echo "=== Preparing Gradle Environment ==="
 
-cd android
-
-echo "Checking Android project structure..."
+echo "Checking project structure in root..."
 ls -la
 
 echo "Making gradlew executable..."
