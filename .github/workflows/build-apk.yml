@@ -20,19 +20,16 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install web dependencies with Capacitor
+      - name: Install dependencies (including Capacitor)
         run: |
-          echo "Installing dependencies..."
           npm install --legacy-peer-deps
-
-          echo "Ensuring required Capacitor packages..."
-          npm install @capacitor/core @capacitor/android @capacitor/cli --legacy-peer-deps
-
-          echo "Verifying Capacitor structure..."
-          ls -la node_modules/@capacitor/android || echo "Capacitor Android module not found"
+          npm install @capacitor/core @capacitor/cli @capacitor/android --legacy-peer-deps
+          ls -la node_modules/@capacitor/
+          ls -la node_modules/@capacitor/android/
 
       - name: Build web assets
-        run: npm run build
+        run: |
+          npm run build
 
       - name: Setup Java 17 (Temurin)
         uses: actions/setup-java@v4
@@ -49,12 +46,14 @@ jobs:
           .github/scripts/setup-android.sh
 
       - name: Add Android platform (Capacitor)
-        run: npx cap add android || echo "Already added"
+        run: |
+          npx cap add android || echo "already added"
 
-      - name: Sync Capacitor with Android
-        run: npx cap sync android
+      - name: Sync Capacitor
+        run: |
+          npx cap sync android
 
-      - name: Prepare Gradle wrapper and environment
+      - name: Prepare Gradle wrapper
         run: |
           chmod +x .github/scripts/prepare-gradle.sh
           .github/scripts/prepare-gradle.sh
@@ -64,10 +63,9 @@ jobs:
         run: |
           chmod +x .github/scripts/build-apk.sh
           .github/scripts/build-apk.sh
-        continue-on-error: true
 
       - name: Upload APK
-        if: steps.build_apk.outcome == 'success'
+        if: steps.build_apk.outputs.apk_found == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: superleitor-apk
@@ -77,10 +75,10 @@ jobs:
       - name: Write build summary
         run: |
           echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.build_apk.outcome }}" == "success" ]; then
-            echo "✅ APK built successfully!" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.build_apk.outputs.apk_found }}" == "true" ]; then
+            echo "✅ APK built at \`${{ steps.build_apk.outputs.apk_path }}\`" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ APK build failed." >> $GITHUB_STEP_SUMMARY
+            echo "❌ APK build failed" >> $GITHUB_STEP_SUMMARY
           fi
           echo "- Node: $(node --version)" >> $GITHUB_STEP_SUMMARY
           echo "- Java: $(java -version 2>&1 | head -1)" >> $GITHUB_STEP_SUMMARY
