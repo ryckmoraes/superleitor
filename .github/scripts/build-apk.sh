@@ -113,17 +113,29 @@ if (hasProperty('postBuildExtras')) {
 EOF
 fi
 
+# Criar diretório capacitor-cordova-android-plugins se não existir
+echo "🔧 Verificando capacitor-cordova-android-plugins..."
+if [ ! -d "capacitor-cordova-android-plugins" ]; then
+    echo "⚠️ capacitor-cordova-android-plugins não encontrado, criando..."
+    mkdir -p capacitor-cordova-android-plugins
+    
+    cat > capacitor-cordova-android-plugins/cordova.variables.gradle << 'EOF'
+// Empty file - placeholder for Cordova variables
+// This file can be used to define variables needed by Cordova plugins
+EOF
+fi
+
 # Clear any remaining build artifacts
 echo "🧹 Limpando artefatos de build remanescentes..."
-./gradlew clean || echo "Gradle clean completou (pode ter avisos)"
+./gradlew clean --no-daemon || echo "Gradle clean completou (pode ter avisos)"
 
 # Test Gradle configuration before build
 echo "🧪 Testando configuração do Gradle..."
-if ./gradlew projects --stacktrace; then
+if ./gradlew projects --stacktrace --no-daemon; then
     echo "✅ Configuração do Gradle válida"
     echo "📋 Projetos detectados:"
-    ./gradlew projects | grep "Project" || echo "Listando todos os projetos..."
-    ./gradlew projects
+    ./gradlew projects --no-daemon | grep "Project" || echo "Listando todos os projetos..."
+    ./gradlew projects --no-daemon
 else
     echo "❌ Configuração do Gradle inválida"
     
@@ -140,7 +152,7 @@ fi
 
 # Attempt the build with enhanced error reporting
 echo "🚀 Iniciando build do APK..."
-if ./gradlew assembleRelease --stacktrace; then
+if ./gradlew assembleRelease --stacktrace --no-daemon; then
     echo "✅ Build do Gradle completado com sucesso"
 else
     echo "❌ Build do Gradle falhou"
@@ -152,7 +164,8 @@ else
     
     # Mostrar os últimos logs de erro
     echo "📋 Últimos logs de build:"
-    ls -la app/build/
+    ls -la app/ || echo "Diretório app não encontrado"
+    ls -la app/build/ || echo "Diretório app/build não encontrado"
     
     exit 1
 fi
