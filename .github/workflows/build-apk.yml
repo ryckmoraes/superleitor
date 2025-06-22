@@ -1,3 +1,4 @@
+
 name: Android Build
 
 on:
@@ -34,6 +35,13 @@ jobs:
 
       - name: 📂 Mostrar estrutura node_modules/@capacitor
         run: ls -R node_modules/@capacitor || echo "⚠️ node_modules/@capacitor não encontrado"
+
+      - name: 🔧 Configurar permissões Gradle
+        run: |
+          chmod +x android/gradlew
+          ls -la android/gradlew
+          echo "✅ Permissões do gradlew configuradas"
+        working-directory: .
 
       - name: 🧹 Limpar build anterior
         run: ./gradlew clean
