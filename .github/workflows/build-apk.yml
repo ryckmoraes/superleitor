@@ -75,10 +75,6 @@ jobs:
         run: ./gradlew clean
         working-directory: android
 
-      - name: 🛠️ Preparar ambiente Gradle
-        run: chmod +x .github/scripts/prepare-gradle.sh && .github/scripts/prepare-gradle.sh
-        working-directory: android
-
       - name: 🔨 Build do APK
         run: chmod +x .github/scripts/build-apk.sh && .github/scripts/build-apk.sh
         working-directory: android
