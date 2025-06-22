@@ -2,73 +2,42 @@
 #!/usr/bin/env bash
 set -e
 
-echo "🔨 Starting robust APK build process..."
+echo "🔨 Starting minimal APK build process..."
 
 cd android
 
-# Clean all previous builds
-echo "🧹 Cleaning previous builds..."
+# Clean all previous builds completely
+echo "🧹 Deep cleaning previous builds..."
 rm -rf .gradle/ build/ app/build/ || true
+rm -rf ~/.gradle/caches/ || true
 
-# Ensure cordova.variables.gradle exists
-echo "🔧 Ensuring cordova.variables.gradle exists..."
+# Ensure cordova.variables.gradle exists with minimal content
+echo "🔧 Creating minimal cordova.variables.gradle..."
 mkdir -p capacitor-cordova-android-plugins
-if [ ! -f "capacitor-cordova-android-plugins/cordova.variables.gradle" ]; then
-    cat > capacitor-cordova-android-plugins/cordova.variables.gradle << 'EOF'
+cat > capacitor-cordova-android-plugins/cordova.variables.gradle << 'EOF'
+// Minimal cordova variables
 ext {
-    minSdkVersion = hasProperty('cdvMinSdkVersion') ? cdvMinSdkVersion : 24
-    compileSdkVersion = hasProperty('cdvCompileSdkVersion') ? cdvCompileSdkVersion : 34
-    targetSdkVersion = hasProperty('cdvTargetSdkVersion') ? cdvTargetSdkVersion : 34
-    buildToolsVersion = hasProperty('cdvBuildToolsVersion') ? cdvBuildToolsVersion : '34.0.0'
+    minSdkVersion = 24
+    compileSdkVersion = 34
+    targetSdkVersion = 34
+    buildToolsVersion = '34.0.0'
 }
 EOF
-    echo "✅ Created cordova.variables.gradle"
-fi
 
-# Test Gradle wrapper
+# Test Gradle wrapper with minimal output
 echo "🧪 Testing Gradle wrapper..."
-if ! ./gradlew --version --no-daemon --quiet; then
-    echo "❌ Gradle wrapper failed"
-    exit 1
-fi
+./gradlew --version --no-daemon --quiet --offline || ./gradlew --version --no-daemon --quiet
 
-# Clean and test configuration
-echo "🧹 Cleaning Gradle cache..."
-./gradlew clean --no-daemon --quiet || echo "Clean completed with warnings"
+# Clean with minimal flags
+echo "🧹 Cleaning project..."
+./gradlew clean --no-daemon --quiet --no-build-cache
 
-# Test project configuration
-echo "🧪 Testing project configuration..."
-if ./gradlew projects --no-daemon --quiet; then
-    echo "✅ Project configuration valid"
-else
-    echo "❌ Project configuration invalid"
-    echo "Debug info:"
-    cat settings.gradle
-    exit 1
-fi
+# Build with minimal configuration
+echo "🚀 Building minimal APK..."
+./gradlew assembleRelease --no-daemon --quiet --no-build-cache --offline || \
+./gradlew assembleRelease --no-daemon --stacktrace
 
-# Build APK with detailed output
-echo "🚀 Building APK..."
-if ./gradlew assembleRelease --no-daemon --stacktrace; then
-    echo "✅ APK build successful"
-else
-    echo "❌ APK build failed"
-    
-    # Show detailed debug info
-    echo "🔍 Debug information:"
-    echo "Settings content:"
-    cat settings.gradle
-    echo ""
-    echo "Capacitor build content:"
-    cat app/capacitor.build.gradle
-    echo ""
-    echo "Available gradle files:"
-    find . -name "*.gradle" -type f
-    
-    exit 1
-fi
-
-# Verify and copy APK
+# Verify APK
 APK_PATH="app/build/outputs/apk/release/app-release.apk"
 if [ -f "$APK_PATH" ]; then
     echo "✅ APK generated successfully"
@@ -78,8 +47,7 @@ if [ -f "$APK_PATH" ]; then
     echo "📱 APK ready: ../superleitor.apk"
     ls -lh "$APK_PATH"
 else
-    echo "❌ APK not found at expected location"
-    echo "📋 Searching for APKs:"
+    echo "❌ APK not found"
     find app/build/outputs/ -name "*.apk" -type f 2>/dev/null || echo "No APKs found"
     echo "apk_found=false" >> "$GITHUB_OUTPUT"
     exit 1

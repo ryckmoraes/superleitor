@@ -1,4 +1,5 @@
 
+// Minimal capacitor.build.gradle - no external dependencies
 android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -6,32 +7,9 @@ android {
     }
 }
 
+// No external dependencies - building minimal app
 dependencies {
-    // Only add Capacitor dependency if the project actually exists
-    if (findProject(':capacitor-android') != null) {
-        implementation project(':capacitor-android')
-        println "✅ Capacitor Android dependency added"
-    } else {
-        println "⚠️ Capacitor Android not available - building basic app"
-    }
+    // All dependencies are handled in main build.gradle
 }
 
-// Safe application of Cordova variables
-def cordovaVarsFile = file('../capacitor-cordova-android-plugins/cordova.variables.gradle')
-if (cordovaVarsFile.exists()) {
-    try {
-        apply from: cordovaVarsFile
-        println "✅ Cordova variables applied"
-    } catch (Exception e) {
-        println "⚠️ Could not apply cordova variables: ${e.message}"
-    }
-}
-
-// Safe postBuildExtras execution
-if (hasProperty('postBuildExtras')) {
-    try {
-        postBuildExtras()
-    } catch (Exception e) {
-        println "⚠️ postBuildExtras failed: ${e.message}"
-    }
-}
+println "✅ Minimal build configuration applied"

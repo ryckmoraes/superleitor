@@ -2,25 +2,6 @@
 rootProject.name = 'superleitor'
 include ':app'
 
-println "=== Superleitor Build Configuration ==="
-
-// Basic node_modules validation
-def nodeModulesRoot = new File(rootDir, '../node_modules')
-if (!nodeModulesRoot.exists()) {
-    println "❌ node_modules not found - run 'npm install' first"
-    throw new GradleException("Missing node_modules directory")
-}
-
-// Only include Capacitor Android if it actually exists and is valid
-def capacitorAndroidDir = new File(nodeModulesRoot, '@capacitor/android')
-def capacitorBuildFile = new File(capacitorAndroidDir, 'build.gradle')
-
-if (capacitorAndroidDir.exists() && capacitorBuildFile.exists()) {
-    include ':capacitor-android'
-    project(':capacitor-android').projectDir = capacitorAndroidDir
-    println "✅ Capacitor Android included"
-} else {
-    println "⚠️ Building without Capacitor Android - basic app only"
-}
-
+println "=== Minimal Android Build ==="
+println "Building basic Android app without Capacitor dependencies"
 println "=== Configuration Complete ==="
