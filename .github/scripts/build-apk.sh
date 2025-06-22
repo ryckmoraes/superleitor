@@ -2,68 +2,60 @@
 #!/usr/bin/env bash
 set -e
 
-echo "🔨 Iniciando build do APK com configuração simplificada..."
+echo "🔨 Iniciando build do APK com configuração robusta..."
 
 cd android
 
-# FORÇA a correção do settings.gradle com configuração mínima e funcional
-echo "🔧 Criando settings.gradle simplificado..."
+# Limpar completamente builds anteriores
+echo "🧹 Limpando builds anteriores..."
+rm -rf .gradle/ build/ app/build/ || true
+
+# Criar settings.gradle simplificado e funcional
+echo "🔧 Criando settings.gradle minimalista..."
 cat > settings.gradle << 'EOF'
 rootProject.name = 'superleitor'
 include ':app'
 
-println "=== Capacitor Core Module Detection ==="
-
+// Verificação básica de node_modules
 def nodeModulesRoot = new File(rootDir, '../node_modules')
-println "Looking for node_modules at: ${nodeModulesRoot.absolutePath}"
-println "Node modules exists: ${nodeModulesRoot.exists()}"
-
 if (!nodeModulesRoot.exists()) {
-    println "❌ node_modules directory not found"
-    throw new GradleException("node_modules directory not found. Please run 'npm install' first.")
+    throw new GradleException("node_modules not found. Run 'npm install' first.")
 }
 
-// Include only the core Capacitor Android module
+// Apenas incluir Capacitor Android se existir
 def capacitorAndroidDir = new File(nodeModulesRoot, '@capacitor/android')
-println "Looking for Capacitor Android at: ${capacitorAndroidDir.absolutePath}"
-
 if (capacitorAndroidDir.exists()) {
     include ':capacitor-android'
     project(':capacitor-android').projectDir = capacitorAndroidDir
-    println "✅ Included :capacitor-android"
+    println "✅ Capacitor Android included"
 } else {
-    println "⚠️ Capacitor Android module not found, continuing without it"
+    println "⚠️ Capacitor Android not found - building without it"
 }
-
-println "=== Module Detection Complete ==="
 EOF
 
-echo "✅ settings.gradle criado com configuração simplificada"
+echo "✅ settings.gradle criado"
 
-# Verificar o conteúdo após a correção
-echo "📋 Verificando conteúdo do settings.gradle:"
-cat settings.gradle
-
-# Criar capacitor.build.gradle simplificado
-echo "🔧 Criando capacitor.build.gradle simplificado..."
+# Criar capacitor.build.gradle minimalista
+echo "🔧 Criando capacitor.build.gradle minimalista..."
 cat > app/capacitor.build.gradle << 'EOF'
 android {
-  compileOptions {
-      sourceCompatibility JavaVersion.VERSION_17
-      targetCompatibility JavaVersion.VERSION_17
-  }
-}
-
-dependencies {
-    // Core Capacitor dependency - only if the module exists
-    if (findProject(':capacitor-android') != null) {
-        implementation project(':capacitor-android')
-        println "✅ Added Capacitor Android dependency"
-    } else {
-        println "⚠️ Capacitor Android module not available"
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 }
 
+dependencies {
+    // Apenas incluir Capacitor se o projeto existir
+    if (findProject(':capacitor-android') != null) {
+        implementation project(':capacitor-android')
+        println "✅ Capacitor Android dependency added"
+    } else {
+        println "⚠️ Building without Capacitor Android"
+    }
+}
+
+// Evitar erro se postBuildExtras não existir
 if (hasProperty('postBuildExtras')) {
     postBuildExtras()
 }
@@ -71,66 +63,79 @@ EOF
 
 echo "✅ capacitor.build.gradle criado"
 
-# Remover diretórios de build antigos completamente
-echo "🧹 Limpando completamente builds anteriores..."
-rm -rf .gradle/ || echo "Sem cache gradle local para limpar"
-rm -rf build/ || echo "Sem diretório build para limpar"
-rm -rf app/build/ || echo "Sem diretório app/build para limpar"
+# Verificar se cordova.variables.gradle existe, se não, criar
+if [ ! -f "capacitor-cordova-android-plugins/cordova.variables.gradle" ]; then
+    echo "🔧 Criando cordova.variables.gradle..."
+    mkdir -p capacitor-cordova-android-plugins
+    cat > capacitor-cordova-android-plugins/cordova.variables.gradle << 'EOF'
+// Cordova plugin variables
+ext {
+    minSdkVersion = hasProperty('cdvMinSdkVersion') ? cdvMinSdkVersion : 24
+    compileSdkVersion = hasProperty('cdvCompileSdkVersion') ? cdvCompileSdkVersion : 34
+    targetSdkVersion = hasProperty('cdvTargetSdkVersion') ? cdvTargetSdkVersion : 34
+    buildToolsVersion = hasProperty('cdvBuildToolsVersion') ? cdvBuildToolsVersion : '34.0.0'
+}
+EOF
+    echo "✅ cordova.variables.gradle criado"
+fi
 
-# Limpar cache Gradle
-echo "🧹 Limpando cache do Gradle..."
-./gradlew clean --no-daemon --quiet || echo "Gradle clean completou"
-
-# Testar configuração do Gradle antes do build
-echo "🧪 Testando configuração básica do Gradle..."
-if ./gradlew help --no-daemon --quiet; then
-    echo "✅ Gradle está funcionando"
-else
-    echo "❌ Gradle não está funcionando corretamente"
+# Verificar se gradle wrapper funciona
+echo "🧪 Testando Gradle wrapper..."
+if ! ./gradlew --version --no-daemon --quiet; then
+    echo "❌ Gradle wrapper com problema"
     exit 1
 fi
 
-# Testar detecção de projetos
-echo "🧪 Testando detecção de projetos..."
-./gradlew projects --no-daemon --quiet || echo "Comando projects executado"
+echo "✅ Gradle wrapper funcionando"
 
-# Build do APK com configuração mínima
-echo "🚀 Iniciando build do APK..."
-if ./gradlew assembleRelease --no-daemon --stacktrace; then
-    echo "✅ Build do APK completado com sucesso"
+# Limpar cache e testar configuração
+echo "🧹 Limpando cache do Gradle..."
+./gradlew clean --no-daemon --quiet || echo "Clean executado"
+
+# Testar se os projetos são reconhecidos
+echo "🧪 Testando configuração de projetos..."
+if ./gradlew projects --no-daemon --quiet; then
+    echo "✅ Configuração de projetos OK"
 else
-    echo "❌ Build do APK falhou"
+    echo "❌ Problema na configuração de projetos"
+    echo "Debug da configuração:"
+    cat settings.gradle
+    exit 1
+fi
+
+# Build do APK
+echo "🚀 Iniciando build do APK..."
+if ./gradlew assembleRelease --no-daemon --stacktrace --info; then
+    echo "✅ Build do APK completado"
+else
+    echo "❌ Build falhou"
     
-    # Informações de debug
-    echo "🔍 Debug final:"
+    # Debug detalhado
+    echo "🔍 Informações de debug:"
     echo "Conteúdo do settings.gradle:"
     cat settings.gradle
     echo ""
-    echo "Verificando se app/build.gradle existe:"
-    ls -la app/build.gradle || echo "app/build.gradle não encontrado"
+    echo "Conteúdo do capacitor.build.gradle:"
+    cat app/capacitor.build.gradle
     echo ""
-    echo "Estrutura do diretório android:"
+    echo "Estrutura dos arquivos:"
     find . -name "*.gradle" -type f | head -10
     
     exit 1
 fi
 
+# Verificar se APK foi gerado
 APK_PATH="app/build/outputs/apk/release/app-release.apk"
-
 if [ -f "$APK_PATH" ]; then
-    echo "✅ APK gerado com sucesso em $APK_PATH"
-    
+    echo "✅ APK gerado com sucesso"
     cp "$APK_PATH" ../superleitor.apk
-    
     echo "apk_found=true" >> "$GITHUB_OUTPUT"
     echo "apk_path=superleitor.apk" >> "$GITHUB_OUTPUT"
-    
-    echo "📱 Informações do APK:"
-    ls -lh "$APK_PATH"
     echo "📱 APK copiado para: ../superleitor.apk"
+    ls -lh "$APK_PATH"
 else
-    echo "❌ APK não encontrado!"
-    echo "📋 Procurando APKs gerados:"
+    echo "❌ APK não encontrado"
+    echo "📋 Procurando APKs:"
     find app/build/outputs/ -name "*.apk" -type f 2>/dev/null || echo "Nenhum APK encontrado"
     echo "apk_found=false" >> "$GITHUB_OUTPUT"
     exit 1

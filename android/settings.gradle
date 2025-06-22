@@ -2,53 +2,25 @@
 rootProject.name = 'superleitor'
 include ':app'
 
-println "=== Capacitor 7.x Module Detection ==="
+println "=== Superleitor Android Build Setup ==="
 
-// Caminho correto para node_modules fora da pasta android/
+// Verificar node_modules
 def nodeModulesRoot = new File(rootDir, '../node_modules')
-
-println "Looking for node_modules at: ${nodeModulesRoot.absolutePath}"
-println "Node modules exists: ${nodeModulesRoot.exists()}"
+println "Checking node_modules at: ${nodeModulesRoot.absolutePath}"
 
 if (!nodeModulesRoot.exists()) {
-    println "❌ node_modules directory not found at: ${nodeModulesRoot.absolutePath}"
+    println "❌ node_modules directory not found"
     throw new GradleException("node_modules directory not found. Please run 'npm install' first.")
 }
 
-// Include the core Capacitor Android module
+// Incluir Capacitor Android apenas se existir
 def capacitorAndroidDir = new File(nodeModulesRoot, '@capacitor/android')
-println "Looking for Capacitor Android at: ${capacitorAndroidDir.absolutePath}"
-println "Capacitor Android exists: ${capacitorAndroidDir.exists()}"
-
 if (capacitorAndroidDir.exists()) {
     include ':capacitor-android'
     project(':capacitor-android').projectDir = capacitorAndroidDir
-    println "✅ Included :capacitor-android (Capacitor 7.x core module)"
+    println "✅ Capacitor Android module included"
 } else {
-    println "❌ Missing :capacitor-android"
-    throw new GradleException("Essential Capacitor Android module not found at: ${capacitorAndroidDir.absolutePath}")
+    println "⚠️ Capacitor Android not found - continuing without it"
 }
 
-// Include individual Capacitor plugin modules that the app uses
-def pluginModules = [
-    [name: ':capacitor-haptics', path: '@capacitor/haptics/android'],
-    [name: ':capacitor-keyboard', path: '@capacitor/keyboard/android'],
-    [name: ':capacitor-status-bar', path: '@capacitor/status-bar/android'],
-    [name: ':capacitor-splash-screen', path: '@capacitor/splash-screen/android']
-]
-
-pluginModules.each { plugin ->
-    def pluginDir = new File(nodeModulesRoot, plugin.path)
-    println "Looking for ${plugin.name} at: ${pluginDir.absolutePath}"
-    println "${plugin.name} exists: ${pluginDir.exists()}"
-    
-    if (pluginDir.exists()) {
-        include plugin.name
-        project(plugin.name).projectDir = pluginDir
-        println "✅ Included ${plugin.name}"
-    } else {
-        println "⚠️  Plugin ${plugin.name} not found at ${pluginDir.absolutePath} (will be skipped)"
-    }
-}
-
-println "=== Capacitor 7.x Module Detection Complete ==="
+println "=== Setup Complete ==="

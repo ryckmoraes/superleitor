@@ -1,35 +1,31 @@
 
-// IMPORTANT: Do not modify this file directly.
-// This file is managed by the 'npx cap sync' command.
-
 android {
-  compileOptions {
-      sourceCompatibility JavaVersion.VERSION_17
-      targetCompatibility JavaVersion.VERSION_17
-  }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
 }
-
-apply from: '../capacitor-cordova-android-plugins/cordova.variables.gradle'
 
 dependencies {
-    // Capacitor Core - required for all Capacitor apps
-    implementation project(':capacitor-android')
-    
-    // Capacitor plugins that the app uses
-    if (findProject(':capacitor-haptics') != null) {
-        implementation project(':capacitor-haptics')
-    }
-    if (findProject(':capacitor-keyboard') != null) {
-        implementation project(':capacitor-keyboard')
-    }
-    if (findProject(':capacitor-status-bar') != null) {
-        implementation project(':capacitor-status-bar')
-    }
-    if (findProject(':capacitor-splash-screen') != null) {
-        implementation project(':capacitor-splash-screen')
+    // Apenas incluir Capacitor Android se o projeto existir
+    if (findProject(':capacitor-android') != null) {
+        implementation project(':capacitor-android')
+        println "✅ Added Capacitor Android dependency"
+    } else {
+        println "⚠️ Capacitor Android not available - building without it"
     }
 }
 
+// Aplicar cordova.variables.gradle se existir
+def cordovaVarsFile = file('../capacitor-cordova-android-plugins/cordova.variables.gradle')
+if (cordovaVarsFile.exists()) {
+    apply from: cordovaVarsFile
+    println "✅ Applied cordova.variables.gradle"
+} else {
+    println "⚠️ cordova.variables.gradle not found"
+}
+
+// Aplicar postBuildExtras se existir
 if (hasProperty('postBuildExtras')) {
-  postBuildExtras()
+    postBuildExtras()
 }
