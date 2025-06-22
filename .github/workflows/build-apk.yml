@@ -1,4 +1,5 @@
 
+
 name: Android Build
 
 on:
@@ -36,11 +37,38 @@ jobs:
       - name: 📂 Mostrar estrutura node_modules/@capacitor
         run: ls -R node_modules/@capacitor || echo "⚠️ node_modules/@capacitor não encontrado"
 
-      - name: 🔧 Configurar permissões Gradle
+      - name: 🔧 Configurar Gradle Wrapper
         run: |
+          echo "Verificando arquivos do Gradle Wrapper..."
+          
+          # Configurar permissões do gradlew
           chmod +x android/gradlew
+          
+          # Verificar se gradle-wrapper.jar existe
+          if [ ! -f "android/gradle/wrapper/gradle-wrapper.jar" ]; then
+            echo "⚠️ gradle-wrapper.jar não encontrado, baixando..."
+            
+            # Baixar gradle-wrapper.jar diretamente
+            mkdir -p android/gradle/wrapper
+            curl -L -o android/gradle/wrapper/gradle-wrapper.jar \
+              "https://github.com/gradle/gradle/raw/v8.2.1/gradle/wrapper/gradle-wrapper.jar" || {
+              echo "❌ Falha ao baixar gradle-wrapper.jar"
+              exit 1
+            }
+            
+            echo "✅ gradle-wrapper.jar baixado com sucesso"
+          else
+            echo "✅ gradle-wrapper.jar já existe"
+          fi
+          
+          # Verificar outros arquivos wrapper
           ls -la android/gradlew
-          echo "✅ Permissões do gradlew configuradas"
+          ls -la android/gradle/wrapper/
+          
+          # Testar gradlew
+          cd android && ./gradlew --version --no-daemon
+          
+          echo "✅ Gradle Wrapper configurado corretamente"
         working-directory: .
 
       - name: 🧹 Limpar build anterior
@@ -61,3 +89,4 @@ jobs:
         with:
           name: app-release.apk
           path: android/app/build/outputs/apk/release/app-release.apk
+
