@@ -2,25 +2,25 @@
 rootProject.name = 'superleitor'
 include ':app'
 
-println "=== Superleitor Android Build Setup ==="
+println "=== Superleitor Build Configuration ==="
 
-// Verificar node_modules
+// Basic node_modules validation
 def nodeModulesRoot = new File(rootDir, '../node_modules')
-println "Checking node_modules at: ${nodeModulesRoot.absolutePath}"
-
 if (!nodeModulesRoot.exists()) {
-    println "❌ node_modules directory not found"
-    throw new GradleException("node_modules directory not found. Please run 'npm install' first.")
+    println "❌ node_modules not found - run 'npm install' first"
+    throw new GradleException("Missing node_modules directory")
 }
 
-// Incluir Capacitor Android apenas se existir
+// Only include Capacitor Android if it actually exists and is valid
 def capacitorAndroidDir = new File(nodeModulesRoot, '@capacitor/android')
-if (capacitorAndroidDir.exists()) {
+def capacitorBuildFile = new File(capacitorAndroidDir, 'build.gradle')
+
+if (capacitorAndroidDir.exists() && capacitorBuildFile.exists()) {
     include ':capacitor-android'
     project(':capacitor-android').projectDir = capacitorAndroidDir
-    println "✅ Capacitor Android module included"
+    println "✅ Capacitor Android included"
 } else {
-    println "⚠️ Capacitor Android not found - continuing without it"
+    println "⚠️ Building without Capacitor Android - basic app only"
 }
 
-println "=== Setup Complete ==="
+println "=== Configuration Complete ==="

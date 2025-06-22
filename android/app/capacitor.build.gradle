@@ -7,25 +7,31 @@ android {
 }
 
 dependencies {
-    // Apenas incluir Capacitor Android se o projeto existir
+    // Only add Capacitor dependency if the project actually exists
     if (findProject(':capacitor-android') != null) {
         implementation project(':capacitor-android')
-        println "✅ Added Capacitor Android dependency"
+        println "✅ Capacitor Android dependency added"
     } else {
-        println "⚠️ Capacitor Android not available - building without it"
+        println "⚠️ Capacitor Android not available - building basic app"
     }
 }
 
-// Aplicar cordova.variables.gradle se existir
+// Safe application of Cordova variables
 def cordovaVarsFile = file('../capacitor-cordova-android-plugins/cordova.variables.gradle')
 if (cordovaVarsFile.exists()) {
-    apply from: cordovaVarsFile
-    println "✅ Applied cordova.variables.gradle"
-} else {
-    println "⚠️ cordova.variables.gradle not found"
+    try {
+        apply from: cordovaVarsFile
+        println "✅ Cordova variables applied"
+    } catch (Exception e) {
+        println "⚠️ Could not apply cordova variables: ${e.message}"
+    }
 }
 
-// Aplicar postBuildExtras se existir
+// Safe postBuildExtras execution
 if (hasProperty('postBuildExtras')) {
-    postBuildExtras()
+    try {
+        postBuildExtras()
+    } catch (Exception e) {
+        println "⚠️ postBuildExtras failed: ${e.message}"
+    }
 }
