@@ -65,8 +65,10 @@ jobs:
 
       - name: 🚩 Substituir arquivos ic_launcher_round.png corrompidos
         run: |
+          echo "Diretório atual: $(pwd)"
+          ls -l "$GITHUB_WORKSPACE/.github/resources/ic_launcher_round.png"
           for dir in android/app/src/main/res/mipmap-*; do
-            cp .github/resources/ic_launcher_round.png "$dir/ic_launcher_round.png"
+            cp "$GITHUB_WORKSPACE/.github/resources/ic_launcher_round.png" "$dir/ic_launcher_round.png"
           done
           echo "Todos os ícones ic_launcher_round.png substituídos com sucesso."
 
