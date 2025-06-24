@@ -52,55 +52,100 @@ export const keepScreenOn = async (): Promise<boolean> => {
       return false;
     }
   } catch (err) {
-    console.error('Error keeping screen on:', err);
+    console.error('Erro ao manter tela ligada:', err);
     return false;
   }
 };
 
 // Request permissions needed for Android audio app
 export const requestAndroidPermissions = async (): Promise<boolean> => {
+  console.log("Iniciando solicitação de permissões Android...");
+  
   try {
     // Cast window to include Capacitor
     const capacitorWindow = window as CapacitorWindow;
     
-    // Only if the app is running in Capacitor (Android native)
+    // Check if running in Capacitor (Android native)
     if (capacitorWindow.Capacitor && capacitorWindow.Capacitor.isNativePlatform()) {
+      console.log("Executando em plataforma nativa Capacitor");
+      
       const Permissions = capacitorWindow.Capacitor.Plugins?.Permissions;
       
       if (Permissions) {
         try {
-          // Request microphone permission
+          console.log("Verificando status da permissão do microfone...");
+          
+          // Check microphone permission status first
           const micStatus = await Permissions.query({ name: 'microphone' });
+          console.log("Status atual da permissão do microfone:", micStatus.state);
           
           if (micStatus.state !== 'granted') {
+            console.log("Solicitando permissão do microfone...");
             const result = await Permissions.request({ name: 'microphone' });
+            console.log("Resultado da solicitação:", result.state);
+            
             if (result.state !== 'granted') {
-              console.warn('Microphone permission not granted');
+              console.warn('Permissão do microfone não foi concedida');
               return false;
             }
           }
           
+          console.log("✅ Permissões Android concedidas com sucesso");
           return true;
+          
         } catch (permError) {
-          console.error("Permission error:", permError);
-          // Fallback to browser permissions for testing
+          console.error("Erro nas permissões do Capacitor:", permError);
+          
+          // Fallback: tentar getUserMedia como teste
+          console.log("Tentando fallback com getUserMedia...");
           if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            await navigator.mediaDevices.getUserMedia({ audio: true });
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach(track => track.stop());
+            console.log("Fallback getUserMedia bem-sucedido");
             return true;
           }
         }
+      } else {
+        console.log("Plugin Permissions não disponível no Capacitor");
       }
+    } else {
+      console.log("Não executando em plataforma nativa, usando API web");
     }
     
-    // Fallback for browser
+    // Fallback for browser or when Capacitor permissions fail
+    console.log("Usando fallback para browser...");
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        } 
+      });
+      
+      console.log("Stream de áudio obtida via getUserMedia");
+      stream.getTracks().forEach(track => {
+        track.stop();
+        console.log("Track parada:", track.kind);
+      });
+      
       return true;
     }
     
+    console.warn("getUserMedia não disponível");
     return false;
+    
   } catch (err) {
-    console.error('Error requesting Android permissions:', err);
+    console.error('Erro ao solicitar permissões Android:', err);
+    
+    if (err instanceof Error) {
+      if (err.name === 'NotAllowedError') {
+        console.error("Usuário negou a permissão");
+      } else if (err.name === 'NotFoundError') {
+        console.error("Dispositivo de áudio não encontrado");
+      }
+    }
+    
     return false;
   }
 };

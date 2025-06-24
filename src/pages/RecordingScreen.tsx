@@ -37,7 +37,7 @@ const RecordingScreen = () => {
   const { error: voskError } = useVoskSetup();
   const { isUnlocked, remainingTime, checkUnlockStatus, unlockApp } = useAppUnlock();
   const { isDarkMode, toggleTheme } = ThemeManager();
-  const { hasMicrophonePermission, requestMicrophonePermission } = MicrophonePermissionHandler();
+  const { hasMicrophonePermission, requestMicrophonePermission, permissionChecked } = MicrophonePermissionHandler();
   
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -80,6 +80,21 @@ const RecordingScreen = () => {
       setErrorMessage(t('recordingScreen.voskInitError', { error: voskError }));
     }
   }, [voskError, t]);
+
+  // Add permission status logging
+  useEffect(() => {
+    if (permissionChecked) {
+      console.log("Status das permissões verificado:", {
+        hasMicrophonePermission,
+        language,
+        isUnlocked
+      });
+      
+      if (!hasMicrophonePermission) {
+        console.warn("⚠️ Permissão do microfone não concedida");
+      }
+    }
+  }, [permissionChecked, hasMicrophonePermission, language, isUnlocked]);
   
   const resetPatternDetection = () => {
     if (patternDetectorRef.current) {
@@ -178,6 +193,21 @@ const RecordingScreen = () => {
     <>
       <SpeechInitializer />
       <WelcomeHandler loaded={loaded} />
+      
+      {/* Show permission status if not checked yet */}
+      {!permissionChecked && (
+        <div className="fixed top-4 left-4 right-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
+          <p className="text-yellow-800">Verificando permissões do sistema...</p>
+        </div>
+      )}
+      
+      {/* Show permission denied message */}
+      {permissionChecked && !hasMicrophonePermission && (
+        <div className="fixed top-4 left-4 right-4 bg-red-50 border border-red-200 rounded-lg p-3 text-sm">
+          <p className="text-red-800 font-medium">Permissão do microfone necessária</p>
+          <p className="text-red-600 mt-1">Toque no botão de gravação para solicitar acesso.</p>
+        </div>
+      )}
       
       <PatternDetector 
         ref={patternDetectorRef}
