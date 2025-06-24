@@ -2,10 +2,12 @@
 import { useEffect, useState } from "react";
 import { isAndroid, requestAndroidPermissions, keepScreenOn } from "@/utils/androidHelper";
 import { showToastOnly } from "@/services/notificationService";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const MicrophonePermissionHandler = () => {
   const [hasMicrophonePermission, setHasMicrophonePermission] = useState(false);
   const [permissionChecked, setPermissionChecked] = useState(false);
+  const { language } = useLanguage();
 
   // Check microphone permissions
   useEffect(() => {
@@ -76,6 +78,20 @@ const MicrophonePermissionHandler = () => {
       checkMicrophonePermission();
     }
   }, [permissionChecked]);
+
+  // Add permission status logging
+  useEffect(() => {
+    if (permissionChecked) {
+      console.log("Status das permissões verificado:", {
+        hasMicrophonePermission,
+        language,
+      });
+      
+      if (!hasMicrophonePermission) {
+        console.warn("⚠️ Permissão do microfone não concedida");
+      }
+    }
+  }, [permissionChecked, hasMicrophonePermission, language]);
 
   // Request microphone permission
   const requestMicrophonePermission = async () => {
