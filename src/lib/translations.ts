@@ -1,713 +1,538 @@
-export const translations = {
-  pt: {
-    greetings: {
-      locked: "Olá! Conte-me uma história para desbloquear o SuperLeitor.",
-      unlocked: "Olá! Você pode continuar usando o app.",
-    },
-    recordingScreen: {
-      appUnlocked: "App Desbloqueado",
-      remainingTime: "Você ainda tem {time} minutos de uso.",
-      canContinue: "Você pode continuar usando o app",
-      error: "Erro",
-      voskInitError: "Erro ao inicializar VOSK: {error}",
-      earnedTime: "O app foi desbloqueado por {time} minutos!",
-      tellMore: "Conte mais da sua história! Estou ouvindo...",
-      remainingTimeLabel: "Tempo restante",
-    },
-    recordingManager: {
-      analyzingStory: "Legal! Vou analisar sua história...",
-      storyReceived: "História recebida!",
-      recordingFinished: "Gravação finalizada após {time} segundos.",
-      noStoryDetected: "Nenhuma história detectada",
-      noStoryDetectedDescription: "Não consegui ouvir sua história. Tente novamente falando mais alto.",
-      tryAgain: "Não consegui ouvir sua história. Vamos tentar novamente?",
-      storyModeActive: "Modo História Ativado",
-      storyModeActiveDescription: "Conte sua história para a Esfera Sonora!",
-      listening: "Estou ouvindo! Pode contar sua história...",
-    },
-    languageSelector: {
-      title: "Selecionar Idioma",
-      save: "Salvar",
-      selectedLanguageLabel: "Idioma Selecionado",
-      selectPlaceholder: "Selecione um idioma",
-      downloadRequired: "Este modelo precisa ser baixado para ser usado.",
-      downloadNow: "Baixar agora",
-      downloadInProgress: "Download em andamento",
-      downloadingModel: "Baixando modelo de idioma...",
-      speed: "Velocidade",
-      estimatedTime: "Tempo estimado",
-      downloadSource: "Baixando de alphacephei.com (servidor oficial VOSK)",
-      cancelDownload: "Cancelar Download",
-      availableModels: "Modelos Disponíveis",
-      size: "Tamanho",
-      active: "Ativo",
-      select: "Selecionar",
-      download: "Baixar",
-      backToApp: "Voltar para o aplicativo",
-      close: "Fechar",
-      languageSaved: "Idioma salvo",
-      languageChanged: "O idioma foi alterado para {name}",
-      languageChangeError: "Erro ao mudar idioma",
-      languageChangeErrorDescription: "Ocorreu um erro ao alterar o idioma.",
-      downloading: "Baixando",
-      errorDownloading: "Erro no download",
-      errorDownloadingDescription: "Não foi possível baixar o modelo de idioma.",
-      downloadCanceled: "Download cancelado",
-      downloadCanceledDescription: "O download do modelo de idioma foi cancelado.",
-      startingDownload: 'Iniciando download...',
-      finishingDownload: 'Finalizando...',
-      installing: 'Instalando modelo...',
-      canceling: 'Cancelando...',
-      calculating: 'calculando...',
-      downloadInProgressDescriptionToast: "Aguarde o download atual terminar antes de iniciar outro.",
-      operationInProgressTitle: "Operação em andamento",
-      operationInProgressDescription: "Por favor, aguarde a conclusão da operação atual.",
-      cancelDownloadPrompt: "Deseja cancelar o download antes de sair?",
-    },
-    recognitionStatus: {
-      waiting: "Aguardando áudio...",
-      listening: "Ouvindo...",
-      analyzing: "Analisando...",
-      processing: "Processando resultado final...",
-      ready: "Pronto.",
-      error: "Erro: {error}",
-    },
-    analysis: {
-      result: "Análise concluída: {summary}. Precisão: {accuracy}%. Padrão: {pattern}.",
-    },
-    speechInitializer: {
-      title: "Reconhecimento de fala",
-      ready: "Pronto para ouvir em {languageName}",
-      info: "Informação",
-      offlineNotAvailable: "Reconhecimento offline não disponível. Usando alternativa online."
-    },
-    welcomeSplash: {
-      heading: "Bem-vindo ao",
-      appName: "Superleitor",
-      description: "O assistente de leitura que transforma sua aprendizagem com recursos interativos e imersivos",
-      startReading: "Iniciar Leitura",
-      configure: "Configurar",
-      greetingWithName: "Olá {name}! Pronto para melhorar sua leitura hoje?",
-      readerPlaceholder: "Leitor",
-    },
-    splashScreen: {
-      languageActivatedTitle: "Novo idioma ativado",
-      languageActivatedDescription: "O idioma ativo é {name} ({language})",
-      selectedLanguageLabel: "Idioma selecionado",
-      signature: "Superleitor - Transformando a maneira como você lê"
-    },
-    menu: {
-      title: "Menu",
-      openMenu: "Abrir menu",
-      closeMenu: "Fechar menu",
-      settings: "Configurações",
-      languages: "Idiomas",
-      resetOnboarding: "Reiniciar Configuração",
-      exitApp: "Sair do Aplicativo",
-      exitTitle: "Saindo do aplicativo",
-      exitDescription: "Obrigado por usar o Esfera Sonora!",
-      exitErrorTitle: "Erro ao sair",
-      exitErrorDescription: "Não foi possível sair corretamente do aplicativo.",
-      logoutTitle: "Logout realizado",
-      logoutDescription: "Você saiu da sua conta. Configuração inicial será necessária.",
-      accessSettings: "Acessar Configurações",
-      accessLanguages: "Acessar Idiomas",
-    },
-    recordingControls: {
-      appName: "SuperLeitor",
-      storyMode: "Modo História",
-      recordingTime: "Tempo de gravação: {time} segundos",
-      startStory: "Iniciar História",
-      stopStory: "Parar História",
-    },
-    settings: {
-      title: "Configurações",
-      appearance: "Aparência",
-      themeModeLabel: "Modo {mode}",
-      day: "Dia",
-      night: "Noturno",
-      security: "Segurança",
-      createPassword: "Criar Senha",
-      changePassword: "Alterar Senha",
-      passwordInfo: "A senha protege o acesso às configurações e a saída do aplicativo.",
+import { getNavigatorLanguage } from "@/utils/getNavigatorLanguage";
+
+interface Translation {
+  [key: string]: {
+    pt: string;
+    en: string;
+    es: string;
+  };
+}
+
+const translations = {
+  appTitle: {
+    pt: "Super Leitor",
+    en: "Super Reader",
+    es: "Super Lector",
+  },
+  loadingScreen: {
+    loading: {
+      pt: "Carregando...",
+      en: "Loading...",
+      es: "Cargando...",
     },
   },
-  en: {
-    greetings: {
-      locked: "Hello! Tell me a story to unlock SuperReader.",
-      unlocked: "Hello! You can continue using the app.",
+  diagnosticPage: {
+    title: {
+      pt: "Diagnóstico",
+      en: "Diagnostic",
+      es: "Diagnóstico",
     },
-    recordingScreen: {
-      appUnlocked: "App Unlocked",
-      remainingTime: "You have {time} minutes of usage remaining.",
-      canContinue: "You can continue using the app",
-      error: "Error",
-      voskInitError: "Error initializing VOSK: {error}",
-      earnedTime: "The app has been unlocked for {time} minutes!",
-      tellMore: "Tell more of your story! I'm listening...",
-      remainingTimeLabel: "Remaining time",
+    description: {
+      pt: "Verifique se tudo está funcionando corretamente.",
+      en: "Check if everything is working correctly.",
+      es: "Verifique si todo está funcionando correctamente.",
     },
-    recordingManager: {
-      analyzingStory: "Great! I will analyze your story...",
-      storyReceived: "Story received!",
-      recordingFinished: "Recording finished after {time} seconds.",
-      noStoryDetected: "No story detected",
-      noStoryDetectedDescription: "I couldn't hear your story. Try speaking louder.",
-      tryAgain: "I couldn't hear your story. Shall we try again?",
-      storyModeActive: "Story Mode Activated",
-      storyModeActiveDescription: "Tell your story to the Sound Sphere!",
-      listening: "I'm listening! You can tell your story...",
+    microphoneAccess: {
+      pt: "Acesso ao Microfone",
+      en: "Microphone Access",
+      es: "Acceso al Micrófono",
     },
-    languageSelector: {
-      title: "Select Language",
-      save: "Save",
-      selectedLanguageLabel: "Selected Language",
-      selectPlaceholder: "Select a language",
-      downloadRequired: "This model needs to be downloaded before use.",
-      downloadNow: "Download now",
-      downloadInProgress: "Download in progress",
-      downloadingModel: "Downloading language model...",
-      speed: "Speed",
-      estimatedTime: "Estimated time",
-      downloadSource: "Downloading from alphacephei.com (official VOSK server)",
-      cancelDownload: "Cancel Download",
-      availableModels: "Available Models",
-      size: "Size",
-      active: "Active",
-      select: "Select",
-      download: "Download",
-      backToApp: "Back to the app",
-      close: "Close",
-      languageSaved: "Language saved",
-      languageChanged: "Language has been changed to {name}",
-      languageChangeError: "Error changing language",
-      languageChangeErrorDescription: "An error occurred while changing the language.",
-      downloading: "Downloading",
-      errorDownloading: "Error downloading",
-      errorDownloadingDescription: "Could not download the language model.",
-      downloadCanceled: "Download canceled",
-      downloadCanceledDescription: "The language model download has been canceled.",
-      startingDownload: 'Starting download...',
-      finishingDownload: 'Finishing...',
-      installing: 'Installing model...',
-      canceling: 'Canceling...',
-      calculating: 'calculating...',
-      downloadInProgressDescriptionToast: "Please wait for the current download to finish before starting another.",
-      operationInProgressTitle: "Operation in progress",
-      operationInProgressDescription: "Please wait for the current operation to complete.",
-      cancelDownloadPrompt: "Do you want to cancel the download before leaving?",
+    microphoneStatus: {
+      pt: "Status do Microfone",
+      en: "Microphone Status",
+      es: "Estado del Micrófono",
     },
-    recognitionStatus: {
-      waiting: "Waiting for audio...",
-      listening: "Listening...",
-      analyzing: "Analyzing...",
-      processing: "Processing final result...",
-      ready: "Ready.",
-      error: "Error: {error}",
+    checkMicrophone: {
+      pt: "Verificar Microfone",
+      en: "Check Microphone",
+      es: "Verificar Micrófono",
     },
-    analysis: {
-      result: "Analysis complete: {summary}. Accuracy: {accuracy}%. Pattern: {pattern}.",
+    microphoneWorking: {
+      pt: "Microfone está funcionando!",
+      en: "Microphone is working!",
+      es: "¡El micrófono está funcionando!",
     },
-    speechInitializer: {
-      title: "Speech Recognition",
-      ready: "Ready to listen in {languageName}",
-      info: "Information",
-      offlineNotAvailable: "Offline recognition not available. Using online alternative."
+    noMicrophoneDetected: {
+      pt: "Nenhum microfone detectado.",
+      en: "No microphone detected.",
+      es: "No se detectó ningún micrófono.",
     },
-    welcomeSplash: {
-      heading: "Welcome to",
-      appName: "Superreader",
-      description: "The reading assistant that transforms your learning with interactive and immersive features",
-      startReading: "Start Reading",
-      configure: "Set Up",
-      greetingWithName: "Hello {name}! Ready to improve your reading today?",
-      readerPlaceholder: "Reader",
+    speechRecognition: {
+      pt: "Reconhecimento de Voz",
+      en: "Speech Recognition",
+      es: "Reconocimiento de Voz",
     },
-    splashScreen: {
-      languageActivatedTitle: "Language activated",
-      languageActivatedDescription: "Active language is {name} ({language})",
-      selectedLanguageLabel: "Selected language",
-      signature: "Superreader – Transforming the way you read"
+    speechRecognitionStatus: {
+      pt: "Status do Reconhecimento de Voz",
+      en: "Speech Recognition Status",
+      es: "Estado del Reconocimiento de Voz",
     },
-    menu: {
-      title: "Menu",
-      openMenu: "Open menu",
-      closeMenu: "Close menu",
-      settings: "Settings",
-      languages: "Languages",
-      resetOnboarding: "Restart Setup",
-      exitApp: "Exit App",
-      exitTitle: "Exiting app",
-      exitDescription: "Thank you for using Sound Sphere!",
-      exitErrorTitle: "Error exiting",
-      exitErrorDescription: "Could not exit the app properly.",
-      logoutTitle: "Logged out",
-      logoutDescription: "You have logged out. Setup will be required.",
-      accessSettings: "Access Settings",
-      accessLanguages: "Access Languages",
+    startRecognition: {
+      pt: "Iniciar Reconhecimento",
+      en: "Start Recognition",
+      es: "Iniciar Reconocimiento",
     },
-    recordingControls: {
-      appName: "SuperReader",
-      storyMode: "Story Mode",
-      recordingTime: "Recording time: {time} seconds",
-      startStory: "Start Story",
-      stopStory: "Stop Story",
+    recognitionWorking: {
+      pt: "Reconhecimento de voz está funcionando!",
+      en: "Speech recognition is working!",
+      es: "¡El reconocimiento de voz está funcionando!",
     },
-    settings: {
-      title: "Settings",
-      appearance: "Appearance",
-      themeModeLabel: "{mode} Mode",
-      day: "Day",
-      night: "Night",
-      security: "Security",
-      createPassword: "Create Password",
-      changePassword: "Change Password",
-      passwordInfo: "The password protects access to settings and exiting the app.",
+    recognitionNotWorking: {
+      pt: "Reconhecimento de voz não está funcionando.",
+      en: "Speech recognition is not working.",
+      es: "El reconocimiento de voz no está funcionando.",
+    },
+    audioPlayback: {
+      pt: "Reprodução de Áudio",
+      en: "Audio Playback",
+      es: "Reproducción de Audio",
+    },
+    playbackStatus: {
+      pt: "Status da Reprodução de Áudio",
+      en: "Audio Playback Status",
+      es: "Estado de la Reproducción de Audio",
+    },
+    startPlayback: {
+      pt: "Iniciar Reprodução",
+      en: "Start Playback",
+      es: "Iniciar Reproducción",
+    },
+    playbackWorking: {
+      pt: "Reprodução de áudio está funcionando!",
+      en: "Audio playback is working!",
+      es: "¡La reproducción de audio está funcionando!",
+    },
+    playbackNotWorking: {
+      pt: "Reprodução de áudio não está funcionando.",
+      en: "Audio playback is not working.",
+      es: "La reproducción de audio no está funcionando.",
+    },
+    allGood: {
+      pt: "Tudo parece estar funcionando corretamente!",
+      en: "Everything seems to be working correctly!",
+      es: "¡Todo parece estar funcionando correctamente!",
+    },
+    somethingIsWrong: {
+      pt: "Algo não está funcionando corretamente.",
+      en: "Something is not working correctly.",
+      es: "Algo no está funcionando correctamente.",
+    },
+    tryAgain: {
+      pt: "Tente novamente mais tarde.",
+      en: "Try again later.",
+      es: "Inténtalo de nuevo más tarde.",
     },
   },
-  es: {
-    greetings: {
-      locked: "¡Hola! Cuéntame una historia para desbloquear SuperLector.",
-      unlocked: "¡Hola! Puedes seguir usando la app.",
+  splashScreen: {
+    title: {
+      pt: "Configuração Inicial",
+      en: "Initial Setup",
+      es: "Configuración Inicial",
     },
-    recordingScreen: {
-      appUnlocked: "App Desbloqueada",
-      remainingTime: "Te quedan {time} minutos de uso.",
-      canContinue: "Puedes seguir usando la app",
-      error: "Error",
-      voskInitError: "Error al inicializar VOSK: {error}",
-      earnedTime: "¡La app ha sido desbloqueada por {time} minutos!",
-      tellMore: "¡Cuenta más de tu historia! Estoy escuchando...",
-      remainingTimeLabel: "Tiempo restante",
+    description: {
+      pt: "Estamos preparando tudo para você.",
+      en: "We are preparing everything for you.",
+      es: "Estamos preparando todo para ti.",
     },
-    recordingManager: {
-      analyzingStory: "¡Genial! Analizaré tu historia...",
-      storyReceived: "¡Historia recibida!",
-      recordingFinished: "Grabación finalizada después de {time} segundos.",
-      noStoryDetected: "No se detectó ninguna historia",
-      noStoryDetectedDescription: "No pude oír tu historia. Intenta hablar más alto.",
-      tryAgain: "¿No pude oír tu historia. Lo intentamos de nuevo?",
-      storyModeActive: "Modo Historia Activado",
-      storyModeActiveDescription: "¡Cuenta tu historia a la Esfera Sonora!",
-      listening: "¡Estoy escuchando! Puedes contar tu historia...",
+    loadingModel: {
+      pt: "Carregando modelo de reconhecimento de voz...",
+      en: "Loading speech recognition model...",
+      es: "Cargando modelo de reconocimiento de voz...",
     },
-    languageSelector: {
-      title: "Seleccionar Idioma",
-      save: "Guardar",
-      selectedLanguageLabel: "Idioma Seleccionado",
-      selectPlaceholder: "Selecciona un idioma",
-      downloadRequired: "Este modelo debe ser descargado para ser usado.",
-      downloadNow: "Descargar ahora",
-      downloadInProgress: "Descarga en progreso",
-      downloadingModel: "Descargando modelo de idioma...",
-      speed: "Velocidad",
-      estimatedTime: "Tiempo estimado",
-      downloadSource: "Descargando de alphacephei.com (servidor oficial VOSK)",
-      cancelDownload: "Cancelar Descarga",
-      availableModels: "Modelos Disponibles",
-      size: "Tamaño",
-      active: "Activo",
-      select: "Seleccionar",
-      download: "Descargar",
-      backToApp: "Volver a la aplicación",
-      close: "Cerrar",
-      languageSaved: "Idioma guardado",
-      languageChanged: "El idioma ha sido cambiado a {name}",
-      languageChangeError: "Error al cambiar de idioma",
-      languageChangeErrorDescription: "Ocurrió un error al cambiar el idioma.",
-      downloading: "Descargando",
-      errorDownloading: "Error de descarga",
-      errorDownloadingDescription: "No se pudo descargar el modelo de idioma.",
-      downloadCanceled: "Descarga cancelada",
-      downloadCanceledDescription: "La descarga del modelo de idioma ha sido cancelada.",
-      startingDownload: 'Iniciando descarga...',
-      finishingDownload: 'Finalizando...',
-      installing: 'Instalando modelo...',
-      canceling: 'Cancelando...',
-      calculating: 'calculando...',
-      downloadInProgressDescriptionToast: "Por favor, espere a que termine la descarga actual antes de iniciar otra.",
-      operationInProgressTitle: "Operación en progreso",
-      operationInProgressDescription: "Por favor, espere a que se complete la operación actual.",
-      cancelDownloadPrompt: "¿Deseas cancelar la descarga antes de salir?",
+    initializing: {
+      pt: "Inicializando...",
+      en: "Initializing...",
+      es: "Inicializando...",
     },
-    recognitionStatus: {
-      waiting: "Esperando audio...",
-      listening: "Escuchando...",
-      analyzing: "Analizando...",
-      processing: "Procesando resultado final...",
-      ready: "Listo.",
-      error: "Error: {error}",
+    done: {
+      pt: "Tudo pronto!",
+      en: "All set!",
+      es: "¡Todo listo!",
     },
-    analysis: {
-      result: "Análisis completo: {summary}. Precisión: {accuracy}%. Patrón: {pattern}.",
-    },
-    speechInitializer: {
-      title: "Reconocimiento de voz",
-      ready: "Listo para escuchar en {languageName}",
-      info: "Información",
-      offlineNotAvailable: "Reconocimiento sin conexión no disponible. Usando alternativa en línea."
-    },
-    welcomeSplash: {
-      heading: "Bienvenido a",
-      appName: "Superlector",
-      description: "El asistente de lectura que transforma tu aprendizaje con funciones interactivas e inmersivas",
-      startReading: "Comenzar Lectura",
-      configure: "Configurar",
-      greetingWithName: "¡Hola {name}! ¿Listo para mejorar tu lectura hoy?",
-      readerPlaceholder: "Lector",
-    },
-    splashScreen: {
-      languageActivatedTitle: "Nuevo idioma activado",
-      languageActivatedDescription: "El idioma activo es {name} ({language})",
-      selectedLanguageLabel: "Idioma seleccionado",
-      signature: "Superlector - Transformando la forma en que lees"
-    },
-    menu: {
-      title: "Menú",
-      openMenu: "Abrir menú",
-      closeMenu: "Cerrar menú",
-      settings: "Ajustes",
-      languages: "Idiomas",
-      resetOnboarding: "Reiniciar Configuración",
-      exitApp: "Salir de la aplicación",
-      exitTitle: "Saliendo de la aplicación",
-      exitDescription: "¡Gracias por usar Sound Sphere!",
-      exitErrorTitle: "Error al salir",
-      exitErrorDescription: "No se pudo salir de la aplicación correctamente.",
-      logoutTitle: "Desconectado",
-      logoutDescription: "Ha cerrado sesión. Se requerirá la configuración.",
-      accessSettings: "Acceder a la configuración",
-      accessLanguages: "Acceder a los idiomas",
-    },
-    recordingControls: {
-      appName: "Superlector",
-      storyMode: "Modo historia",
-      recordingTime: "Tiempo de grabación: {time} segundos",
-      startStory: "Empezar historia",
-      stopStory: "Parar historia",
-    },
-    settings: {
-      title: "Ajustes",
-      appearance: "Apariencia",
-      themeModeLabel: "Modo {mode}",
-      day: "Día",
-      night: "Noche",
-      security: "Seguridad",
-      createPassword: "Crear contraseña",
-      changePassword: "Cambiar la contraseña",
-      passwordInfo: "La contraseña protege el acceso a la configuración y la salida de la aplicación.",
+    continue: {
+      pt: "Continuar",
+      en: "Continue",
+      es: "Continuar",
     },
   },
-  fr: {
-    greetings: {
-        locked: "Bonjour! Racontez-moi une histoire pour déverrouiller SuperLecteur.",
-        unlocked: "Bonjour! Vous pouvez continuer à utiliser l'application.",
+  index: {
+    title: {
+      pt: "Bem-vindo ao Super Leitor!",
+      en: "Welcome to Super Reader!",
+      es: "¡Bienvenido a Super Lector!",
     },
-    recordingScreen: {
-        appUnlocked: "Application déverrouillée",
-        remainingTime: "Il vous reste {time} minutes d'utilisation.",
-        canContinue: "Vous pouvez continuer à utiliser l'application",
-        error: "Erreur",
-        voskInitError: "Erreur lors de l'initialisation de VOSK: {error}",
-        earnedTime: "L'application a été déverrouillée pendant {time} minutes!",
-        tellMore: "Racontez plus de votre histoire! J'écoute...",
-        remainingTimeLabel: "Temps restant",
+    description: {
+      pt: "Um aplicativo para ajudar você a praticar a leitura e a escrita.",
+      en: "An application to help you practice reading and writing.",
+      es: "Una aplicación para ayudarte a practicar la lectura y la escritura.",
     },
-    recordingManager: {
-        analyzingStory: "Super! Je vais analyser votre histoire...",
-        storyReceived: "Histoire reçue!",
-        recordingFinished: "Enregistrement terminé après {time} secondes.",
-        noStoryDetected: "Aucune histoire détectée",
-        noStoryDetectedDescription: "Je n'ai pas pu entendre votre histoire. Essayez de parler plus fort.",
-        tryAgain: "Je n'ai pas pu entendre votre histoire. On réessaye?",
-        storyModeActive: "Mode Histoire Activé",
-        storyModeActiveDescription: "Racontez votre histoire à la Sphère Sonore!",
-        listening: "J'écoute! Vous pouvez raconter votre histoire...",
+    start: {
+      pt: "Começar",
+      en: "Start",
+      es: "Empezar",
     },
-    languageSelector: {
-        title: "Sélectionner la langue",
-        save: "Enregistrer",
-        selectedLanguageLabel: "Langue sélectionnée",
-        selectPlaceholder: "Sélectionnez une langue",
-        downloadRequired: "Ce modèle doit être téléchargé avant utilisation.",
-        downloadNow: "Télécharger maintenant",
-        downloadInProgress: "Téléchargement en cours",
-        downloadingModel: "Téléchargement du modèle de langue...",
-        speed: "Vitesse",
-        estimatedTime: "Temps estimé",
-        downloadSource: "Téléchargement depuis alphacephei.com (serveur officiel VOSK)",
-        cancelDownload: "Annuler le téléchargement",
-        availableModels: "Modèles disponibles",
-        size: "Taille",
-        active: "Actif",
-        select: "Sélectionner",
-        download: "Télécharger",
-        backToApp: "Retour à l'application",
-        close: "Fermer",
-        languageSaved: "Langue enregistrée",
-        languageChanged: "La langue a été changée en {name}",
-        languageChangeError: "Erreur lors du changement de langue",
-        languageChangeErrorDescription: "Une erreur est survenue lors du changement de langue.",
-        downloading: "Téléchargement",
-        errorDownloading: "Erreur de téléchargement",
-        errorDownloadingDescription: "Impossible de télécharger le modèle de langue.",
-        downloadCanceled: "Téléchargement annulé",
-        downloadCanceledDescription: "Le téléchargement du modèle de langue a été annulé.",
-        startingDownload: "Démarrage du téléchargement...",
-        finishingDownload: "Finalisation...",
-        installing: "Installation du modèle...",
-        canceling: "Annulation...",
-        calculating: "calcul...",
-        downloadInProgressDescriptionToast: "Veuillez attendre la fin du téléchargement actuel avant d'en lancer un autre.",
-        operationInProgressTitle: "Opération en cours",
-        operationInProgressDescription: "Veuillez attendre la fin de l'opération en cours.",
-        cancelDownloadPrompt: "Voulez-vous annuler le téléchargement avant de quitter ?",
-    },
-    recognitionStatus: {
-        waiting: "En attente d'audio...",
-        listening: "Écoute...",
-        analyzing: "Analyse...",
-        processing: "Traitement du résultat final...",
-        ready: "Prêt.",
-        error: "Erreur: {error}",
-    },
-    analysis: {
-        result: "Analyse terminée: {summary}. Précision: {accuracy}%. Modèle: {pattern}.",
-    },
-    speechInitializer: {
-      title: "Reconnaissance vocale",
-      ready: "Prêt à écouter en {languageName}",
-      info: "Information",
-      offlineNotAvailable: "Reconnaissance hors ligne non disponible. Utilisation de l'alternative en ligne."
-    },
-    welcomeSplash: {
-      heading: "Bienvenue sur",
-      appName: "Superlecteur",
-      description: "L'assistant de lecture qui transforme votre apprentissage avec des fonctionnalités interactives et immersives",
-      startReading: "Commencer la Lecture",
-      configure: "Configurer",
-      greetingWithName: "Bonjour {name} ! Prêt à améliorer votre lecture aujourd'hui ?",
-      readerPlaceholder: "Lecteur",
-    },
-    splashScreen: {
-      languageActivatedTitle: "Nouvelle langue activée",
-      languageActivatedDescription: "La langue active est {name} ({language})",
-      selectedLanguageLabel: "Langue sélectionnée",
-      signature: "Superlecteur - Transformer votre façon de lire"
-    },
-    menu: {
-      title: "Menu",
-      openMenu: "Ouvrir le menu",
-      closeMenu: "Fermer le menu",
-      settings: "Paramètres",
-      languages: "Langues",
-      resetOnboarding: "Réinitialiser la configuration",
-      exitApp: "Quitter l'application",
-      exitTitle: "Quitter l'application",
-      exitDescription: "Merci d'utiliser Sound Sphere!",
-      exitErrorTitle: "Erreur lors de la sortie",
-      exitErrorDescription: "Impossible de quitter l'application correctement.",
-      logoutTitle: "Déconnecté",
-      logoutDescription: "Vous vous êtes déconnecté. La configuration sera nécessaire.",
-      accessSettings: "Accéder aux paramètres",
-      accessLanguages: "Accéder aux langues",
-    },
-    recordingControls: {
-      appName: "Superlecteur",
-      storyMode: "Mode histoire",
-      recordingTime: "Temps d'enregistrement: {time} secondes",
-      startStory: "Commencer l'histoire",
-      stopStory: "Arrêter l'histoire",
-    },
-    settings: {
-      title: "Paramètres",
-      appearance: "Apparence",
-      themeModeLabel: "Mode {mode}",
-      day: "Jour",
-      night: "Nuit",
-      security: "Sécurité",
-      createPassword: "Créer un mot de passe",
-      changePassword: "Changer le mot de passe",
-      passwordInfo: "Le mot de passe protège l'accès aux paramètres et à la sortie de l'application.",
+    diagnostic: {
+      pt: "Diagnóstico",
+      en: "Diagnostic",
+      es: "Diagnóstico",
     },
   },
-  de: {
-    greetings: {
-        locked: "Hallo! Erzähl mir eine Geschichte, um SuperLeser freizuschalten.",
-        unlocked: "Hallo! Du kannst die App weiterhin verwenden.",
+  recordScreen: {
+    appUnlocked: {
+      pt: "App Desbloqueado!",
+      en: "App Unlocked!",
+      es: "¡App Desbloqueada!",
     },
-    recordingScreen: {
-        appUnlocked: "App entsperrt",
-        remainingTime: "Du hast noch {time} Minuten Nutzungszeit.",
-        canContinue: "Du kannst die App weiterhin verwenden",
-        error: "Fehler",
-        voskInitError: "Fehler beim Initialisieren von VOSK: {error}",
-        earnedTime: "Die App wurde für {time} Minuten freigeschaltet!",
-        tellMore: "Erzähl mehr von deiner Geschichte! Ich höre zu...",
-        remainingTimeLabel: "Verbleibende Zeit",
+    remainingTime: {
+      pt: "Tempo restante: {time} minutos",
+      en: "Remaining time: {time} minutes",
+      es: "Tiempo restante: {time} minutos",
     },
-    recordingManager: {
-        analyzingStory: "Super! Ich werde deine Geschichte analysieren...",
-        storyReceived: "Geschichte erhalten!",
-        recordingFinished: "Aufnahme nach {time} Sekunden beendet.",
-        noStoryDetected: "Keine Geschichte erkannt",
-        noStoryDetectedDescription: "Ich konnte deine Geschichte nicht hören. Sprich bitte lauter.",
-        tryAgain: "Ich konnte deine Geschichte nicht hören. Sollen wir es nochmal versuchen?",
-        storyModeActive: "Geschichtenmodus aktiviert",
-        storyModeActiveDescription: "Erzähle deine Geschichte der Klangsphäre!",
-        listening: "Ich höre zu! Du kannst deine Geschichte erzählen...",
+    remainingTimeLabel: {
+      pt: "Tempo restante",
+      en: "Remaining time",
+      es: "Tiempo restante",
     },
-    languageSelector: {
-        title: "Sprache auswählen",
-        save: "Speichern",
-        selectedLanguageLabel: "Ausgewählte Sprache",
-        selectPlaceholder: "Wähle eine Sprache",
-        downloadRequired: "Dieses Modell muss vor der Verwendung heruntergeladen werden.",
-        downloadNow: "Jetzt herunterladen",
-        downloadInProgress: "Download läuft",
-        downloadingModel: "Sprachmodell wird heruntergeladen...",
-        speed: "Geschwindigkeit",
-        estimatedTime: "Geschätzte Zeit",
-        downloadSource: "Download von alphacephei.com (offizieller VOSK-Server)",
-        cancelDownload: "Download abbrechen",
-        availableModels: "Verfügbare Modelle",
-        size: "Größe",
-        active: "Aktiv",
-        select: "Auswählen",
-        download: "Herunterladen",
-        backToApp: "Zurück zur App",
-        close: "Schließen",
-        languageSaved: "Sprache gespeichert",
-        languageChanged: "Die Sprache wurde auf {name} geändert",
-        languageChangeError: "Fehler beim Ändern der Sprache",
-        languageChangeErrorDescription: "Beim Ändern der Sprache ist ein Fehler aufgetreten.",
-        downloading: "Wird heruntergeladen",
-        errorDownloading: "Fehler beim Herunterladen",
-        errorDownloadingDescription: "Das Sprachmodell konnte nicht heruntergeladen werden.",
-        downloadCanceled: "Download abgebrochen",
-        downloadCanceledDescription: "Der Download des Sprachmodells wurde abgebrochen.",
-        startingDownload: "Download wird gestartet...",
-        finishingDownload: "Wird abgeschlossen...",
-        installing: "Modell wird installiert...",
-        canceling: "Wird abgebrochen...",
-        calculating: "berechne...",
-        downloadInProgressDescriptionToast: "Bitte warten Sie, bis der aktuelle Download abgeschlossen ist, bevor Sie einen neuen starten.",
-        operationInProgressTitle: "Vorgang läuft",
-        operationInProgressDescription: "Bitte warten Sie, bis der aktuelle Vorgang abgeschlossen ist.",
-        cancelDownloadPrompt: "Möchten Sie den Download abbrechen, bevor Sie gehen?",
+    earnedTime: {
+      pt: "Você ganhou {time} minutos de uso!",
+      en: "You earned {time} minutes of use!",
+      es: "¡Ganaste {time} minutos de uso!",
     },
-    recognitionStatus: {
-        waiting: "Warte auf Audio...",
-        listening: "Höre zu...",
-        analyzing: "Analysiere...",
-        processing: "Verarbeite Endergebnis...",
-        ready: "Bereit.",
-        error: "Fehler: {error}",
+    error: {
+      pt: "Erro!",
+      en: "Error!",
+      es: "¡Error!",
     },
-    analysis: {
-        result: "Analyse abgeschlossen: {summary}. Genauigkeit: {accuracy}%. Muster: {pattern}.",
+    voskInitError: {
+      pt: "Erro ao inicializar o VOSK: {error}",
+      en: "Error initializing VOSK: {error}",
+      es: "Error al inicializar VOSK: {error}",
     },
-    speechInitializer: {
-      title: "Spracherkennung",
-      ready: "Bereit zum Zuhören in {languageName}",
-      info: "Information",
-      offlineNotAvailable: "Offline-Erkennung nicht verfügbar. Online-Alternative wird verwendet."
-    },
-    welcomeSplash: {
-      heading: "Willkommen bei",
-      appName: "Superleser",
-      description: "Der Leseassistent, der Ihr Lernen mit interaktiven und immersiven Funktionen verwandelt",
-      startReading: "Lesen starten",
-      configure: "Einrichten",
-      greetingWithName: "Hallo {name}! Bereit, Ihr Lesen heute zu verbessern?",
-      readerPlaceholder: "Leser",
-    },
-    splashScreen: {
-      languageActivatedTitle: "Neue Sprache aktiviert",
-      languageActivatedDescription: "Die aktive Sprache ist {name} ({language})",
-      selectedLanguageLabel: "Ausgewählte Sprache",
-      signature: "Superleser – So wird Lesen neu erlebt"
-    },
-    menu: {
-      title: "Menü",
-      openMenu: "Menü öffnen",
-      closeMenu: "Menü schließen",
-      settings: "Einstellungen",
-      languages: "Sprachen",
-      resetOnboarding: "Setup zurücksetzen",
-      exitApp: "App verlassen",
-      exitTitle: "App wird verlassen",
-      exitDescription: "Vielen Dank für die Nutzung von Sound Sphere!",
-      exitErrorTitle: "Fehler beim Verlassen",
-      exitErrorDescription: "Die App konnte nicht ordnungsgemäß verlassen werden.",
-      logoutTitle: "Abgemeldet",
-      logoutDescription: "Sie haben sich abgemeldet. Setup ist erforderlich.",
-      accessSettings: "Auf Einstellungen zugreifen",
-      accessLanguages: "Auf Sprachen zugreifen",
-    },
-    recordingControls: {
-      appName: "Superleser",
-      storyMode: "Geschichtenmodus",
-      recordingTime: "Aufnahmezeit: {time} Sekunden",
-      startStory: "Geschichte starten",
-      stopStory: "Geschichte stoppen",
-    },
-    settings: {
-      title: "Einstellungen",
-      appearance: "Aussehen",
-      themeModeLabel: "{mode}-Modus",
-      day: "Tag",
-      night: "Nacht",
-      security: "Sicherheit",
-      createPassword: "Passwort erstellen",
-      changePassword: "Passwort ändern",
-      passwordInfo: "Das Passwort schützt den Zugriff auf die Einstellungen und das Verlassen der App.",
+    tellMore: {
+      pt: "Conte mais...",
+      en: "Tell me more...",
+      es: "Cuéntame más...",
     },
   },
-};
-
-type NestedValue = string | { [key: string]: NestedValue };
-type LanguageDict = { [key: string]: NestedValue };
-
-export const getTranslation = (
-  lang: string,
-  key: string,
-  values?: Record<string, string | number>,
-  defaultValue?: string
-): string => {
-  const langKey = lang.split("-")[0] as keyof typeof translations;
-  let langDict: LanguageDict = translations[langKey] || translations.en;
-
-  // Fallback if primary language dictionary doesn't exist
-  if (!langDict) {
-    langDict = translations.pt;
-  }
-
-  const keys = key.split(".");
-  let text = keys.reduce(
-    (obj, k) => (obj && typeof obj === 'object' && obj[k] ? obj[k] : null),
-    langDict
-  ) as string | null;
-
-  if (!text) {
-    // Fallback to English for the specific key if not found in the current language
-    const fallbackDict = translations.en || translations.pt;
-    text = keys.reduce(
-        (obj, k) => (obj && typeof obj === 'object' && obj[k] ? obj[k] : null),
-        fallbackDict
-    ) as string | null;
-
-    if (!text) {
-        console.warn(`[getTranslation] No translation found for key: ${key}`);
-        return defaultValue || key;
+  recognitionStatus: {
+    waiting: {
+      pt: "Aguardando áudio...",
+      en: "Waiting for audio...",
+      es: "Esperando audio...",
+    },
+    listening: {
+      pt: "Ouvindo...",
+      en: "Listening...",
+      es: "Escuchando...",
+    },
+    analyzing: {
+      pt: "Analisando...",
+      en: "Analyzing...",
+      es: "Analizando...",
+    },
+    processing: {
+      pt: "Processando resultado final...",
+      en: "Processing final result...",
+      es: "Procesando resultado final...",
+    },
+    ready: {
+      pt: "Pronto.",
+      en: "Ready.",
+      es: "Listo.",
+    },
+    error: {
+      pt: "Erro: {error}",
+      en: "Error: {error}",
+      es: "Error: {error}",
+    },
+  },
+  greetings: {
+    welcome: {
+      pt: "Olá! Seja bem-vindo ao Super Leitor!",
+      en: "Hello! Welcome to Super Reader!",
+      es: "¡Hola! ¡Bienvenido a Super Lector!",
+    },
+    locked: {
+      pt: "Olá! Para continuar usando o app, conte uma história!",
+      en: "Hello! To continue using the app, tell a story!",
+      es: "¡Hola! Para seguir usando la app, cuenta una historia!",
+    },
+    unlocked: {
+      pt: "Olá novamente! Que bom que você voltou!",
+      en: "Hello again! Glad you're back!",
+      es: "¡Hola de nuevo! ¡Qué bueno que volviste!",
+    },
+  },
+  analysis: {
+    result: {
+      pt: "Análise: {summary}. Precisão: {accuracy}%. Padrão: {pattern}.",
+      en: "Analysis: {summary}. Accuracy: {accuracy}%. Pattern: {pattern}.",
+      es: "Análisis: {summary}. Precisión: {accuracy}%. Patrón: {pattern}.",
+    },
+  },
+  recordingManager: {
+    storyModeActive: {
+      pt: "Modo história ativado!",
+      en: "Story mode activated!",
+      es: "¡Modo historia activado!",
+    },
+    storyModeActiveDescription: {
+      pt: "Comece a contar sua história.",
+      en: "Start telling your story.",
+      es: "Empieza a contar tu historia.",
+    },
+    listening: {
+      pt: "Estou ouvindo...",
+      en: "I'm listening...",
+      es: "Estoy escuchando...",
+    },
+    storyReceived: {
+      pt: "História recebida!",
+      en: "Story received!",
+      es: "¡Historia recibida!",
+    },
+    recordingFinished: {
+      pt: "Gravação finalizada em {time} segundos.",
+      en: "Recording finished in {time} seconds.",
+      es: "Grabación finalizada en {time} segundos.",
+    },
+    analyzingStory: {
+      pt: "Analisando sua história...",
+      en: "Analyzing your story...",
+      es: "Analizando tu historia...",
+    },
+    noStoryDetected: {
+      pt: "Nenhuma história detectada!",
+      en: "No story detected!",
+      es: "¡No se detectó ninguna historia!",
+    },
+    noStoryDetectedDescription: {
+      pt: "Tente contar uma história mais longa.",
+      en: "Try telling a longer story.",
+      es: "Intenta contar una historia más larga.",
+    },
+    tryAgain: {
+      pt: "Tente novamente...",
+      en: "Try again...",
+      es: "Intenta nuevamente...",
+    },
+  },
+  hamburguerMenu: {
+    options: {
+      pt: "Opções",
+      en: "Options",
+      es: "Opciones",
+    },
+    theme: {
+      pt: "Tema",
+      en: "Theme",
+      es: "Tema",
+    },
+    light: {
+      pt: "Claro",
+      en: "Light",
+      es: "Claro",
+    },
+    dark: {
+      pt: "Escuro",
+      en: "Dark",
+      es: "Oscuro",
+    },
+    language: {
+      pt: "Idioma",
+      en: "Language",
+      es: "Idioma",
+    },
+    portuguese: {
+      pt: "Português",
+      en: "Portuguese",
+      es: "Portugués",
+    },
+    english: {
+      pt: "Inglês",
+      en: "English",
+      es: "Inglés",
+    },
+    spanish: {
+      pt: "Espanhol",
+      en: "Spanish",
+      es: "Español",
+    },
+    diagnostic: {
+      pt: "Diagnóstico",
+      en: "Diagnostic",
+      es: "Diagnóstico",
+    },
+    resetApp: {
+      pt: "Resetar App",
+      en: "Reset App",
+      es: "Resetear App",
+    },
+    resetAppConfirmation: {
+      pt: "Tem certeza que deseja resetar o app? Isso irá apagar todos os dados.",
+      en: "Are you sure you want to reset the app? This will erase all data.",
+      es: "¿Estás seguro de que quieres resetear la app? Esto borrará todos los datos.",
+    },
+    reset: {
+      pt: "Resetar",
+      en: "Reset",
+      es: "Resetear",
+    },
+    cancel: {
+      pt: "Cancelar",
+      en: "Cancel",
+      es: "Cancelar",
+    },
+    password: {
+      pt: "Senha",
+      en: "Password",
+      es: "Contraseña",
+    },
+    createPassword: {
+      pt: "Criar Senha",
+      en: "Create Password",
+      es: "Crear Contraseña",
+    },
+    changePassword: {
+      pt: "Alterar Senha",
+      en: "Change Password",
+      es: "Cambiar Contraseña",
+    },
+    removePassword: {
+      pt: "Remover Senha",
+      en: "Remove Password",
+      es: "Remover Contraseña",
+    },
+    removePasswordConfirmation: {
+      pt: "Tem certeza que deseja remover a senha? O acesso às opções ficará livre.",
+      en: "Are you sure you want to remove the password? Access to options will be free.",
+      es: "¿Estás seguro de que quieres remover la contraseña? El acceso a las opciones será libre.",
+    },
+    remove: {
+      pt: "Remover",
+      en: "Remove",
+      es: "Remover",
+    },
+  },
+  passwordDialog: {
+    verifyPassword: {
+      pt: "Verificar Senha",
+      en: "Verify Password",
+      es: "Verificar Contraseña",
+    },
+    createPassword: {
+      pt: "Criar Senha",
+      en: "Create Password",
+      es: "Crear Contraseña",
+    },
+    changePassword: {
+      pt: "Alterar Senha",
+      en: "Change Password",
+      es: "Cambiar Contraseña",
+    },
+    enterPassword: {
+      pt: "Digite sua senha para continuar.",
+      en: "Enter your password to continue.",
+      es: "Ingrese su contraseña para continuar.",
+    },
+    createPasswordDescription: {
+      pt: "Crie uma senha para proteger o acesso às configurações.",
+      en: "Create a password to protect access to settings.",
+      es: "Cree una contraseña para proteger el acceso a la configuración.",
+    },
+    changePasswordDescription: {
+      pt: "Altere sua senha atual.",
+      en: "Change your current password.",
+      es: "Cambie su contraseña actual.",
+    },
+    currentPassword: {
+      pt: "Senha Atual",
+      en: "Current Password",
+      es: "Contraseña Actual",
+    },
+    newPassword: {
+      pt: "Nova Senha",
+      en: "New Password",
+      es: "Nueva Contraseña",
+    },
+    confirmPassword: {
+      pt: "Confirmar Senha",
+      en: "Confirm Password",
+      es: "Confirmar Contraseña",
+    },
+    enterYourPassword: {
+      pt: "Digite sua senha",
+      en: "Enter your password",
+      es: "Ingrese su contraseña",
+    },
+    enterNewPassword: {
+      pt: "Digite a nova senha",
+      en: "Enter the new password",
+      es: "Ingrese la nueva contraseña",
+    },
+    confirmNewPassword: {
+      pt: "Confirme a nova senha",
+      en: "Confirm the new password",
+      es: "Confirme la nueva contraseña",
+    },
+    cancel: {
+      pt: "Cancelar",
+      en: "Cancel",
+      es: "Cancelar",
+    },
+    confirm: {
+      pt: "Confirmar",
+      en: "Confirm",
+      es: "Confirmar",
+    },
+    incorrectPassword: {
+      pt: "Senha incorreta",
+      en: "Incorrect password",
+      es: "Contraseña incorrecta",
+    },
+    passwordsDoNotMatch: {
+      pt: "As senhas não coincidem",
+      en: "Passwords do not match",
+      es: "Las contraseñas no coinciden",
+    },
+    passwordMustBeLonger: {
+      pt: "A senha deve ter pelo menos 4 caracteres",
+      en: "Password must be at least 4 characters",
+      es: "La contraseña debe tener al menos 4 caracteres",
+    },
+  },
+  appLock: {
+    exitBlocked: {
+      pt: "Saída Bloqueada",
+      en: "Exit Blocked",
+      es: "Salida Bloqueada"
+    },
+    needStoryOrPassword: {
+      pt: "Conte uma história ou use a senha para sair",
+      en: "Tell a story or use password to exit", 
+      es: "Cuenta una historia o usa la contraseña para salir"
+    },
+    cantExitMessage: {
+      pt: "Você precisa contar uma história para sair do aplicativo",
+      en: "You need to tell a story to exit the app",
+      es: "Necesitas contar una historia para salir de la aplicación"
+    },
+    confirmExit: {
+      pt: "Tem certeza que deseja sair? Você precisa contar uma história primeiro.",
+      en: "Are you sure you want to exit? You need to tell a story first.",
+      es: "¿Estás seguro de que quieres salir? Necesitas contar una historia primero."
+    },
+    appMinimized: {
+      pt: "App Minimizado",
+      en: "App Minimized", 
+      es: "App Minimizada"
+    },
+    returnToApp: {
+      pt: "Retorne ao app para continuar",
+      en: "Return to app to continue",
+      es: "Regresa a la app para continuar"
     }
   }
-  
-  if (values) {
-    return Object.entries(values).reduce((acc, [k, v]) => {
-        return acc.replace(`{${k}}`, String(v));
-    }, text);
-  }
-
-  return text;
 };
+
+export default translations;

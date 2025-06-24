@@ -16,6 +16,7 @@ import WelcomeSplashScreen from "./pages/WelcomeSplashScreen";
 import NotFound from "./pages/NotFound";
 import { OnboardingProvider } from "./contexts/OnboardingContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import AppLockProvider from "./components/AppLockProvider";
 import { logger } from "@/utils/logger";
 
 const queryClient = new QueryClient();
@@ -74,7 +75,9 @@ const App = () => {
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <AnimatedRoutes />
+              <AppLockProvider>
+                <AnimatedRoutes />
+              </AppLockProvider>
             </BrowserRouter>
           </OnboardingProvider>
         </TooltipProvider>

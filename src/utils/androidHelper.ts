@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for Android-specific behaviors
  */
@@ -16,6 +17,8 @@ interface CapacitorWindow extends Window {
       };
       App?: {
         exitApp: () => Promise<void>;
+        addListener: (eventName: string, callback: (data: any) => void) => void;
+        removeAllListeners: () => Promise<void>;
       };
       StatusBar?: {
         setStyle: (options: { style: string }) => Promise<void>;
@@ -171,7 +174,60 @@ export const hideSystemUI = async (): Promise<void> => {
   }
 };
 
-// Exit the Android app properly
+// Configurar bloqueio do botão voltar no Android
+export const setupBackButtonLock = (onBackPressed: () => boolean): (() => void) => {
+  const capacitorWindow = window as CapacitorWindow;
+  
+  if (capacitorWindow.Capacitor?.isNativePlatform()) {
+    const App = capacitorWindow.Capacitor.Plugins?.App;
+    if (App) {
+      console.log("Configurando bloqueio do botão voltar no Capacitor");
+      
+      const backButtonHandler = (data: any) => {
+        console.log("Botão voltar pressionado no Android");
+        const canGoBack = onBackPressed();
+        
+        if (!canGoBack) {
+          console.log("Bloqueando saída do app");
+          // Impedir a ação padrão
+          data.canGoBack = false;
+        } else {
+          console.log("Permitindo saída do app");
+        }
+      };
+      
+      App.addListener('backButton', backButtonHandler);
+      
+      // Retorna função de cleanup
+      return () => {
+        if (App.removeAllListeners) {
+          App.removeAllListeners();
+        }
+      };
+    }
+  }
+  
+  // Fallback para web
+  const handleBackButton = (event: PopStateEvent) => {
+    const canGoBack = onBackPressed();
+    if (!canGoBack) {
+      event.preventDefault();
+      event.stopPropagation();
+      // Restaurar o estado atual
+      window.history.pushState(null, '', window.location.href);
+    }
+  };
+  
+  // Adicionar estado inicial para detectar navegação
+  window.history.pushState(null, '', window.location.href);
+  window.addEventListener('popstate', handleBackButton);
+  
+  return () => {
+    window.removeEventListener('popstate', handleBackButton);
+  };
+};
+
+// Exit the Android app properly (only when unlocked)
 export const exitApp = async (): Promise<void> => {
   try {
     const capacitorWindow = window as CapacitorWindow;
