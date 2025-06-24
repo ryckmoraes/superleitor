@@ -2,8 +2,8 @@
 import { Navigate } from "react-router-dom";
 
 const Index = () => {
-  // Redirect to diagnostic page first to test basic functionality
-  return <Navigate to="/diagnostic" replace />;
+  // Redirect to loading screen to run diagnostics
+  return <Navigate to="/loading" replace />;
 };
 
 export default Index;

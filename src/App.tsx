@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { CSSTransition, TransitionGroup } from "react-transition-group";
 import Index from "./pages/Index";
+import LoadingScreen from "./pages/LoadingScreen";
 import DiagnosticPage from "./pages/DiagnosticPage";
 import SplashScreen from "./pages/SplashScreen";
 import RecordingScreen from "./pages/RecordingScreen";
@@ -31,6 +32,7 @@ const AnimatedRoutes = () => {
       >
         <Routes location={location}>
           <Route path="/" element={<Index />} />
+          <Route path="/loading" element={<LoadingScreen />} />
           <Route path="/diagnostic" element={<DiagnosticPage />} />
           <Route path="/welcome" element={<WelcomeSplashScreen />} />
           <Route path="/setup" element={<SplashScreen />} />
@@ -46,11 +48,9 @@ const App = () => {
   useEffect(() => {
     logger.info("=== APP.TSX MONTADO ===");
     
-    // Configurações simplificadas - apenas o essencial
     const setupBasicFeatures = () => {
       logger.info("Configurando recursos básicos...");
       
-      // Prevenir zoom em dispositivos móveis
       document.addEventListener('touchstart', (e) => {
         if (e.touches.length > 1) {
           e.preventDefault();
