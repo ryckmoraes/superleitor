@@ -1,4 +1,3 @@
-
 import { getNavigatorLanguage } from "@/utils/getNavigatorLanguage";
 
 interface Translation {
@@ -14,6 +13,43 @@ const translations = {
     pt: "Super Leitor",
     en: "Super Reader",
     es: "Super Lector",
+  },
+  welcomeSplash: {
+    heading: {
+      pt: "Bem-vindo ao",
+      en: "Welcome to",
+      es: "Bienvenido a",
+    },
+    appName: {
+      pt: "Super Leitor",
+      en: "Super Reader",
+      es: "Super Lector",
+    },
+    description: {
+      pt: "Um aplicativo para ajudar você a praticar a leitura através de histórias.",
+      en: "An application to help you practice reading through stories.",
+      es: "Una aplicación para ayudarte a practicar la lectura a través de historias.",
+    },
+    configure: {
+      pt: "Configurar",
+      en: "Configure",
+      es: "Configurar",
+    },
+    startReading: {
+      pt: "Começar a Ler",
+      en: "Start Reading",
+      es: "Empezar a Leer",
+    },
+    greetingWithName: {
+      pt: "Olá, {name}! Pronto para uma nova aventura?",
+      en: "Hello, {name}! Ready for a new adventure?",
+      es: "¡Hola, {name}! ¿Listo para una nueva aventura?",
+    },
+    readerPlaceholder: {
+      pt: "Super Leitor",
+      en: "Super Reader",
+      es: "Super Lector",
+    },
   },
   loadingScreen: {
     loading: {
@@ -224,7 +260,7 @@ const translations = {
     remainingTime: {
       pt: "Tempo restante: {time} minutos",
       en: "Remaining time: {time} minutes",
-      es: "Tiempo restante: {time} minutos",
+      es: "Tiempo restante: {time} minutes",
     },
     remainingTimeLabel: {
       pt: "Tempo restante",
@@ -544,7 +580,7 @@ const translations = {
     },
     spanish: {
       pt: "Espanhol",
-      en: "Spanish",
+      en: "Español",
       es: "Español",
     },
     diagnostic: {
