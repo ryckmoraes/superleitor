@@ -1,3 +1,4 @@
+
 import { getNavigatorLanguage } from "@/utils/getNavigatorLanguage";
 
 interface Translation {
@@ -260,7 +261,7 @@ const translations = {
     remainingTime: {
       pt: "Tempo restante: {time} minutos",
       en: "Remaining time: {time} minutes",
-      es: "Tiempo restante: {time} minutes",
+      es: "Tiempo restante: {time} minutos",
     },
     remainingTimeLabel: {
       pt: "Tempo restante",
@@ -757,6 +758,83 @@ const translations = {
       en: "Return to app to continue",
       es: "Regresa a la app para continuar"
     }
+  },
+  menu: {
+    title: {
+      pt: "Opções",
+      en: "Options",
+      es: "Opciones",
+    },
+    openMenu: {
+      pt: "Abrir menu",
+      en: "Open menu",
+      es: "Abrir menú",
+    },
+    closeMenu: {
+      pt: "Fechar menu",
+      en: "Close menu",
+      es: "Cerrar menú",
+    },
+    settings: {
+      pt: "Configurações",
+      en: "Settings",
+      es: "Configuraciones",
+    },
+    languages: {
+      pt: "Idiomas",
+      en: "Languages",
+      es: "Idiomas",
+    },
+    resetOnboarding: {
+      pt: "Resetar Tutorial",
+      en: "Reset Tutorial",
+      es: "Resetear Tutorial",
+    },
+    exitApp: {
+      pt: "Sair do App",
+      en: "Exit App",
+      es: "Salir de la App",
+    },
+    accessSettings: {
+      pt: "Acessar Configurações",
+      en: "Access Settings",
+      es: "Acceder a Configuraciones",
+    },
+    accessLanguages: {
+      pt: "Acessar Idiomas",
+      en: "Access Languages",
+      es: "Acceder a Idiomas",
+    },
+    exitTitle: {
+      pt: "Saindo...",
+      en: "Exiting...",
+      es: "Saliendo...",
+    },
+    exitDescription: {
+      pt: "Voltando à tela inicial",
+      en: "Returning to home screen",
+      es: "Volviendo a la pantalla inicial",
+    },
+    exitErrorTitle: {
+      pt: "Erro ao sair",
+      en: "Error exiting",
+      es: "Error al salir",
+    },
+    exitErrorDescription: {
+      pt: "Tente novamente",
+      en: "Please try again",
+      es: "Inténtalo de nuevo",
+    },
+    logoutTitle: {
+      pt: "Tutorial resetado",
+      en: "Tutorial reset",
+      es: "Tutorial reseteado",
+    },
+    logoutDescription: {
+      pt: "Voltando ao início",
+      en: "Returning to start",
+      es: "Volviendo al inicio",
+    },
   }
 };
 
