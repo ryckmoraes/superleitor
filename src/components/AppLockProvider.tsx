@@ -2,13 +2,19 @@
 import React, { useEffect } from 'react';
 import { useAppLock } from '@/hooks/useAppLock';
 import { useLocation } from 'react-router-dom';
+import PasswordDialog from '@/components/PasswordDialog';
 
 interface AppLockProviderProps {
   children: React.ReactNode;
 }
 
 const AppLockProvider = ({ children }: AppLockProviderProps) => {
-  const { isLocked } = useAppLock();
+  const { 
+    isLocked, 
+    showPasswordDialog, 
+    setShowPasswordDialog, 
+    handlePasswordSuccess 
+  } = useAppLock();
   const location = useLocation();
 
   // Aplicar estilos CSS para modo bloqueado
@@ -57,6 +63,14 @@ const AppLockProvider = ({ children }: AppLockProviderProps) => {
           🔒 App bloqueado - Conte uma história para desbloquear
         </div>
       )}
+      
+      <PasswordDialog
+        isOpen={showPasswordDialog}
+        onClose={() => setShowPasswordDialog(false)}
+        onSuccess={handlePasswordSuccess}
+        mode="verify"
+        title="Senha para Sair"
+      />
     </>
   );
 };

@@ -1,27 +1,40 @@
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppUnlock } from './useAppUnlock';
 import { showToastOnly } from '@/services/notificationService';
 import { speakNaturally } from '@/services/audioProcessor';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslations } from './useTranslations';
+import { setupBackButtonLock, exitApp } from '@/utils/androidHelper';
 
 export const useAppLock = () => {
   const navigate = useNavigate();
   const { isUnlocked, remainingTime } = useAppUnlock();
   const { language } = useLanguage();
   const { t } = useTranslations();
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 
   // Função para verificar se pode sair do app
   const canExitApp = useCallback(() => {
     return isUnlocked && remainingTime > 0;
   }, [isUnlocked, remainingTime]);
 
+  // Função para verificar se existe senha configurada
+  const hasPassword = useCallback(() => {
+    return !!localStorage.getItem("app_password");
+  }, []);
+
   // Função para lidar com tentativa de saída
   const handleExitAttempt = useCallback(() => {
     if (canExitApp()) {
       return true; // Permitir saída
+    }
+    
+    // Se tem senha, mostrar dialog de senha
+    if (hasPassword()) {
+      setShowPasswordDialog(true);
+      return false;
     }
     
     // Bloquear saída e mostrar mensagem
@@ -38,22 +51,22 @@ export const useAppLock = () => {
     // Redirecionar para tela de gravação se não estiver lá
     navigate('/recording');
     return false;
-  }, [canExitApp, navigate, language, t]);
+  }, [canExitApp, hasPassword, navigate, language, t]);
+
+  // Função para lidar com sucesso da senha
+  const handlePasswordSuccess = useCallback(() => {
+    setShowPasswordDialog(false);
+    exitApp();
+  }, []);
 
   // Configurar bloqueio do botão voltar/home no Android
   useEffect(() => {
-    const handleBackButton = (event: Event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      
-      if (!handleExitAttempt()) {
-        // Bloquear a ação padrão
-        return false;
-      }
-    };
+    const cleanup = setupBackButtonLock(() => {
+      return handleExitAttempt();
+    });
 
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (!canExitApp()) {
+      if (!canExitApp() && !hasPassword()) {
         event.preventDefault();
         event.returnValue = t('appLock.confirmExit');
         return t('appLock.confirmExit');
@@ -76,39 +89,16 @@ export const useAppLock = () => {
     };
 
     // Adicionar listeners para diferentes eventos de saída
-    document.addEventListener('backbutton', handleBackButton, true);
     window.addEventListener('beforeunload', handleBeforeUnload);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Para Capacitor (Android nativo)
-    const setupCapacitorBackButton = async () => {
-      try {
-        const capacitorWindow = window as any;
-        if (capacitorWindow.Capacitor?.isNativePlatform()) {
-          const { App } = capacitorWindow.Capacitor.Plugins;
-          if (App) {
-            App.addListener('backButton', (data: any) => {
-              if (!handleExitAttempt()) {
-                // Prevenir saída
-                data.canGoBack = false;
-              }
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Erro ao configurar bloqueio do botão voltar:', error);
-      }
-    };
-
-    setupCapacitorBackButton();
-
     // Cleanup
     return () => {
-      document.removeEventListener('backbutton', handleBackButton, true);
+      cleanup();
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [handleExitAttempt, canExitApp, t]);
+  }, [handleExitAttempt, canExitApp, hasPassword, t]);
 
   // Configurar modo fullscreen e prevenir gestos de saída
   useEffect(() => {
@@ -116,15 +106,11 @@ export const useAppLock = () => {
       // Prevenir gestos de navegação no Android
       document.body.style.overscrollBehavior = 'none';
       document.body.style.touchAction = 'pan-x pan-y';
-      
-      // Adicionar classe para fullscreen
-      document.body.classList.add('app-locked');
     };
 
     const restoreGestures = () => {
       document.body.style.overscrollBehavior = '';
       document.body.style.touchAction = '';
-      document.body.classList.remove('app-locked');
     };
 
     if (!canExitApp()) {
@@ -141,6 +127,9 @@ export const useAppLock = () => {
   return {
     canExitApp,
     handleExitAttempt,
-    isLocked: !canExitApp()
+    isLocked: !canExitApp(),
+    showPasswordDialog,
+    setShowPasswordDialog,
+    handlePasswordSuccess
   };
 };

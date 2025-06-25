@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
 import { Lock } from "lucide-react";
+import { useTranslations } from "@/hooks/useTranslations";
 
 interface PasswordDialogProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ const PasswordDialog = ({ isOpen, onClose, onSuccess, mode, title }: PasswordDia
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const { t } = useTranslations();
 
   const storedPassword = localStorage.getItem("app_password");
 
@@ -31,27 +33,27 @@ const PasswordDialog = ({ isOpen, onClose, onSuccess, mode, title }: PasswordDia
         onSuccess();
         setPassword("");
       } else {
-        setError("Senha incorreta");
+        setError(t('passwordDialog.incorrectPassword'));
         toast({
           variant: "destructive",
-          title: "Senha incorreta",
-          description: "A senha inserida não está correta."
+          title: t('passwordDialog.incorrectPassword'),
+          description: t('passwordDialog.incorrectPassword')
         });
       }
     } else if (mode === "create") {
       if (newPassword.length < 4) {
-        setError("A senha deve ter pelo menos 4 caracteres");
+        setError(t('passwordDialog.passwordMustBeLonger'));
         return;
       }
       
       if (newPassword !== confirmPassword) {
-        setError("As senhas não coincidem");
+        setError(t('passwordDialog.passwordsDoNotMatch'));
         return;
       }
 
       localStorage.setItem("app_password", newPassword);
       toast({
-        title: "Senha criada",
+        title: t('hamburguerMenu.createPassword'),
         description: "Sua senha foi criada com sucesso."
       });
       onSuccess();
@@ -59,28 +61,28 @@ const PasswordDialog = ({ isOpen, onClose, onSuccess, mode, title }: PasswordDia
     } else if (mode === "change") {
       if (!storedPassword || password === storedPassword) {
         if (newPassword.length < 4) {
-          setError("A nova senha deve ter pelo menos 4 caracteres");
+          setError(t('passwordDialog.passwordMustBeLonger'));
           return;
         }
         
         if (newPassword !== confirmPassword) {
-          setError("As novas senhas não coincidem");
+          setError(t('passwordDialog.passwordsDoNotMatch'));
           return;
         }
 
         localStorage.setItem("app_password", newPassword);
         toast({
-          title: "Senha alterada",
+          title: t('hamburguerMenu.changePassword'),
           description: "Sua senha foi alterada com sucesso."
         });
         onSuccess();
         resetFields();
       } else {
-        setError("Senha atual incorreta");
+        setError(t('passwordDialog.incorrectPassword'));
         toast({
           variant: "destructive",
-          title: "Senha incorreta",
-          description: "A senha atual inserida não está correta."
+          title: t('passwordDialog.incorrectPassword'),
+          description: t('passwordDialog.incorrectPassword')
         });
       }
     }
@@ -102,10 +104,19 @@ const PasswordDialog = ({ isOpen, onClose, onSuccess, mode, title }: PasswordDia
     if (title) return title;
     
     switch (mode) {
-      case "verify": return "Verificar Senha";
-      case "create": return "Criar Senha";
-      case "change": return "Alterar Senha";
-      default: return "Senha";
+      case "verify": return t('passwordDialog.verifyPassword');
+      case "create": return t('passwordDialog.createPassword');
+      case "change": return t('passwordDialog.changePassword');
+      default: return t('hamburguerMenu.password');
+    }
+  };
+
+  const getDescription = () => {
+    switch (mode) {
+      case "verify": return t('passwordDialog.enterPassword');
+      case "create": return t('passwordDialog.createPasswordDescription');
+      case "change": return t('passwordDialog.changePasswordDescription');
+      default: return "";
     }
   };
 
@@ -117,9 +128,7 @@ const PasswordDialog = ({ isOpen, onClose, onSuccess, mode, title }: PasswordDia
             <Lock className="h-5 w-5" /> {getTitle()}
           </DialogTitle>
           <DialogDescription>
-            {mode === "verify" && "Digite sua senha para continuar."}
-            {mode === "create" && "Crie uma senha para proteger o acesso às configurações."}
-            {mode === "change" && "Altere sua senha atual."}
+            {getDescription()}
           </DialogDescription>
         </DialogHeader>
         
@@ -127,14 +136,14 @@ const PasswordDialog = ({ isOpen, onClose, onSuccess, mode, title }: PasswordDia
           {(mode === "verify" || mode === "change") && (
             <div className="space-y-2">
               <label htmlFor="current-password" className="text-sm font-medium">
-                {mode === "verify" ? "Senha" : "Senha Atual"}
+                {mode === "verify" ? t('hamburguerMenu.password') : t('passwordDialog.currentPassword')}
               </label>
               <Input
                 id="current-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Digite sua senha"
+                placeholder={t('passwordDialog.enterYourPassword')}
                 required
               />
             </div>
@@ -144,28 +153,28 @@ const PasswordDialog = ({ isOpen, onClose, onSuccess, mode, title }: PasswordDia
             <>
               <div className="space-y-2">
                 <label htmlFor="new-password" className="text-sm font-medium">
-                  Nova Senha
+                  {t('passwordDialog.newPassword')}
                 </label>
                 <Input
                   id="new-password"
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Digite a nova senha"
+                  placeholder={t('passwordDialog.enterNewPassword')}
                   required
                 />
               </div>
               
               <div className="space-y-2">
                 <label htmlFor="confirm-password" className="text-sm font-medium">
-                  Confirmar Senha
+                  {t('passwordDialog.confirmPassword')}
                 </label>
                 <Input
                   id="confirm-password"
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirme a nova senha"
+                  placeholder={t('passwordDialog.confirmNewPassword')}
                   required
                 />
               </div>
@@ -178,10 +187,10 @@ const PasswordDialog = ({ isOpen, onClose, onSuccess, mode, title }: PasswordDia
           
           <DialogFooter className="flex justify-end space-x-2 pt-4">
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancelar
+              {t('passwordDialog.cancel')}
             </Button>
             <Button type="submit">
-              Confirmar
+              {t('passwordDialog.confirm')}
             </Button>
           </DialogFooter>
         </form>
