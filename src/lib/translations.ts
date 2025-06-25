@@ -1,3 +1,4 @@
+
 import { getNavigatorLanguage } from "@/utils/getNavigatorLanguage";
 
 interface Translation {
@@ -214,6 +215,43 @@ const translations = {
       es: "Cuéntame más...",
     },
   },
+  recordingScreen: {
+    appUnlocked: {
+      pt: "App Desbloqueado!",
+      en: "App Unlocked!",
+      es: "¡App Desbloqueada!",
+    },
+    remainingTime: {
+      pt: "Tempo restante: {time} minutos",
+      en: "Remaining time: {time} minutes",
+      es: "Tiempo restante: {time} minutos",
+    },
+    remainingTimeLabel: {
+      pt: "Tempo restante",
+      en: "Remaining time",
+      es: "Tiempo restante",
+    },
+    earnedTime: {
+      pt: "Você ganhou {time} minutos de uso!",
+      en: "You earned {time} minutes of use!",
+      es: "¡Ganaste {time} minutos de uso!",
+    },
+    error: {
+      pt: "Erro!",
+      en: "Error!",
+      es: "¡Error!",
+    },
+    voskInitError: {
+      pt: "Erro ao inicializar o VOSK: {error}",
+      en: "Error initializing VOSK: {error}",
+      es: "Error al inicializar VOSK: {error}",
+    },
+    tellMore: {
+      pt: "Conte mais...",
+      en: "Tell me more...",
+      es: "Cuéntame más...",
+    },
+  },
   recognitionStatus: {
     waiting: {
       pt: "Aguardando áudio...",
@@ -315,6 +353,157 @@ const translations = {
       pt: "Tente novamente...",
       en: "Try again...",
       es: "Intenta nuevamente...",
+    },
+  },
+  recordingControls: {
+    storyMode: {
+      pt: "Modo História",
+      en: "Story Mode",
+      es: "Modo Historia",
+    },
+    appName: {
+      pt: "SuperLeitor",
+      en: "SuperReader",
+      es: "SuperLector",
+    },
+    recordingTime: {
+      pt: "Tempo de gravação: {time} segundos",
+      en: "Recording time: {time} seconds",
+      es: "Tiempo de grabación: {time} segundos",
+    },
+    stopStory: {
+      pt: "Parar História",
+      en: "Stop Story",
+      es: "Parar Historia",
+    },
+    startStory: {
+      pt: "Iniciar História",
+      en: "Start Story",
+      es: "Iniciar Historia",
+    },
+  },
+  speechInitializer: {
+    title: {
+      pt: "Reconhecimento Ativo",
+      en: "Recognition Active",
+      es: "Reconocimiento Activo",
+    },
+    ready: {
+      pt: "Reconhecimento de voz pronto para {languageName}",
+      en: "Speech recognition ready for {languageName}",
+      es: "Reconocimiento de voz listo para {languageName}",
+    },
+    info: {
+      pt: "Informação",
+      en: "Information",
+      es: "Información",
+    },
+    offlineNotAvailable: {
+      pt: "Reconhecimento offline não disponível no momento",
+      en: "Offline recognition not available at the moment",
+      es: "Reconocimiento offline no disponible en este momento",
+    },
+  },
+  languageSelector: {
+    languageSaved: {
+      pt: "Idioma Salvo",
+      en: "Language Saved",
+      es: "Idioma Guardado",
+    },
+    languageChanged: {
+      pt: "Idioma alterado para {name}",
+      en: "Language changed to {name}",
+      es: "Idioma cambiado a {name}",
+    },
+    languageChangeError: {
+      pt: "Erro ao Alterar Idioma",
+      en: "Error Changing Language",
+      es: "Error al Cambiar Idioma",
+    },
+    languageChangeErrorDescription: {
+      pt: "Não foi possível alterar o idioma. Tente novamente.",
+      en: "Could not change language. Please try again.",
+      es: "No se pudo cambiar el idioma. Inténtelo de nuevo.",
+    },
+    downloadInProgress: {
+      pt: "Download em Andamento",
+      en: "Download in Progress",
+      es: "Descarga en Progreso",
+    },
+    downloadInProgressDescriptionToast: {
+      pt: "Aguarde o download atual terminar",
+      en: "Wait for current download to finish",
+      es: "Espera a que termine la descarga actual",
+    },
+    downloadingModelToastDescription: {
+      pt: "Baixando modelo para {name}. Tamanho: {size}",
+      en: "Downloading model for {name}. Size: {size}",
+      es: "Descargando modelo para {name}. Tamaño: {size}",
+    },
+    startingDownload: {
+      pt: "Iniciando download...",
+      en: "Starting download...",
+      es: "Iniciando descarga...",
+    },
+    calculating: {
+      pt: "calculando...",
+      en: "calculating...",
+      es: "calculando...",
+    },
+    downloadingModel: {
+      pt: "Baixando arquivos...",
+      en: "Downloading files...",
+      es: "Descargando archivos...",
+    },
+    finishingDownload: {
+      pt: "Finalizando...",
+      en: "Finishing...",
+      es: "Finalizando...",
+    },
+    installing: {
+      pt: "Instalando modelo...",
+      en: "Installing model...",
+      es: "Instalando modelo...",
+    },
+    errorDownloading: {
+      pt: "Erro no Download",
+      en: "Download Error",
+      es: "Error de Descarga",
+    },
+    errorDownloadingDescription: {
+      pt: "Não foi possível baixar o modelo. Verifique sua conexão.",
+      en: "Could not download model. Check your connection.",
+      es: "No se pudo descargar el modelo. Verifica tu conexión.",
+    },
+    canceling: {
+      pt: "Cancelando...",
+      en: "Canceling...",
+      es: "Cancelando...",
+    },
+    downloadCanceled: {
+      pt: "Download Cancelado",
+      en: "Download Canceled",
+      es: "Descarga Cancelada",
+    },
+    downloadCanceledDescription: {
+      pt: "O download foi cancelado com sucesso",
+      en: "Download was canceled successfully",
+      es: "La descarga fue cancelada exitosamente",
+    },
+    operationInProgressTitle: {
+      pt: "Operação em Andamento",
+      en: "Operation in Progress",
+      es: "Operación en Progreso",
+    },
+    operationInProgressDescription: {
+      pt: "Aguarde a operação atual terminar",
+      en: "Wait for current operation to finish",
+      es: "Espera a que termine la operación actual",
+    },
+    cancelDownloadPrompt: {
+      pt: "Cancele o download primeiro para fechar",
+      en: "Cancel download first to close",
+      es: "Cancela la descarga primero para cerrar",
     },
   },
   hamburguerMenu: {
@@ -552,6 +741,7 @@ export const getTranslation = (
       current = current[part];
     } else {
       // Key not found, return default value or key
+      console.warn(`Translation key not found: ${key}`);
       return defaultValue || key;
     }
   }
@@ -571,6 +761,7 @@ export const getTranslation = (
   }
   
   // Fallback to default value or key
+  console.warn(`Translation not found for language ${langCode} and key: ${key}`);
   return defaultValue || key;
 };
 
