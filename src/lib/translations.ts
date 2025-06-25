@@ -535,4 +535,43 @@ const translations = {
   }
 };
 
+export const getTranslation = (
+  language: string,
+  key: string,
+  values?: Record<string, string | number>,
+  defaultValue?: string
+): string => {
+  const langCode = language.split('-')[0] as 'pt' | 'en' | 'es';
+  
+  // Navigate through the nested object using the key path
+  const keyParts = key.split('.');
+  let current: any = translations;
+  
+  for (const part of keyParts) {
+    if (current && typeof current === 'object' && part in current) {
+      current = current[part];
+    } else {
+      // Key not found, return default value or key
+      return defaultValue || key;
+    }
+  }
+  
+  // If we found the translation object, get the language-specific text
+  if (current && typeof current === 'object' && langCode in current) {
+    let text = current[langCode];
+    
+    // Replace placeholders if values are provided
+    if (values) {
+      Object.entries(values).forEach(([placeholder, value]) => {
+        text = text.replace(`{${placeholder}}`, String(value));
+      });
+    }
+    
+    return text;
+  }
+  
+  // Fallback to default value or key
+  return defaultValue || key;
+};
+
 export default translations;
