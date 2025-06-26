@@ -13,7 +13,7 @@ export const textToSpeechService = {
     text: string, 
     voiceId: string
   ): Promise<Blob> {
-    const apiKey = keyManagement.getApiKey();
+    const apiKey = await keyManagement.getApiKey();
     
     if (!apiKey) {
       throw new Error("ElevenLabs API key not set");

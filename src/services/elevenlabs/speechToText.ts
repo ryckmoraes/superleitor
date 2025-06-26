@@ -11,7 +11,7 @@ import { voskModelsService } from '../voskModelsService';
 export const speechToTextService = {
   // Transcribe audio using ElevenLabs speech-to-text
   async transcribeAudio(audioBlob: Blob): Promise<string> {
-    const apiKey = keyManagement.getApiKey();
+    const apiKey = await keyManagement.getApiKey();
     
     if (!apiKey) {
       throw new Error("ElevenLabs API key not set");
