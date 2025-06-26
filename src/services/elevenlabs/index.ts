@@ -1,3 +1,4 @@
+
 // Main ElevenLabs service
 import { DEFAULT_VOICE_ID, AGENT_ID } from './config';
 import { keyManagement } from './keyManagement';
@@ -5,12 +6,13 @@ import { textToSpeechService } from './textToSpeech';
 import { audioAnalysisService } from './audioAnalysis';
 import { speechToTextService } from './speechToText';
 import { voskModelsService } from '../voskModelsService';
+import { logger } from '@/utils/logger';
 
 /**
  * Main ElevenLabs service for text-to-speech functionality
  */
 export const elevenLabsService = {
-  // API key management
+  // API key management (now async)
   getApiKey: keyManagement.getApiKey,
   setApiKey: keyManagement.setApiKey,
   hasApiKey: keyManagement.hasApiKey,
@@ -44,15 +46,17 @@ export const elevenLabsService = {
         window.speechSynthesis.cancel();
       }
       
-      if (!this.hasApiKey()) {
-        console.error("ElevenLabs API key não definida, usando fallback");
+      const hasKey = await this.hasApiKey();
+      if (!hasKey) {
+        logger.warn("ElevenLabs API key not configured, using fallback");
         throw new Error("No API key");
       }
       
-      console.log("Falando com ElevenLabs usando voice ID:", DEFAULT_VOICE_ID);
+      logger.info("Using ElevenLabs TTS with secure key management");
       const audioBlob = await this.textToSpeech(text, DEFAULT_VOICE_ID);
       return await this.playAudio(audioBlob);
     } catch (error) {
+      logger.info("Falling back to native speech synthesis");
       // Fallback para síntese de fala nativa
       if ('speechSynthesis' in window) {
         if (priority && window.speechSynthesis.speaking) {

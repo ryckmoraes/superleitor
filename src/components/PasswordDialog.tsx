@@ -6,6 +6,9 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
 import { Lock } from "lucide-react";
 import { useTranslations } from "@/hooks/useTranslations";
+import { securityUtils } from "@/utils/securityUtils";
+import { secureStorage } from "@/utils/secureStorage";
+import { logger } from "@/utils/logger";
 
 interface PasswordDialogProps {
   isOpen: boolean;
@@ -20,48 +23,43 @@ const PasswordDialog = ({ isOpen, onClose, onSuccess, mode, title }: PasswordDia
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const { t } = useTranslations();
 
-  const storedPassword = localStorage.getItem("app_password");
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
-    if (mode === "verify") {
-      if (!storedPassword || password === storedPassword) {
-        onSuccess();
-        setPassword("");
-      } else {
-        setError(t('passwordDialog.incorrectPassword'));
-        toast({
-          variant: "destructive",
-          title: t('passwordDialog.incorrectPassword'),
-          description: t('passwordDialog.incorrectPassword')
-        });
-      }
-    } else if (mode === "create") {
-      if (newPassword.length < 4) {
-        setError(t('passwordDialog.passwordMustBeLonger'));
-        return;
-      }
-      
-      if (newPassword !== confirmPassword) {
-        setError(t('passwordDialog.passwordsDoNotMatch'));
-        return;
-      }
+    try {
+      if (mode === "verify") {
+        const storedHash = await secureStorage.getSecureItem("password_hash");
+        const storedSalt = await secureStorage.getSecureItem("password_salt");
+        
+        if (!storedHash || !storedSalt) {
+          // No password set, allow access
+          onSuccess();
+          setPassword("");
+          return;
+        }
 
-      localStorage.setItem("app_password", newPassword);
-      toast({
-        title: t('hamburguerMenu.createPassword'),
-        description: "Sua senha foi criada com sucesso."
-      });
-      onSuccess();
-      resetFields();
-    } else if (mode === "change") {
-      if (!storedPassword || password === storedPassword) {
-        if (newPassword.length < 4) {
-          setError(t('passwordDialog.passwordMustBeLonger'));
+        const isValid = await securityUtils.verifyPassword(password, storedHash, storedSalt);
+        if (isValid) {
+          onSuccess();
+          setPassword("");
+        } else {
+          setError(t('passwordDialog.incorrectPassword'));
+          toast({
+            variant: "destructive",
+            title: t('passwordDialog.incorrectPassword'),
+            description: t('passwordDialog.incorrectPassword')
+          });
+        }
+      } else if (mode === "create") {
+        // Validate password strength
+        const validation = securityUtils.validatePasswordStrength(newPassword);
+        if (!validation.isValid) {
+          setError(validation.errors[0]);
           return;
         }
         
@@ -70,21 +68,66 @@ const PasswordDialog = ({ isOpen, onClose, onSuccess, mode, title }: PasswordDia
           return;
         }
 
-        localStorage.setItem("app_password", newPassword);
+        // Hash and store password
+        const { hash, salt } = await securityUtils.hashPassword(newPassword);
+        await secureStorage.setSecureItem("password_hash", hash);
+        await secureStorage.setSecureItem("password_salt", salt);
+        
+        // Remove old insecure password if it exists
+        localStorage.removeItem("app_password");
+        
+        toast({
+          title: t('hamburguerMenu.createPassword'),
+          description: "Sua senha foi criada com sucesso."
+        });
+        onSuccess();
+        resetFields();
+      } else if (mode === "change") {
+        const storedHash = await secureStorage.getSecureItem("password_hash");
+        const storedSalt = await secureStorage.getSecureItem("password_salt");
+        
+        if (storedHash && storedSalt) {
+          const isCurrentValid = await securityUtils.verifyPassword(password, storedHash, storedSalt);
+          if (!isCurrentValid) {
+            setError(t('passwordDialog.incorrectPassword'));
+            return;
+          }
+        }
+
+        // Validate new password strength
+        const validation = securityUtils.validatePasswordStrength(newPassword);
+        if (!validation.isValid) {
+          setError(validation.errors[0]);
+          return;
+        }
+        
+        if (newPassword !== confirmPassword) {
+          setError(t('passwordDialog.passwordsDoNotMatch'));
+          return;
+        }
+
+        // Hash and store new password
+        const { hash, salt } = await securityUtils.hashPassword(newPassword);
+        await secureStorage.setSecureItem("password_hash", hash);
+        await secureStorage.setSecureItem("password_salt", salt);
+        
         toast({
           title: t('hamburguerMenu.changePassword'),
           description: "Sua senha foi alterada com sucesso."
         });
         onSuccess();
         resetFields();
-      } else {
-        setError(t('passwordDialog.incorrectPassword'));
-        toast({
-          variant: "destructive",
-          title: t('passwordDialog.incorrectPassword'),
-          description: t('passwordDialog.incorrectPassword')
-        });
       }
+    } catch (error) {
+      logger.error('Password dialog error', error);
+      setError('Erro interno. Tente novamente.');
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro interno. Tente novamente."
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -142,9 +185,10 @@ const PasswordDialog = ({ isOpen, onClose, onSuccess, mode, title }: PasswordDia
                 id="current-password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => setPassword(securityUtils.sanitizeInput(e.target.value))}
                 placeholder={t('passwordDialog.enterYourPassword')}
                 required
+                disabled={loading}
               />
             </div>
           )}
@@ -159,10 +203,14 @@ const PasswordDialog = ({ isOpen, onClose, onSuccess, mode, title }: PasswordDia
                   id="new-password"
                   type="password"
                   value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
+                  onChange={(e) => setNewPassword(securityUtils.sanitizeInput(e.target.value))}
                   placeholder={t('passwordDialog.enterNewPassword')}
                   required
+                  disabled={loading}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Mínimo 8 caracteres, com maiúscula, minúscula e número
+                </p>
               </div>
               
               <div className="space-y-2">
@@ -173,9 +221,10 @@ const PasswordDialog = ({ isOpen, onClose, onSuccess, mode, title }: PasswordDia
                   id="confirm-password"
                   type="password"
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={(e) => setConfirmPassword(securityUtils.sanitizeInput(e.target.value))}
                   placeholder={t('passwordDialog.confirmNewPassword')}
                   required
+                  disabled={loading}
                 />
               </div>
             </>
@@ -186,11 +235,11 @@ const PasswordDialog = ({ isOpen, onClose, onSuccess, mode, title }: PasswordDia
           )}
           
           <DialogFooter className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={handleClose}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
               {t('passwordDialog.cancel')}
             </Button>
-            <Button type="submit">
-              {t('passwordDialog.confirm')}
+            <Button type="submit" disabled={loading}>
+              {loading ? "Processando..." : t('passwordDialog.confirm')}
             </Button>
           </DialogFooter>
         </form>

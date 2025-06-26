@@ -8,6 +8,7 @@ import { toast } from "@/components/ui/use-toast";
 import { Key, LockKeyhole, Sun, Moon, Settings as SettingsIcon } from "lucide-react";
 import PasswordDialog from "./PasswordDialog";
 import { useTranslations } from "@/hooks/useTranslations";
+import { secureStorage } from "@/utils/secureStorage";
 
 interface SettingsProps {
   isOpen: boolean;
@@ -23,10 +24,26 @@ const Settings = ({ isOpen, onClose, toggleTheme, isDarkMode }: SettingsProps) =
   const { t } = useTranslations();
 
   useEffect(() => {
-    // Verificar se já existe uma senha configurada
-    const storedPassword = localStorage.getItem("app_password");
-    setHasPassword(!!storedPassword);
-  }, [passwordDialogOpen]);
+    const checkPassword = async () => {
+      try {
+        const storedHash = await secureStorage.getSecureItem("password_hash");
+        const legacyPassword = localStorage.getItem("app_password");
+        
+        setHasPassword(!!storedHash || !!legacyPassword);
+        
+        // Migrate legacy password if exists
+        if (legacyPassword && !storedHash) {
+          console.warn("Legacy password detected. Please update to secure storage.");
+        }
+      } catch (error) {
+        console.error("Error checking password:", error);
+      }
+    };
+    
+    if (isOpen) {
+      checkPassword();
+    }
+  }, [passwordDialogOpen, isOpen]);
 
   const handleCreatePassword = () => {
     setPasswordMode("create");
@@ -48,13 +65,17 @@ const Settings = ({ isOpen, onClose, toggleTheme, isDarkMode }: SettingsProps) =
     });
   };
 
+  const getTitle = () => {
+    return t("settings.title");
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <SettingsIcon className="h-5 w-5" /> {t("settings.title")}
+              <SettingsIcon className="h-5 w-5" /> {getTitle()}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-6 py-4">
@@ -97,7 +118,7 @@ const Settings = ({ isOpen, onClose, toggleTheme, isDarkMode }: SettingsProps) =
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                {t("settings.passwordInfo")}
+                {t("settings.passwordInfo")} Senhas agora são criptografadas com segurança.
               </p>
             </div>
           </div>
