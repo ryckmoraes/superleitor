@@ -4,11 +4,13 @@ package com.superleitor.app;
 import android.os.Bundle;
 import android.util.Log;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.webkit.WebSettings;
+import androidx.appcompat.app.AppCompatActivity;
 
-import com.getcapacitor.BridgeActivity;
-
-public class MainActivity extends BridgeActivity {
+public class MainActivity extends AppCompatActivity {
     private static final String TAG = "SuperleitorMainActivity";
+    private WebView webView;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -19,7 +21,25 @@ public class MainActivity extends BridgeActivity {
             super.onCreate(savedInstanceState);
             Log.d(TAG, "super.onCreate executado com sucesso");
             
-            // Habilitar debugging do WebView
+            // Create and configure WebView
+            webView = new WebView(this);
+            setContentView(webView);
+            
+            // Configure WebView settings
+            WebSettings webSettings = webView.getSettings();
+            webSettings.setJavaScriptEnabled(true);
+            webSettings.setDomStorageEnabled(true);
+            webSettings.setAllowFileAccess(true);
+            webSettings.setAllowContentAccess(true);
+            webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+            
+            // Set WebView client
+            webView.setWebViewClient(new WebViewClient());
+            
+            // Load the app - using the dist folder
+            webView.loadUrl("file:///android_asset/public/index.html");
+            
+            // Enable debugging
             Log.d(TAG, "Habilitando WebView debugging...");
             WebView.setWebContentsDebuggingEnabled(true);
             Log.d(TAG, "WebView debugging habilitado");
@@ -73,10 +93,22 @@ public class MainActivity extends BridgeActivity {
     protected void onDestroy() {
         Log.d(TAG, "onDestroy() chamado");
         try {
+            if (webView != null) {
+                webView.destroy();
+            }
             super.onDestroy();
             Log.d(TAG, "onDestroy() executado com sucesso");
         } catch (Exception e) {
             Log.e(TAG, "Erro em onDestroy()", e);
+        }
+    }
+    
+    @Override
+    public void onBackPressed() {
+        if (webView != null && webView.canGoBack()) {
+            webView.goBack();
+        } else {
+            super.onBackPressed();
         }
     }
 }
