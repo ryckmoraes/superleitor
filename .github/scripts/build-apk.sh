@@ -45,18 +45,36 @@ echo "🧹 Cleaning project..."
 echo "🚀 Building APK with dependency resolution..."
 ./gradlew assembleRelease --no-daemon --refresh-dependencies --info
 
-# Verify APK
-APK_PATH="app/build/outputs/apk/release/app-release.apk"
-if [ -f "$APK_PATH" ]; then
+# Search for APK with correct name (based on archivesBaseName)
+echo "🔍 Searching for generated APK..."
+APK_PATHS=(
+    "app/build/outputs/apk/release/superleitor_01-release.apk"
+    "app/build/outputs/apk/release/app-release.apk"
+    "app/build/outputs/apk/release/superleitor-release.apk"
+)
+
+APK_FOUND=""
+for APK_PATH in "${APK_PATHS[@]}"; do
+    if [ -f "$APK_PATH" ]; then
+        echo "✅ APK found at: $APK_PATH"
+        APK_FOUND="$APK_PATH"
+        break
+    fi
+done
+
+if [ -n "$APK_FOUND" ]; then
     echo "✅ APK generated successfully"
-    cp "$APK_PATH" ../superleitor.apk
+    cp "$APK_FOUND" ../superleitor.apk
     echo "apk_found=true" >> "$GITHUB_OUTPUT"
     echo "apk_path=superleitor.apk" >> "$GITHUB_OUTPUT"
     echo "📱 APK ready: ../superleitor.apk"
-    ls -lh "$APK_PATH"
+    ls -lh "$APK_FOUND"
 else
-    echo "❌ APK not found"
+    echo "❌ APK not found in any expected location"
+    echo "🔍 Listing all APK files in build outputs:"
     find app/build/outputs/ -name "*.apk" -type f 2>/dev/null || echo "No APKs found"
+    echo "📂 Full directory structure:"
+    ls -la app/build/outputs/apk/release/ || echo "Release directory not found"
     echo "apk_found=false" >> "$GITHUB_OUTPUT"
     exit 1
 fi
