@@ -2,7 +2,7 @@
 #!/usr/bin/env bash
 set -e
 
-echo "🔨 Starting minimal APK build process..."
+echo "🔨 Starting APK build process..."
 
 cd android
 
@@ -24,18 +24,26 @@ ext {
 }
 EOF
 
-# Test Gradle wrapper with minimal output
+# Download Gradle wrapper if missing
+echo "📦 Ensuring Gradle wrapper is available..."
+if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
+    echo "Downloading gradle-wrapper.jar..."
+    mkdir -p gradle/wrapper
+    curl -L -o gradle/wrapper/gradle-wrapper.jar \
+      "https://github.com/gradle/gradle/raw/v8.2.1/gradle/wrapper/gradle-wrapper.jar"
+fi
+
+# Test Gradle wrapper with online mode
 echo "🧪 Testing Gradle wrapper..."
-./gradlew --version --no-daemon --quiet --offline || ./gradlew --version --no-daemon --quiet
+./gradlew --version --no-daemon --info
 
-# Clean with minimal flags
+# Clean with online dependencies
 echo "🧹 Cleaning project..."
-./gradlew clean --no-daemon --quiet --no-build-cache
+./gradlew clean --no-daemon --refresh-dependencies --info
 
-# Build with minimal configuration
-echo "🚀 Building minimal APK..."
-./gradlew assembleRelease --no-daemon --quiet --no-build-cache --offline || \
-./gradlew assembleRelease --no-daemon --stacktrace
+# Build with dependency resolution
+echo "🚀 Building APK with dependency resolution..."
+./gradlew assembleRelease --no-daemon --refresh-dependencies --info
 
 # Verify APK
 APK_PATH="app/build/outputs/apk/release/app-release.apk"

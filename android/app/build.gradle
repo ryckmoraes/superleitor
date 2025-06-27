@@ -54,10 +54,16 @@ android {
         exclude 'META-INF/NOTICE'
         exclude 'META-INF/NOTICE.txt'
     }
+
+    // Fix for ic_launcher compilation
+    aaptOptions {
+        cruncherEnabled = false
+    }
 }
 
 tasks.withType(JavaCompile).configureEach {
     options.release = 17
+    options.encoding = 'UTF-8'
 }
 
 dependencies {
