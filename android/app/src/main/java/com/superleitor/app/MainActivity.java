@@ -1,4 +1,3 @@
-
 package com.superleitor.app;
 
 import android.os.Bundle;
@@ -36,8 +35,32 @@ public class MainActivity extends AppCompatActivity {
             // Set WebView client
             webView.setWebViewClient(new WebViewClient());
             
-            // Load the app - using the dist folder
-            webView.loadUrl("file:///android_asset/public/index.html");
+            // Load the app - try multiple possible locations
+            String[] possiblePaths = {
+                "file:///android_asset/index.html",
+                "file:///android_asset/public/index.html",
+                "file:///android_asset/dist/index.html"
+            };
+            
+            boolean loaded = false;
+            for (String path : possiblePaths) {
+                try {
+                    Log.d(TAG, "Tentando carregar: " + path);
+                    webView.loadUrl(path);
+                    loaded = true;
+                    Log.d(TAG, "Carregado com sucesso: " + path);
+                    break;
+                } catch (Exception e) {
+                    Log.w(TAG, "Falha ao carregar " + path + ": " + e.getMessage());
+                }
+            }
+            
+            if (!loaded) {
+                Log.e(TAG, "Não foi possível carregar nenhum arquivo HTML");
+                // Fallback: load a simple HTML page
+                String fallbackHtml = "<!DOCTYPE html><html><head><title>Superleitor</title></head><body><h1>Superleitor</h1><p>Aplicativo carregando...</p></body></html>";
+                webView.loadData(fallbackHtml, "text/html", "UTF-8");
+            }
             
             // Enable debugging
             Log.d(TAG, "Habilitando WebView debugging...");

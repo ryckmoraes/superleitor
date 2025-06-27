@@ -4,6 +4,31 @@ set -e
 
 echo "🔨 Starting APK build process..."
 
+# Build web assets first
+echo "🌐 Building web assets..."
+npm run build
+
+# Ensure dist directory exists and has content
+if [ ! -d "dist" ] || [ ! -f "dist/index.html" ]; then
+    echo "❌ Web build failed - dist directory missing or no index.html"
+    exit 1
+fi
+
+echo "✅ Web build successful"
+ls -la dist/
+
+# Create Android assets directory and copy web build
+echo "📱 Preparing Android assets..."
+mkdir -p android/app/src/main/assets
+cp -r dist/* android/app/src/main/assets/
+
+# Also create backup locations for assets
+mkdir -p android/app/src/main/assets/public
+cp -r dist/* android/app/src/main/assets/public/
+
+echo "✅ Assets copied to Android project"
+ls -la android/app/src/main/assets/
+
 cd android
 
 # Clean all previous builds completely
