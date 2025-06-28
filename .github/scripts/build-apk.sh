@@ -20,7 +20,15 @@ ls -la dist/
 # Create Android assets directory and copy web build
 echo "📱 Preparing Android assets..."
 mkdir -p android/app/src/main/assets
+rm -rf android/app/src/main/assets/* || true
 cp -r dist/* android/app/src/main/assets/
+
+# Also copy to alternative paths that MainActivity might check
+mkdir -p android/app/src/main/assets/dist
+cp -r dist/* android/app/src/main/assets/dist/
+
+mkdir -p android/app/src/main/assets/www  
+cp -r dist/* android/app/src/main/assets/www/
 
 echo "✅ Assets copied to Android project"
 ls -la android/app/src/main/assets/
@@ -32,18 +40,8 @@ echo "🧹 Deep cleaning previous builds..."
 rm -rf .gradle/ build/ app/build/ || true
 rm -rf ~/.gradle/caches/ || true
 
-# Ensure cordova.variables.gradle exists with minimal content
-echo "🔧 Creating minimal cordova.variables.gradle..."
-mkdir -p capacitor-cordova-android-plugins
-cat > capacitor-cordova-android-plugins/cordova.variables.gradle << 'EOF'
-// Minimal cordova variables
-ext {
-    minSdkVersion = 24
-    compileSdkVersion = 34
-    targetSdkVersion = 34
-    buildToolsVersion = '34.0.0'
-}
-EOF
+# Ensure gradle wrapper permissions
+chmod +x ./gradlew
 
 # Download Gradle wrapper if missing
 echo "📦 Ensuring Gradle wrapper is available..."
@@ -56,22 +54,24 @@ fi
 
 # Test Gradle wrapper
 echo "🧪 Testing Gradle wrapper..."
-./gradlew --version --no-daemon
+./gradlew --version --no-daemon --warning-mode=all
 
-# Clean with online dependencies
+# Clean with dependencies refresh
 echo "🧹 Cleaning project..."
-./gradlew clean --no-daemon --refresh-dependencies
+./gradlew clean --no-daemon --refresh-dependencies --warning-mode=all
 
-# Build APK
+# Build APK with detailed logging
 echo "🚀 Building APK..."
-./gradlew assembleRelease --no-daemon --refresh-dependencies
+./gradlew assembleRelease --no-daemon --refresh-dependencies --info --stacktrace
 
-# Search for APK
+# Search for APK with more comprehensive search
 echo "🔍 Searching for generated APK..."
+find . -name "*.apk" -type f | head -10
+
 APK_PATHS=(
-    "app/build/outputs/apk/release/superleitor_01-release.apk"
     "app/build/outputs/apk/release/app-release.apk"
     "app/build/outputs/apk/release/superleitor-release.apk"
+    "build/outputs/apk/release/app-release.apk"
 )
 
 APK_FOUND=""
@@ -86,14 +86,21 @@ done
 if [ -n "$APK_FOUND" ]; then
     echo "✅ APK generated successfully"
     cp "$APK_FOUND" ../superleitor.apk
-    echo "apk_found=true" >> "$GITHUB_OUTPUT"
-    echo "apk_path=superleitor.apk" >> "$GITHUB_OUTPUT"
     echo "📱 APK ready: ../superleitor.apk"
     ls -lh "$APK_FOUND"
+    
+    # Set GitHub Actions outputs if available
+    if [ -n "$GITHUB_OUTPUT" ]; then
+        echo "apk_found=true" >> "$GITHUB_OUTPUT"
+        echo "apk_path=superleitor.apk" >> "$GITHUB_OUTPUT"
+    fi
 else
     echo "❌ APK not found in any expected location"
-    find app/build/outputs/ -name "*.apk" -type f 2>/dev/null || echo "No APKs found"
-    ls -la app/build/outputs/apk/release/ || echo "Release directory not found"
-    echo "apk_found=false" >> "$GITHUB_OUTPUT"
+    echo "Available APK files:"
+    find . -name "*.apk" -type f 2>/dev/null || echo "No APKs found"
+    
+    if [ -n "$GITHUB_OUTPUT" ]; then
+        echo "apk_found=false" >> "$GITHUB_OUTPUT"
+    fi
     exit 1
 fi
