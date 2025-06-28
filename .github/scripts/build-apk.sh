@@ -63,46 +63,27 @@ echo "🧹 Cleaning project..."
 echo "🚀 Building APK..."
 ./gradlew assembleRelease --no-daemon --refresh-dependencies --info --stacktrace
 
-# Search for APK with more comprehensive search
-echo "🔍 Searching for generated APK..."
-find . -name "*.apk" -type f | head -10
+# Define expected APK path
+APK_PATH="app/build/outputs/apk/release/superleitor_01-release.apk"
 
-APK_PATHS=(
-    "app/build/outputs/apk/release/app-release.apk"
-    "app/build/outputs/apk/release/superleitor-release.apk"
-    "build/outputs/apk/release/app-release.apk"
-)
+# Check if the expected APK exists
+if [ -f "$APK_PATH" ]; then
+    echo "✅ APK generated successfully: $APK_PATH"
+    ls -lh "$APK_PATH"
 
-APK_FOUND=""
-for APK_PATH in "${APK_PATHS[@]}"; do
-    if [ -f "$APK_PATH" ]; then
-        echo "✅ APK found at: $APK_PATH"
-        APK_FOUND="$APK_PATH"
-        break
-    fi
-done
-
-if [ -n "$APK_FOUND" ]; then
-    echo "✅ APK generated successfully"
-
-    FINAL_APK_PATH="app/build/outputs/apk/release/superleitor_01-release.apk"
-    cp "$APK_FOUND" "$FINAL_APK_PATH"
-    
-    echo "📱 APK ready: $FINAL_APK_PATH"
-    ls -lh "$FINAL_APK_PATH"
-    
-    # Set GitHub Actions outputs if available
+    # GitHub Actions output
     if [ -n "$GITHUB_OUTPUT" ]; then
         echo "apk_found=true" >> "$GITHUB_OUTPUT"
-        echo "apk_path=$FINAL_APK_PATH" >> "$GITHUB_OUTPUT"
+        echo "apk_path=$APK_PATH" >> "$GITHUB_OUTPUT"
     fi
 else
-    echo "❌ APK not found in any expected location"
-    echo "Available APK files:"
-    find . -name "*.apk" -type f 2>/dev/null || echo "No APKs found"
+    echo "❌ APK not found at expected location: $APK_PATH"
+    echo "🔍 Available APK files:"
+    find . -name "*.apk" -type f || echo "No APKs found"
     
     if [ -n "$GITHUB_OUTPUT" ]; then
         echo "apk_found=false" >> "$GITHUB_OUTPUT"
     fi
+
     exit 1
 fi
