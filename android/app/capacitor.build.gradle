@@ -1,5 +1,5 @@
 
-// Minimal capacitor.build.gradle - no external dependencies
+// Basic Android build configuration - no Capacitor dependencies
 android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -7,9 +7,9 @@ android {
     }
 }
 
-// No external dependencies - building minimal app
+// No external dependencies - building basic native Android app
 dependencies {
-    // All dependencies are handled in main build.gradle
+    // All dependencies handled in main build.gradle
 }
 
-println "✅ Minimal build configuration applied"
+println "✅ Basic Android build configuration applied"

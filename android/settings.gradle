@@ -2,6 +2,6 @@
 rootProject.name = 'superleitor'
 include ':app'
 
-println "=== Minimal Android Build ==="
-println "Building basic Android app without Capacitor dependencies"
+println "=== Basic Android Build ==="
+println "Building native Android app without Capacitor dependencies"
 println "=== Configuration Complete ==="
