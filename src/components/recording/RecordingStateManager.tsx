@@ -23,6 +23,8 @@ export const useRecordingState = () => {
   const { t } = useTranslations();
   const { error: voskError } = useVoskSetup();
   const { isUnlocked, remainingTime, checkUnlockStatus, unlockApp } = useAppUnlock();
+  
+  const welcomeExecutedRef = useRef(false);
 
   // Initialize loaded state
   useEffect(() => {
@@ -33,11 +35,13 @@ export const useRecordingState = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Handle welcome messages
+  // Handle welcome messages - simplified to avoid multiple executions
   useEffect(() => {
-    if (loaded && language) {
-      if (checkUnlockStatus() && isUnlocked && remainingTime > 0) {
-        setTimeout(() => {
+    if (loaded && language && !welcomeExecutedRef.current) {
+      welcomeExecutedRef.current = true;
+      
+      setTimeout(() => {
+        if (checkUnlockStatus() && isUnlocked && remainingTime > 0) {
           showToastOnly(
             t('recordingScreen.appUnlocked'),
             t('recordingScreen.remainingTime', { time: remainingTime }),
@@ -46,15 +50,13 @@ export const useRecordingState = () => {
           
           const welcomeBackMessage = t('greetings.unlocked');
           speakNaturally(welcomeBackMessage, language, true);
-        }, 1000);
-      } else {
-        setTimeout(() => {
+        } else {
           const greeting = t('greetings.locked');
           speakNaturally(greeting, language, true);
-        }, 1000);
-      }
+        }
+      }, 1000);
     }
-  }, [loaded, isUnlocked, remainingTime, checkUnlockStatus, language, t]);
+  }, [loaded, language]); // Simplified dependencies
 
   // Handle error messages
   useEffect(() => {

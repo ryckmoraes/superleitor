@@ -1,5 +1,5 @@
 /**
- * Enhanced logger utility for Android debugging
+ * Simplified logger utility for Android debugging
  */
 type LogLevel = "info" | "warn" | "error" | "debug";
 
@@ -8,34 +8,30 @@ interface LogEntry {
   level: LogLevel;
   message: string;
   details?: any;
-  context?: {
-    url?: string;
-    userAgent?: string;
-    platform?: string;
-  };
 }
 
 const LOG_KEY = "superleitor_debug_log";
+const MAX_LOGS = 100; // Reduced from 500
 
 class Logger {
-  logs: LogEntry[] = [];
+  private logs: LogEntry[] = [];
+  private initialized = false;
 
   constructor() {
-    // Load existing logs from localStorage
+    // Defer initialization to avoid blocking startup
+    setTimeout(() => this.init(), 100);
+  }
+
+  private init() {
     try {
       const stored = localStorage.getItem(LOG_KEY);
       if (stored) {
-        this.logs = JSON.parse(stored);
+        this.logs = JSON.parse(stored).slice(-MAX_LOGS);
       }
     } catch (e) {
       console.warn("Failed to load stored logs:", e);
     }
-    
-    // Log initialization
-    this.log("info", "Logger initialized", {
-      timestamp: new Date().toISOString(),
-      logsCount: this.logs.length
-    });
+    this.initialized = true;
   }
 
   log(level: LogLevel, message: string, details?: any) {
@@ -43,29 +39,10 @@ class Logger {
       timestamp: new Date().toISOString(),
       level,
       message,
-      details,
-      context: {
-        url: window.location.href,
-        userAgent: navigator.userAgent.substring(0, 100),
-        platform: this.detectPlatform()
-      }
+      details
     };
     
-    this.logs.push(entry);
-    
-    // Keep only last 500 entries to prevent memory issues
-    if (this.logs.length > 500) {
-      this.logs = this.logs.slice(-500);
-    }
-    
-    // Persist to localStorage
-    try {
-      localStorage.setItem(LOG_KEY, JSON.stringify(this.logs));
-    } catch (e) {
-      console.warn("Failed to persist logs:", e);
-    }
-    
-    // Console output with enhanced formatting
+    // Always log to console immediately
     const consoleMessage = `[Superleitor][${level.toUpperCase()}] ${message}`;
     
     if (level === "error") {
@@ -77,16 +54,25 @@ class Logger {
     } else {
       console.log(consoleMessage, details);
     }
-  }
 
-  private detectPlatform(): string {
-    const ua = navigator.userAgent;
-    if (/Android/i.test(ua)) return "Android";
-    if (/iPhone|iPad/i.test(ua)) return "iOS";
-    if (/Windows/i.test(ua)) return "Windows";
-    if (/Mac/i.test(ua)) return "Mac";
-    if (/Linux/i.test(ua)) return "Linux";
-    return "Unknown";
+    // Store in memory
+    this.logs.push(entry);
+    
+    // Keep only recent logs
+    if (this.logs.length > MAX_LOGS) {
+      this.logs = this.logs.slice(-MAX_LOGS);
+    }
+    
+    // Persist to localStorage asynchronously to avoid blocking
+    if (this.initialized) {
+      setTimeout(() => {
+        try {
+          localStorage.setItem(LOG_KEY, JSON.stringify(this.logs));
+        } catch (e) {
+          console.warn("Failed to persist logs:", e);
+        }
+      }, 0);
+    }
   }
 
   info(m: string, d?: any) { this.log("info", m, d); }
@@ -104,11 +90,13 @@ class Logger {
 
   clear() {
     this.logs = [];
-    localStorage.removeItem(LOG_KEY);
-    this.log("info", "Logs cleared");
+    try {
+      localStorage.removeItem(LOG_KEY);
+    } catch (e) {
+      console.warn("Failed to clear logs:", e);
+    }
   }
 
-  // Method to get critical errors for debugging
   getCriticalErrors(): LogEntry[] {
     return this.logs.filter(log => log.level === "error");
   }
