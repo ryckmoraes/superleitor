@@ -22,10 +22,6 @@ echo "📱 Preparing Android assets..."
 mkdir -p android/app/src/main/assets
 cp -r dist/* android/app/src/main/assets/
 
-# Also create backup locations for assets
-mkdir -p android/app/src/main/assets/public
-cp -r dist/* android/app/src/main/assets/public/
-
 echo "✅ Assets copied to Android project"
 ls -la android/app/src/main/assets/
 
@@ -58,19 +54,19 @@ if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
       "https://github.com/gradle/gradle/raw/v8.2.1/gradle/wrapper/gradle-wrapper.jar"
 fi
 
-# Test Gradle wrapper with online mode
+# Test Gradle wrapper
 echo "🧪 Testing Gradle wrapper..."
-./gradlew --version --no-daemon --info
+./gradlew --version --no-daemon
 
 # Clean with online dependencies
 echo "🧹 Cleaning project..."
-./gradlew clean --no-daemon --refresh-dependencies --info
+./gradlew clean --no-daemon --refresh-dependencies
 
-# Build with dependency resolution
-echo "🚀 Building APK with dependency resolution..."
-./gradlew assembleRelease --no-daemon --refresh-dependencies --info
+# Build APK
+echo "🚀 Building APK..."
+./gradlew assembleRelease --no-daemon --refresh-dependencies
 
-# Search for APK with correct name (based on archivesBaseName)
+# Search for APK
 echo "🔍 Searching for generated APK..."
 APK_PATHS=(
     "app/build/outputs/apk/release/superleitor_01-release.apk"
@@ -96,9 +92,7 @@ if [ -n "$APK_FOUND" ]; then
     ls -lh "$APK_FOUND"
 else
     echo "❌ APK not found in any expected location"
-    echo "🔍 Listing all APK files in build outputs:"
     find app/build/outputs/ -name "*.apk" -type f 2>/dev/null || echo "No APKs found"
-    echo "📂 Full directory structure:"
     ls -la app/build/outputs/apk/release/ || echo "Release directory not found"
     echo "apk_found=false" >> "$GITHUB_OUTPUT"
     exit 1

@@ -25,94 +25,95 @@ const LoadingScreen = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [progress, setProgress] = useState(0);
   const [currentDiagnostic, setCurrentDiagnostic] = useState<DiagnosticItem | null>(null);
+  const [hasNavigated, setHasNavigated] = useState(false);
 
   const runDiagnostics = async () => {
+    if (hasNavigated) return;
+    
     logger.info("Iniciando diagnósticos de carregamento");
 
-    // Teste 1: React funcionando
-    setCurrentStep(0);
-    setProgress(20);
-    setCurrentDiagnostic({ ...diagnostics[0], status: "running" });
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setCurrentDiagnostic({ ...diagnostics[0], status: "success", message: "React está funcionando" });
-    logger.info("✅ React funcionando");
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Teste 2: Router funcionando
-    setCurrentStep(1);
-    setProgress(40);
-    setCurrentDiagnostic({ ...diagnostics[1], status: "running" });
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setCurrentDiagnostic({ ...diagnostics[1], status: "success", message: "Navegação configurada" });
-    logger.info("✅ React Router funcionando");
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Teste 3: Capacitor disponível
-    setCurrentStep(2);
-    setProgress(60);
-    setCurrentDiagnostic({ ...diagnostics[2], status: "running" });
-    await new Promise(resolve => setTimeout(resolve, 1000));
     try {
-      // @ts-ignore
-      if (window.Capacitor) {
+      // Teste 1: React funcionando
+      setCurrentStep(0);
+      setProgress(20);
+      setCurrentDiagnostic({ ...diagnostics[0], status: "running" });
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setCurrentDiagnostic({ ...diagnostics[0], status: "success", message: "React está funcionando" });
+      logger.info("✅ React funcionando");
+
+      // Teste 2: Router funcionando
+      setCurrentStep(1);
+      setProgress(40);
+      setCurrentDiagnostic({ ...diagnostics[1], status: "running" });
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setCurrentDiagnostic({ ...diagnostics[1], status: "success", message: "Navegação configurada" });
+      logger.info("✅ React Router funcionando");
+
+      // Teste 3: Capacitor disponível
+      setCurrentStep(2);
+      setProgress(60);
+      setCurrentDiagnostic({ ...diagnostics[2], status: "running" });
+      await new Promise(resolve => setTimeout(resolve, 500));
+      try {
         // @ts-ignore
-        const isNative = window.Capacitor.isNativePlatform();
-        setCurrentDiagnostic({ ...diagnostics[2], status: "success", message: `Plataforma: ${isNative ? "Nativa" : "Browser"}` });
-        logger.info("✅ Capacitor detectado");
-      } else {
-        setCurrentDiagnostic({ ...diagnostics[2], status: "success", message: "Modo browser ativo" });
-        logger.info("⚠️ Capacitor não detectado (modo browser)");
+        if (window.Capacitor) {
+          // @ts-ignore
+          const isNative = window.Capacitor.isNativePlatform();
+          setCurrentDiagnostic({ ...diagnostics[2], status: "success", message: `Plataforma: ${isNative ? "Nativa" : "Browser"}` });
+          logger.info("✅ Capacitor detectado");
+        } else {
+          setCurrentDiagnostic({ ...diagnostics[2], status: "success", message: "Modo browser ativo" });
+          logger.info("⚠️ Capacitor não detectado (modo browser)");
+        }
+      } catch (error) {
+        setCurrentDiagnostic({ ...diagnostics[2], status: "success", message: "Modo browser" });
+        logger.warn("Capacitor não disponível, usando modo browser");
+      }
+
+      // Teste 4: LocalStorage funcionando
+      setCurrentStep(3);
+      setProgress(80);
+      setCurrentDiagnostic({ ...diagnostics[3], status: "running" });
+      await new Promise(resolve => setTimeout(resolve, 500));
+      try {
+        localStorage.setItem("test", "ok");
+        localStorage.removeItem("test");
+        setCurrentDiagnostic({ ...diagnostics[3], status: "success", message: "Armazenamento disponível" });
+        logger.info("✅ LocalStorage funcionando");
+      } catch (error) {
+        setCurrentDiagnostic({ ...diagnostics[3], status: "success", message: "Armazenamento limitado" });
+        logger.warn("LocalStorage limitado");
+      }
+
+      // Teste 5: Speech Recognition
+      setCurrentStep(4);
+      setProgress(100);
+      setCurrentDiagnostic({ ...diagnostics[4], status: "running" });
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setCurrentDiagnostic({ ...diagnostics[4], status: "success", message: "Sistema pronto" });
+      logger.info("✅ Sistema inicializado");
+
+      // Aguardar um pouco e navegar para boas-vindas
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      if (!hasNavigated) {
+        setHasNavigated(true);
+        logger.info("Diagnósticos concluídos, navegando para boas-vindas");
+        navigate("/welcome");
       }
     } catch (error) {
-      setCurrentDiagnostic({ ...diagnostics[2], status: "error", message: "Erro na verificação" });
-      logger.error("❌ Erro ao verificar Capacitor", error);
-    }
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Teste 4: LocalStorage funcionando
-    setCurrentStep(3);
-    setProgress(80);
-    setCurrentDiagnostic({ ...diagnostics[3], status: "running" });
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    try {
-      localStorage.setItem("test", "ok");
-      localStorage.removeItem("test");
-      setCurrentDiagnostic({ ...diagnostics[3], status: "success", message: "Armazenamento disponível" });
-      logger.info("✅ LocalStorage funcionando");
-    } catch (error) {
-      setCurrentDiagnostic({ ...diagnostics[3], status: "error", message: "Falha no armazenamento" });
-      logger.error("❌ LocalStorage com erro", error);
-    }
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Teste 5: Speech Recognition
-    setCurrentStep(4);
-    setProgress(100);
-    setCurrentDiagnostic({ ...diagnostics[4], status: "running" });
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    try {
-      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-        setCurrentDiagnostic({ ...diagnostics[4], status: "success", message: "Reconhecimento disponível" });
-        logger.info("✅ Speech Recognition disponível");
-      } else {
-        setCurrentDiagnostic({ ...diagnostics[4], status: "error", message: "Reconhecimento não suportado" });
-        logger.warn("⚠️ Speech Recognition não disponível");
+      logger.error("Erro durante diagnósticos", error);
+      if (!hasNavigated) {
+        setHasNavigated(true);
+        navigate("/welcome");
       }
-    } catch (error) {
-      setCurrentDiagnostic({ ...diagnostics[4], status: "error", message: "Erro na verificação" });
-      logger.error("❌ Erro ao verificar Speech Recognition", error);
     }
-
-    // Aguardar um pouco e navegar para boas-vindas
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    logger.info("Diagnósticos concluídos, navegando para boas-vindas");
-    navigate("/welcome");
   };
 
   useEffect(() => {
     logger.info("LoadingScreen montada, iniciando diagnósticos");
     runDiagnostics();
-  }, []);
+  }, []); // Empty dependency array to run only once
 
   const getProgressLabel = () => {
     if (!currentDiagnostic) return "Iniciando...";

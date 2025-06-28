@@ -24,10 +24,13 @@ try {
   const rootElement = document.getElementById("root");
   if (rootElement) {
     rootElement.innerHTML = `
-      <div style="padding: 20px; color: red; font-family: monospace;">
+      <div style="padding: 20px; color: red; font-family: monospace; text-align: center;">
         <h2>Erro de Inicialização</h2>
-        <p>Erro: ${error instanceof Error ? error.message : 'Erro desconhecido'}</p>
+        <p>${error instanceof Error ? error.message : 'Erro desconhecido'}</p>
         <p>Verifique o console para mais detalhes.</p>
+        <button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px;">
+          Tentar Novamente
+        </button>
       </div>
     `;
   }

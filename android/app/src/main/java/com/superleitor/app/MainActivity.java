@@ -1,137 +1,23 @@
+
 package com.superleitor.app;
 
 import android.os.Bundle;
 import android.util.Log;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.webkit.WebSettings;
-import androidx.appcompat.app.AppCompatActivity;
+import com.getcapacitor.BridgeActivity;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BridgeActivity {
     private static final String TAG = "SuperleitorMainActivity";
-    private WebView webView;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "=== INICIANDO MAINACTIVITY ===");
         
         try {
-            Log.d(TAG, "Chamando super.onCreate...");
             super.onCreate(savedInstanceState);
-            Log.d(TAG, "super.onCreate executado com sucesso");
-            
-            // Create and configure WebView
-            webView = new WebView(this);
-            setContentView(webView);
-            
-            // Configure WebView settings
-            WebSettings webSettings = webView.getSettings();
-            webSettings.setJavaScriptEnabled(true);
-            webSettings.setDomStorageEnabled(true);
-            webSettings.setAllowFileAccess(true);
-            webSettings.setAllowContentAccess(true);
-            webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-            
-            // Set WebView client
-            webView.setWebViewClient(new WebViewClient());
-            
-            // Load the app - try multiple possible locations
-            String[] possiblePaths = {
-                "file:///android_asset/index.html",
-                "file:///android_asset/public/index.html",
-                "file:///android_asset/dist/index.html"
-            };
-            
-            boolean loaded = false;
-            for (String path : possiblePaths) {
-                try {
-                    Log.d(TAG, "Tentando carregar: " + path);
-                    webView.loadUrl(path);
-                    loaded = true;
-                    Log.d(TAG, "Carregado com sucesso: " + path);
-                    break;
-                } catch (Exception e) {
-                    Log.w(TAG, "Falha ao carregar " + path + ": " + e.getMessage());
-                }
-            }
-            
-            if (!loaded) {
-                Log.e(TAG, "Não foi possível carregar nenhum arquivo HTML");
-                // Fallback: load a simple HTML page
-                String fallbackHtml = "<!DOCTYPE html><html><head><title>Superleitor</title></head><body><h1>Superleitor</h1><p>Aplicativo carregando...</p></body></html>";
-                webView.loadData(fallbackHtml, "text/html", "UTF-8");
-            }
-            
-            // Enable debugging
-            Log.d(TAG, "Habilitando WebView debugging...");
-            WebView.setWebContentsDebuggingEnabled(true);
-            Log.d(TAG, "WebView debugging habilitado");
-            
             Log.d(TAG, "=== MAINACTIVITY INICIALIZADA COM SUCESSO ===");
-            
         } catch (Exception e) {
             Log.e(TAG, "=== ERRO FATAL NA MAINACTIVITY ===", e);
-            Log.e(TAG, "Erro: " + e.getMessage());
-            Log.e(TAG, "Causa: " + (e.getCause() != null ? e.getCause().getMessage() : "Desconhecida"));
-            
-            // Re-lançar exceção para que apareça no logcat
             throw new RuntimeException("Falha na inicialização da MainActivity", e);
-        }
-    }
-    
-    @Override
-    protected void onStart() {
-        Log.d(TAG, "onStart() chamado");
-        try {
-            super.onStart();
-            Log.d(TAG, "onStart() executado com sucesso");
-        } catch (Exception e) {
-            Log.e(TAG, "Erro em onStart()", e);
-        }
-    }
-    
-    @Override
-    protected void onResume() {
-        Log.d(TAG, "onResume() chamado");
-        try {
-            super.onResume();
-            Log.d(TAG, "onResume() executado com sucesso");
-        } catch (Exception e) {
-            Log.e(TAG, "Erro em onResume()", e);
-        }
-    }
-    
-    @Override
-    protected void onPause() {
-        Log.d(TAG, "onPause() chamado");
-        try {
-            super.onPause();
-            Log.d(TAG, "onPause() executado com sucesso");
-        } catch (Exception e) {
-            Log.e(TAG, "Erro em onPause()", e);
-        }
-    }
-    
-    @Override
-    protected void onDestroy() {
-        Log.d(TAG, "onDestroy() chamado");
-        try {
-            if (webView != null) {
-                webView.destroy();
-            }
-            super.onDestroy();
-            Log.d(TAG, "onDestroy() executado com sucesso");
-        } catch (Exception e) {
-            Log.e(TAG, "Erro em onDestroy()", e);
-        }
-    }
-    
-    @Override
-    public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) {
-            webView.goBack();
-        } else {
-            super.onBackPressed();
         }
     }
 }

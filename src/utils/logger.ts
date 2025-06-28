@@ -1,4 +1,3 @@
-
 /**
  * Simplified logger utility for Android debugging
  */
@@ -12,25 +11,25 @@ interface LogEntry {
 }
 
 const LOG_KEY = "superleitor_debug_log";
-const MAX_LOGS = 100; // Reduced from 500
+const MAX_LOGS = 50; // Reduced further
 
 class Logger {
   private logs: LogEntry[] = [];
   private initialized = false;
 
   constructor() {
-    // Defer initialization to avoid blocking startup
-    setTimeout(() => this.init(), 100);
+    // Initialize asynchronously to avoid blocking
+    this.initAsync();
   }
 
-  private init() {
+  private async initAsync() {
     try {
       const stored = localStorage.getItem(LOG_KEY);
       if (stored) {
         this.logs = JSON.parse(stored).slice(-MAX_LOGS);
       }
     } catch (e) {
-      console.warn("Failed to load stored logs:", e);
+      // Silent fail - don't block initialization
     }
     this.initialized = true;
   }
@@ -47,13 +46,13 @@ class Logger {
     const consoleMessage = `[Superleitor][${level.toUpperCase()}] ${message}`;
     
     if (level === "error") {
-      console.error(consoleMessage, details);
+      console.error(consoleMessage, details || '');
     } else if (level === "warn") {
-      console.warn(consoleMessage, details);
+      console.warn(consoleMessage, details || '');
     } else if (level === "debug") {
-      console.debug(consoleMessage, details);
+      console.debug(consoleMessage, details || '');
     } else {
-      console.log(consoleMessage, details);
+      console.log(consoleMessage, details || '');
     }
 
     // Store in memory
@@ -64,15 +63,15 @@ class Logger {
       this.logs = this.logs.slice(-MAX_LOGS);
     }
     
-    // Persist to localStorage asynchronously to avoid blocking
+    // Persist asynchronously without blocking
     if (this.initialized) {
-      setTimeout(() => {
+      requestIdleCallback(() => {
         try {
           localStorage.setItem(LOG_KEY, JSON.stringify(this.logs));
         } catch (e) {
-          console.warn("Failed to persist logs:", e);
+          // Silent fail
         }
-      }, 0);
+      });
     }
   }
 
@@ -85,13 +84,12 @@ class Logger {
     return JSON.stringify(this.logs, null, 2);
   }
 
-  getRecentLogs(count: number = 50): LogEntry[] {
+  getRecentLogs(count: number = 20): LogEntry[] {
     return this.logs.slice(-count);
   }
 
-  // Add public getter for logs
   getAllLogs(): LogEntry[] {
-    return this.logs;
+    return [...this.logs];
   }
 
   clear() {
@@ -99,7 +97,7 @@ class Logger {
     try {
       localStorage.removeItem(LOG_KEY);
     } catch (e) {
-      console.warn("Failed to clear logs:", e);
+      // Silent fail
     }
   }
 
