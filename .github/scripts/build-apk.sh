@@ -1,4 +1,3 @@
-
 #!/usr/bin/env bash
 set -e
 
@@ -85,14 +84,17 @@ done
 
 if [ -n "$APK_FOUND" ]; then
     echo "✅ APK generated successfully"
-    cp "$APK_FOUND" ../superleitor.apk
-    echo "📱 APK ready: ../superleitor.apk"
-    ls -lh "$APK_FOUND"
+
+    FINAL_APK_PATH="app/build/outputs/apk/release/superleitor_01-release.apk"
+    cp "$APK_FOUND" "$FINAL_APK_PATH"
+    
+    echo "📱 APK ready: $FINAL_APK_PATH"
+    ls -lh "$FINAL_APK_PATH"
     
     # Set GitHub Actions outputs if available
     if [ -n "$GITHUB_OUTPUT" ]; then
         echo "apk_found=true" >> "$GITHUB_OUTPUT"
-        echo "apk_path=superleitor.apk" >> "$GITHUB_OUTPUT"
+        echo "apk_path=$FINAL_APK_PATH" >> "$GITHUB_OUTPUT"
     fi
 else
     echo "❌ APK not found in any expected location"
