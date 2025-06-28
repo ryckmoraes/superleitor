@@ -1,3 +1,4 @@
+
 /**
  * Simplified logger utility for Android debugging
  */
@@ -86,6 +87,11 @@ class Logger {
 
   getRecentLogs(count: number = 50): LogEntry[] {
     return this.logs.slice(-count);
+  }
+
+  // Add public getter for logs
+  getAllLogs(): LogEntry[] {
+    return this.logs;
   }
 
   clear() {

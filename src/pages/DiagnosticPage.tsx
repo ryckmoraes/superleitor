@@ -109,7 +109,7 @@ const DiagnosticPage = () => {
         <div className="mt-6 p-4 bg-muted rounded text-xs text-muted-foreground">
           <p className="font-semibold mb-2">Logs do Sistema:</p>
           <div className="max-h-32 overflow-y-auto">
-            {logger.logs.slice(-10).map((log, index) => (
+            {logger.getAllLogs().slice(-10).map((log, index) => (
               <div key={index} className="mb-1">
                 <span className="text-primary">[{log.level}]</span> {log.message}
               </div>

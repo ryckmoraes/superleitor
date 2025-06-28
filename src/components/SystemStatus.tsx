@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -105,7 +104,7 @@ const SystemStatus = ({ isOpen, onClose }: SystemStatusProps) => {
                 <p><strong>URL:</strong> {window.location.href}</p>
                 <p><strong>User Agent:</strong> {navigator.userAgent.substring(0, 50)}...</p>
                 <p><strong>Plataforma:</strong> {navigator.platform}</p>
-                <p><strong>Total de Logs:</strong> {logger.logs.length}</p>
+                <p><strong>Total de Logs:</strong> {logger.getAllLogs().length}</p>
               </div>
             </div>
             
