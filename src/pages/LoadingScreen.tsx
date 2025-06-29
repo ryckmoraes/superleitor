@@ -9,81 +9,77 @@ const LoadingScreen = () => {
   const navigate = useNavigate();
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("Iniciando sistema...");
-  const [hasNavigated, setHasNavigated] = useState(false);
 
   useEffect(() => {
-    if (hasNavigated) return;
+    logger.info("LoadingScreen montado");
     
-    const runInitialization = async () => {
+    const initializeApp = async () => {
       try {
-        logger.info("Iniciando aplicativo");
-        
-        // Simulação de inicialização mais rápida
+        // Etapa 1
         setStatus("Carregando recursos...");
         setProgress(25);
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 800));
         
+        // Etapa 2
         setStatus("Configurando sistema...");
         setProgress(50);
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 800));
         
+        // Etapa 3
         setStatus("Finalizando...");
         setProgress(75);
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 800));
         
+        // Etapa 4
         setProgress(100);
         setStatus("Pronto!");
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 500));
         
-        if (!hasNavigated) {
-          setHasNavigated(true);
-          logger.info("Navegando para tela de boas-vindas");
-          navigate("/welcome", { replace: true });
-        }
+        // Navegar para a próxima tela
+        logger.info("Navegando para welcome");
+        navigate("/welcome", { replace: true });
+        
       } catch (error) {
         logger.error("Erro na inicialização", error);
-        if (!hasNavigated) {
-          setHasNavigated(true);
-          navigate("/welcome", { replace: true });
-        }
+        // Em caso de erro, ainda navega para não ficar travado
+        navigate("/welcome", { replace: true });
       }
     };
 
-    const timer = setTimeout(runInitialization, 100);
-    return () => clearTimeout(timer);
-  }, [navigate, hasNavigated]);
+    initializeApp();
+  }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary/10 to-background flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center p-6">
       <div className="max-w-md mx-auto w-full text-center">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2 text-primary">
+          <h1 className="text-4xl font-bold mb-4 text-blue-600">
             Superleitor
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-gray-600 text-lg">
             {status}
           </p>
         </div>
 
         <div className="space-y-6">
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Carregando</span>
+          <div className="space-y-3">
+            <div className="flex justify-between text-sm text-gray-500">
+              <span>Progresso</span>
               <span>{progress}%</span>
             </div>
-            <Progress value={progress} className="h-3" />
+            <Progress value={progress} className="h-4" />
           </div>
 
-          <div className="flex items-center justify-center space-x-3 p-4 rounded-lg border bg-muted/50">
+          <div className="flex items-center justify-center space-x-4 p-6 rounded-xl border-2 border-blue-100 bg-blue-50">
             <div className="flex-shrink-0">
               {progress === 100 ? (
-                <CheckCircle className="h-6 w-6 text-green-600" />
+                <CheckCircle className="h-8 w-8 text-green-500" />
               ) : (
-                <Loader2 className="h-6 w-6 text-blue-600 animate-spin" />
+                <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
               )}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-base font-medium">{status}</p>
+            <div className="flex-1">
+              <p className="text-lg font-semibold text-gray-800">{status}</p>
             </div>
           </div>
         </div>
