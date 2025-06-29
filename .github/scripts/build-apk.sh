@@ -17,16 +17,35 @@ fi
 echo "✅ Build da web bem-sucedido"
 ls -la dist/
 
-# Copiar ícones corretos antes de tudo
-echo "🚩 Copiando ícones corretos..."
+# Copiar e verificar ícones ANTES de preparar assets Android
+echo "🚩 Copiando e verificando ícones..."
+ICON_SOURCE="$GITHUB_WORKSPACE/.github/resources/ic_launcher_round.png"
+
+if [ ! -f "$ICON_SOURCE" ]; then
+    echo "❌ Arquivo de ícone fonte não encontrado: $ICON_SOURCE"
+    exit 1
+fi
+
+echo "✅ Arquivo de ícone fonte encontrado: $ICON_SOURCE"
+
+# Copiar para todos os diretórios mipmap
 for dir in android/app/src/main/res/mipmap-*; do
     if [ -d "$dir" ]; then
-        echo "Copiando ícone para $dir"
-        cp "$GITHUB_WORKSPACE/.github/resources/ic_launcher_round.png" "$dir/ic_launcher_round.png" || true
+        echo "📱 Copiando ícone para $dir"
         
-        # Verificar se o ícone principal existe, se não, copiar o round como principal
+        # Copiar como ic_launcher_round.png
+        cp "$ICON_SOURCE" "$dir/ic_launcher_round.png"
+        
+        # Copiar também como ic_launcher.png se não existir
         if [ ! -f "$dir/ic_launcher.png" ]; then
-            cp "$GITHUB_WORKSPACE/.github/resources/ic_launcher_round.png" "$dir/ic_launcher.png" || true
+            cp "$ICON_SOURCE" "$dir/ic_launcher.png"
+        fi
+        
+        # Verificar se foram copiados
+        if [ -f "$dir/ic_launcher_round.png" ]; then
+            echo "  ✅ ic_launcher_round.png copiado"
+        else
+            echo "  ❌ Falha ao copiar ic_launcher_round.png"
         fi
     fi
 done
@@ -48,41 +67,32 @@ if [ ! -f "android/app/src/main/assets/index.html" ]; then
     exit 1
 fi
 
+echo "✅ index.html confirmado nos assets Android"
+
 cd android
 
-# Limpeza completa de builds anteriores
-echo "🧹 Limpeza profunda de builds anteriores..."
+# Limpeza e preparação do Gradle
+echo "🧹 Limpeza e preparação..."
 rm -rf .gradle/ build/ app/build/ || true
-rm -rf ~/.gradle/caches/ || true
 
 # Garantir permissões do gradle wrapper
 chmod +x ./gradlew
 
-# Verificar e baixar Gradle wrapper se necessário
+# Verificar Gradle wrapper
 echo "📦 Verificando Gradle wrapper..."
-if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
-    echo "Baixando gradle-wrapper.jar..."
-    mkdir -p gradle/wrapper
-    curl -L -o gradle/wrapper/gradle-wrapper.jar \
-      "https://github.com/gradle/gradle/raw/v8.2.1/gradle/wrapper/gradle-wrapper.jar"
-fi
+./gradlew --version --no-daemon
 
-# Testar Gradle wrapper
-echo "🧪 Testando Gradle wrapper..."
-./gradlew --version --no-daemon --warning-mode=all
-
-# Limpar com refresh de dependências
+# Limpar projeto
 echo "🧹 Limpando projeto..."
-./gradlew clean --no-daemon --refresh-dependencies --warning-mode=all
+./gradlew clean --no-daemon --refresh-dependencies
 
-# Construir APK com logging detalhado
+# Construir APK
 echo "🚀 Construindo APK..."
-./gradlew assembleRelease --no-daemon --refresh-dependencies --info --stacktrace
-
-# Definir caminho esperado do APK
-APK_PATH="app/build/outputs/apk/release/superleitor_01-release.apk"
+./gradlew assembleRelease --no-daemon --info
 
 # Verificar se o APK foi gerado
+APK_PATH="app/build/outputs/apk/release/superleitor_01-release.apk"
+
 if [ -f "$APK_PATH" ]; then
     echo "✅ APK gerado com sucesso: $APK_PATH"
     ls -lh "$APK_PATH"

@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { logger } from "@/utils/logger";
 
 interface OnboardingData {
   adminName: string;
@@ -43,6 +44,8 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Load data from localStorage on mount
   useEffect(() => {
+    logger.onboarding("Carregando dados do localStorage");
+    
     const savedData = localStorage.getItem("onboardingData");
     if (savedData) {
       try {
@@ -56,30 +59,42 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
         setOnboardingData(parsedData);
         setIsFirstTimeUser(!parsedData.setupCompleted);
+        
+        logger.onboarding("Dados carregados", {
+          setupCompleted: parsedData.setupCompleted,
+          isFirstTimeUser: !parsedData.setupCompleted
+        });
       } catch (error) {
-        console.error("Error parsing onboarding data:", error);
+        logger.error("Erro ao carregar dados do onboarding:", error);
       }
+    } else {
+      logger.onboarding("Nenhum dado salvo encontrado - usuário novo");
     }
   }, []);
 
   // Save data to localStorage when it changes
   useEffect(() => {
+    logger.onboarding("Salvando dados no localStorage", {
+      setupCompleted: onboardingData.setupCompleted
+    });
     localStorage.setItem("onboardingData", JSON.stringify(onboardingData));
   }, [onboardingData]);
 
   const updateOnboardingData = (data: Partial<OnboardingData>) => {
+    logger.onboarding("Atualizando dados", data);
     setOnboardingData(prev => ({ ...prev, ...data }));
   };
 
   const resetOnboarding = () => {
+    logger.onboarding("Resetando onboarding");
     setOnboardingData(defaultOnboardingData);
     setIsFirstTimeUser(true);
     localStorage.removeItem("onboardingData");
-    localStorage.removeItem("app_password"); // Also clear the app password
+    localStorage.removeItem("app_password");
   };
   
-  // Function to handle app exit - sets a flag that we're exiting, not logging out
   const handleAppExit = () => {
+    logger.onboarding("Aplicativo saindo");
     localStorage.setItem("app_exited", "true");
   };
 

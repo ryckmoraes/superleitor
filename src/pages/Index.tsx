@@ -12,20 +12,23 @@ const Index = () => {
   useEffect(() => {
     logger.info("Index page carregada");
     
-    // Simular carregamento inicial
-    const timer = setTimeout(() => {
-      setIsLoading(false);
+    // Verificar imediatamente se precisa fazer onboarding
+    const checkOnboarding = () => {
+      logger.info("Verificando status do onboarding:", onboardingData.setupCompleted);
       
-      // Verificar se precisa fazer onboarding
       if (!onboardingData.setupCompleted) {
         logger.info("Redirecionando para setup");
         navigate("/setup", { replace: true });
       } else {
-        logger.info("Redirecionando para loading");
-        navigate("/loading", { replace: true });
+        logger.info("Redirecionando para welcome");
+        navigate("/welcome", { replace: true });
       }
-    }, 1000);
+      
+      setIsLoading(false);
+    };
 
+    // Pequeno delay apenas para permitir que o contexto seja carregado
+    const timer = setTimeout(checkOnboarding, 100);
     return () => clearTimeout(timer);
   }, [navigate, onboardingData.setupCompleted]);
 
@@ -35,7 +38,7 @@ const Index = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <h1 className="text-2xl font-bold text-blue-600">Superleitor</h1>
-          <p className="text-gray-600 mt-2">Carregando...</p>
+          <p className="text-gray-600 mt-2">Inicializando...</p>
         </div>
       </div>
     );

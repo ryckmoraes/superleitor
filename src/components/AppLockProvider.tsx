@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import { useAppLock } from '@/hooks/useAppLock';
 import { useLocation } from 'react-router-dom';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 import PasswordDialog from '@/components/PasswordDialog';
 
 interface AppLockProviderProps {
@@ -16,9 +17,15 @@ const AppLockProvider = ({ children }: AppLockProviderProps) => {
     handlePasswordSuccess 
   } = useAppLock();
   const location = useLocation();
+  const { onboardingData } = useOnboarding();
 
-  // Aplicar estilos CSS para modo bloqueado
+  // Não aplicar AppLock se o onboarding não foi concluído
+  const shouldApplyLock = onboardingData.setupCompleted;
+
+  // Aplicar estilos CSS para modo bloqueado apenas se necessário
   useEffect(() => {
+    if (!shouldApplyLock) return;
+
     const style = document.createElement('style');
     style.textContent = `
       .app-locked {
@@ -52,25 +59,26 @@ const AppLockProvider = ({ children }: AppLockProviderProps) => {
     return () => {
       document.head.removeChild(style);
     };
-  }, []);
+  }, [shouldApplyLock]);
 
-  // Mostrar indicador visual quando o app está bloqueado
   return (
     <>
       {children}
-      {isLocked && location.pathname !== '/recording' && (
+      {shouldApplyLock && isLocked && location.pathname !== '/recording' && (
         <div className="fixed top-0 left-0 right-0 bg-red-500/90 text-white text-center py-2 text-sm font-medium z-50">
           🔒 App bloqueado - Conte uma história para desbloquear
         </div>
       )}
       
-      <PasswordDialog
-        isOpen={showPasswordDialog}
-        onClose={() => setShowPasswordDialog(false)}
-        onSuccess={handlePasswordSuccess}
-        mode="verify"
-        title="Senha para Sair"
-      />
+      {shouldApplyLock && (
+        <PasswordDialog
+          isOpen={showPasswordDialog}
+          onClose={() => setShowPasswordDialog(false)}
+          onSuccess={handlePasswordSuccess}
+          mode="verify"
+          title="Senha para Sair"
+        />
+      )}
     </>
   );
 };

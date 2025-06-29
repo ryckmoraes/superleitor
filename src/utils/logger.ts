@@ -1,3 +1,4 @@
+
 /**
  * Simplified logger utility for Android debugging
  */
@@ -11,14 +12,13 @@ interface LogEntry {
 }
 
 const LOG_KEY = "superleitor_debug_log";
-const MAX_LOGS = 50; // Reduced further
+const MAX_LOGS = 50;
 
 class Logger {
   private logs: LogEntry[] = [];
   private initialized = false;
 
   constructor() {
-    // Initialize asynchronously to avoid blocking
     this.initAsync();
   }
 
@@ -42,8 +42,8 @@ class Logger {
       details
     };
     
-    // Always log to console immediately
-    const consoleMessage = `[Superleitor][${level.toUpperCase()}] ${message}`;
+    // Always log to console immediately with more detail
+    const consoleMessage = `[Superleitor][${level.toUpperCase()}][${new Date().toLocaleTimeString()}] ${message}`;
     
     if (level === "error") {
       console.error(consoleMessage, details || '');
@@ -79,6 +79,16 @@ class Logger {
   warn(m: string, d?: any) { this.log("warn", m, d); }
   error(m: string, d?: any) { this.log("error", m, d); }
   debug(m: string, d?: any) { this.log("debug", m, d); }
+
+  // Método específico para rastrear navegação
+  navigation(from: string, to: string, reason?: string) {
+    this.info(`NAVEGAÇÃO: ${from} -> ${to}${reason ? ` (${reason})` : ''}`);
+  }
+
+  // Método específico para rastrear onboarding
+  onboarding(step: string, data?: any) {
+    this.info(`ONBOARDING: ${step}`, data);
+  }
 
   exportLogs(): string {
     return JSON.stringify(this.logs, null, 2);
