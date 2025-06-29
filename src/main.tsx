@@ -4,16 +4,14 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 
-// Inicialização mais robusta
-const initializeApp = () => {
-  const rootElement = document.getElementById("root");
-  
-  if (!rootElement) {
-    console.error("Elemento root não encontrado");
-    return;
-  }
+console.log("=== INICIALIZANDO APLICAÇÃO ===");
 
-  console.log("Inicializando aplicação...");
+const rootElement = document.getElementById("root");
+
+if (!rootElement) {
+  console.error("❌ Elemento root não encontrado");
+} else {
+  console.log("✅ Elemento root encontrado, criando aplicação");
   
   const root = createRoot(rootElement);
   
@@ -23,12 +21,5 @@ const initializeApp = () => {
     </StrictMode>
   );
   
-  console.log("Aplicação inicializada com sucesso");
-};
-
-// Aguardar DOM estar pronto
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initializeApp);
-} else {
-  initializeApp();
+  console.log("✅ Aplicação renderizada com sucesso");
 }

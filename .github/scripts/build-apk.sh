@@ -17,8 +17,8 @@ fi
 echo "✅ Build da web bem-sucedido"
 ls -la dist/
 
-# Copiar e verificar ícones ANTES de preparar assets Android
-echo "🚩 Copiando e verificando ícones..."
+# Preparar ícones ANTES de preparar assets Android
+echo "🚩 Preparando ícones..."
 ICON_SOURCE="$GITHUB_WORKSPACE/.github/resources/ic_launcher_round.png"
 
 if [ ! -f "$ICON_SOURCE" ]; then
@@ -28,25 +28,25 @@ fi
 
 echo "✅ Arquivo de ícone fonte encontrado: $ICON_SOURCE"
 
-# Copiar para todos os diretórios mipmap
-for dir in android/app/src/main/res/mipmap-*; do
-    if [ -d "$dir" ]; then
-        echo "📱 Copiando ícone para $dir"
-        
-        # Copiar como ic_launcher_round.png
-        cp "$ICON_SOURCE" "$dir/ic_launcher_round.png"
-        
-        # Copiar também como ic_launcher.png se não existir
-        if [ ! -f "$dir/ic_launcher.png" ]; then
-            cp "$ICON_SOURCE" "$dir/ic_launcher.png"
-        fi
-        
-        # Verificar se foram copiados
-        if [ -f "$dir/ic_launcher_round.png" ]; then
-            echo "  ✅ ic_launcher_round.png copiado"
-        else
-            echo "  ❌ Falha ao copiar ic_launcher_round.png"
-        fi
+# Criar diretórios mipmap se não existirem e copiar ícones
+for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+    dir="android/app/src/main/res/mipmap-$density"
+    
+    # Criar diretório se não existir
+    mkdir -p "$dir"
+    
+    echo "📱 Copiando ícone para $dir"
+    
+    # Copiar ícone principal
+    cp "$ICON_SOURCE" "$dir/ic_launcher.png"
+    cp "$ICON_SOURCE" "$dir/ic_launcher_round.png"
+    
+    # Verificar se foram copiados
+    if [ -f "$dir/ic_launcher.png" ] && [ -f "$dir/ic_launcher_round.png" ]; then
+        echo "  ✅ Ícones copiados com sucesso"
+    else
+        echo "  ❌ Falha ao copiar ícones"
+        exit 1
     fi
 done
 

@@ -5,32 +5,33 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 import IntroductionStepper from "@/components/onboarding/IntroductionStepper";
 import { voskModelsService } from "@/services/voskModelsService";
 import { toast } from "@/hooks/use-toast";
-import { useTranslations } from "@/hooks/useTranslations";
+import { logger } from "@/utils/logger";
 
 const SplashScreen = () => {
   const navigate = useNavigate();
   const { onboardingData } = useOnboarding();
   const [loaded, setLoaded] = useState(false);
   const [currentModelName, setCurrentModelName] = useState<string | null>(null);
-  const { t } = useTranslations();
 
   useEffect(() => {
+    logger.info("SplashScreen carregado");
+    
     const model = voskModelsService.getCurrentModel();
     setCurrentModelName(model ? `${model.name} (${model.language})` : null);
-    console.log("[SplashScreen] Modelo carregado na inicialização:", model);
-
+    
     // Notificação toast se modelo não for 'pt-br-small'
     if (model && model.id !== 'pt-br-small') {
       toast({
-        title: t("splashScreen.languageActivatedTitle"),
-        description: t("splashScreen.languageActivatedDescription", { name: model.name, language: model.language }),
+        title: "Idioma Ativado",
+        description: `Modelo ${model.name} (${model.language}) ativado`,
       });
     }
-  }, [t]);
+  }, []);
 
   useEffect(() => {
     // Redirect if setup already completed
     if (onboardingData.setupCompleted) {
+      logger.navigation("SplashScreen", "Index", "Setup já concluído");
       navigate("/");
     }
     
@@ -48,15 +49,15 @@ const SplashScreen = () => {
         loaded ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
       }`}>
         <IntroductionStepper />
-        {/* DEBUG - mostrar modelo atual na SplashScreen */}
+        {/* Mostrar modelo atual na SplashScreen */}
         {currentModelName && (
           <div className="text-xs font-bold mt-6 mb-2 text-primary text-center">
-            {t("splashScreen.selectedLanguageLabel")}: {currentModelName}
+            Idioma Selecionado: {currentModelName}
           </div>
         )}
       </div>
       <div className="absolute bottom-4 text-center text-xs text-muted-foreground">
-        {t("splashScreen.signature")}
+        Desenvolvido por Equipe Superleitor
       </div>
     </div>
   );
