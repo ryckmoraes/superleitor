@@ -1,6 +1,5 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { logger } from "@/utils/logger";
 
 interface OnboardingData {
   adminName: string;
@@ -44,11 +43,9 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [isFirstTimeUser, setIsFirstTimeUser] = useState<boolean>(true);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load data from localStorage on mount
+  // Load data from localStorage on mount - simplified without logging
   useEffect(() => {
     const loadData = () => {
-      logger.onboarding("Carregando dados do onboarding");
-      
       try {
         const stored = localStorage.getItem("onboardingData");
         if (stored) {
@@ -64,16 +61,10 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           
           setOnboardingData(parsedData);
           setIsFirstTimeUser(!parsedData.setupCompleted);
-          
-          logger.onboarding("Dados carregados", {
-            setupCompleted: parsedData.setupCompleted
-          });
         } else {
-          logger.onboarding("Primeiro uso - dados padrão");
           setIsFirstTimeUser(true);
         }
       } catch (error) {
-        logger.error("Erro ao carregar dados:", error);
         setOnboardingData(defaultOnboardingData);
         setIsFirstTimeUser(true);
       }
@@ -81,31 +72,25 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setIsLoaded(true);
     };
 
-    // Carregamento imediato
     loadData();
   }, []);
 
-  // Save data to localStorage when it changes
+  // Save data to localStorage when it changes - simplified
   useEffect(() => {
     if (isLoaded) {
       try {
         localStorage.setItem("onboardingData", JSON.stringify(onboardingData));
-        logger.onboarding("Dados salvos", {
-          setupCompleted: onboardingData.setupCompleted
-        });
       } catch (error) {
-        logger.error("Erro ao salvar dados:", error);
+        // Silent fail
       }
     }
   }, [onboardingData, isLoaded]);
 
   const updateOnboardingData = (data: Partial<OnboardingData>) => {
-    logger.onboarding("Atualizando dados", data);
     setOnboardingData(prev => ({ ...prev, ...data }));
   };
 
   const resetOnboarding = () => {
-    logger.onboarding("Resetando onboarding");
     setOnboardingData(defaultOnboardingData);
     setIsFirstTimeUser(true);
     
@@ -113,26 +98,25 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       localStorage.removeItem("onboardingData");
       localStorage.removeItem("app_password");
     } catch (error) {
-      logger.error("Erro ao limpar dados:", error);
+      // Silent fail
     }
   };
   
   const handleAppExit = () => {
-    logger.onboarding("App saindo");
     try {
       localStorage.setItem("app_exited", "true");
     } catch (error) {
-      logger.error("Erro ao salvar flag de saída:", error);
+      // Silent fail
     }
   };
 
-  // Renderizar loading simples enquanto carrega
+  // Simple loading screen without complex styling
   if (!isLoaded) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-          <p className="text-sm text-gray-600">Carregando configurações...</p>
+          <p className="text-sm text-gray-600">Carregando...</p>
         </div>
       </div>
     );

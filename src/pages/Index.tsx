@@ -2,21 +2,16 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { logger } from "@/utils/logger";
 
 const Index = () => {
   const navigate = useNavigate();
   const { onboardingData } = useOnboarding();
 
   useEffect(() => {
-    logger.info("=== INDEX INICIADO ===");
-    
-    // Verificação direta e imediata
+    // Simple navigation without logging
     if (onboardingData.setupCompleted) {
-      logger.navigation("Index", "Welcome", "Setup concluído");
       navigate("/welcome", { replace: true });
     } else {
-      logger.navigation("Index", "Setup", "Setup pendente");
       navigate("/setup", { replace: true });
     }
   }, [navigate, onboardingData.setupCompleted]);

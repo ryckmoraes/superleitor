@@ -16,22 +16,17 @@ import NotFound from "./pages/NotFound";
 import { OnboardingProvider } from "./contexts/OnboardingContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import AppLockProvider from "./components/AppLockProvider";
-import { logger } from "@/utils/logger";
 
 const queryClient = new QueryClient();
 
 const App = () => {
   useEffect(() => {
-    logger.info("=== APP INICIADO ===");
-    
-    // Configuração básica para dispositivos móveis
+    // Simplified mobile configuration without logging
     document.addEventListener('touchstart', (e) => {
       if (e.touches.length > 1) {
         e.preventDefault();
       }
     }, { passive: false });
-    
-    logger.info("=== APP CONFIGURADO ===");
   }, []);
 
   return (
