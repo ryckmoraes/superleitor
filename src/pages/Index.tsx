@@ -8,7 +8,7 @@ const Index = () => {
   const { onboardingData } = useOnboarding();
 
   useEffect(() => {
-    // Simple navigation without logging
+    // Navegação direta e imediata
     if (onboardingData.setupCompleted) {
       navigate("/welcome", { replace: true });
     } else {
@@ -16,8 +16,9 @@ const Index = () => {
     }
   }, [navigate, onboardingData.setupCompleted]);
 
+  // Tela de carregamento mínima
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
+    <div className="min-h-screen bg-white flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
         <h1 className="text-2xl font-bold text-blue-600">Superleitor</h1>

@@ -1,5 +1,4 @@
 
-import DebugLogExporter from "@/components/DebugLogExporter";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,21 +16,32 @@ import { OnboardingProvider } from "./contexts/OnboardingContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import AppLockProvider from "./components/AppLockProvider";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => {
   useEffect(() => {
-    // Simplified mobile configuration without logging
+    // Configuração mobile básica
     document.addEventListener('touchstart', (e) => {
       if (e.touches.length > 1) {
         e.preventDefault();
       }
     }, { passive: false });
+
+    // Remover splash screen do Capacitor
+    if (window.Capacitor?.Plugins?.SplashScreen) {
+      window.Capacitor.Plugins.SplashScreen.hide();
+    }
   }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <DebugLogExporter />
       <LanguageProvider>
         <TooltipProvider>
           <OnboardingProvider>

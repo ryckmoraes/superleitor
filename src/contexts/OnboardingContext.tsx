@@ -43,45 +43,39 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [isFirstTimeUser, setIsFirstTimeUser] = useState<boolean>(true);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load data from localStorage on mount - simplified without logging
+  // Inicialização simplificada
   useEffect(() => {
-    const loadData = () => {
-      try {
-        const stored = localStorage.getItem("onboardingData");
-        if (stored) {
-          const parsedData = JSON.parse(stored);
-          
-          // Convert string dates back to Date objects
-          if (parsedData.adminBirthdate) {
-            parsedData.adminBirthdate = new Date(parsedData.adminBirthdate);
-          }
-          if (parsedData.superReaderBirthdate) {
-            parsedData.superReaderBirthdate = new Date(parsedData.superReaderBirthdate);
-          }
-          
-          setOnboardingData(parsedData);
-          setIsFirstTimeUser(!parsedData.setupCompleted);
-        } else {
-          setIsFirstTimeUser(true);
+    try {
+      const stored = localStorage.getItem("onboardingData");
+      if (stored) {
+        const parsedData = JSON.parse(stored);
+        
+        // Converter datas
+        if (parsedData.adminBirthdate) {
+          parsedData.adminBirthdate = new Date(parsedData.adminBirthdate);
         }
-      } catch (error) {
-        setOnboardingData(defaultOnboardingData);
-        setIsFirstTimeUser(true);
+        if (parsedData.superReaderBirthdate) {
+          parsedData.superReaderBirthdate = new Date(parsedData.superReaderBirthdate);
+        }
+        
+        setOnboardingData(parsedData);
+        setIsFirstTimeUser(!parsedData.setupCompleted);
       }
-      
-      setIsLoaded(true);
-    };
-
-    loadData();
+    } catch (error) {
+      // Falha silenciosa, usar dados padrão
+    }
+    
+    // Marcar como carregado após 100ms para evitar travamentos
+    setTimeout(() => setIsLoaded(true), 100);
   }, []);
 
-  // Save data to localStorage when it changes - simplified
+  // Salvar dados quando mudarem
   useEffect(() => {
     if (isLoaded) {
       try {
         localStorage.setItem("onboardingData", JSON.stringify(onboardingData));
       } catch (error) {
-        // Silent fail
+        // Falha silenciosa
       }
     }
   }, [onboardingData, isLoaded]);
@@ -98,7 +92,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       localStorage.removeItem("onboardingData");
       localStorage.removeItem("app_password");
     } catch (error) {
-      // Silent fail
+      // Falha silenciosa
     }
   };
   
@@ -106,14 +100,14 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     try {
       localStorage.setItem("app_exited", "true");
     } catch (error) {
-      // Silent fail
+      // Falha silenciosa
     }
   };
 
-  // Simple loading screen without complex styling
+  // Renderizar loading simples
   if (!isLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
           <p className="text-sm text-gray-600">Carregando...</p>
