@@ -10,6 +10,19 @@ interface AppLockProviderProps {
 }
 
 const AppLockProvider = ({ children }: AppLockProviderProps) => {
+  const { onboardingData } = useOnboarding();
+  const location = useLocation();
+
+  // Se o onboarding não foi concluído, não aplicar AppLock
+  if (!onboardingData.setupCompleted) {
+    return <>{children}</>;
+  }
+
+  // Só usar AppLock após setup completo
+  return <AppLockProviderInternal>{children}</AppLockProviderInternal>;
+};
+
+const AppLockProviderInternal = ({ children }: AppLockProviderProps) => {
   const { 
     isLocked, 
     showPasswordDialog, 
@@ -17,15 +30,9 @@ const AppLockProvider = ({ children }: AppLockProviderProps) => {
     handlePasswordSuccess 
   } = useAppLock();
   const location = useLocation();
-  const { onboardingData } = useOnboarding();
 
-  // Não aplicar AppLock se o onboarding não foi concluído
-  const shouldApplyLock = onboardingData.setupCompleted;
-
-  // Aplicar estilos CSS para modo bloqueado apenas se necessário
+  // Aplicar estilos CSS para modo bloqueado
   useEffect(() => {
-    if (!shouldApplyLock) return;
-
     const style = document.createElement('style');
     style.textContent = `
       .app-locked {
@@ -42,13 +49,11 @@ const AppLockProvider = ({ children }: AppLockProviderProps) => {
         user-select: none;
       }
       
-      /* Prevenir zoom */
       .app-locked {
         touch-action: pan-x pan-y;
         -ms-touch-action: pan-x pan-y;
       }
       
-      /* Esconder scrollbars quando bloqueado */
       .app-locked::-webkit-scrollbar {
         display: none;
       }
@@ -59,26 +64,24 @@ const AppLockProvider = ({ children }: AppLockProviderProps) => {
     return () => {
       document.head.removeChild(style);
     };
-  }, [shouldApplyLock]);
+  }, []);
 
   return (
     <>
       {children}
-      {shouldApplyLock && isLocked && location.pathname !== '/recording' && (
+      {isLocked && location.pathname !== '/recording' && (
         <div className="fixed top-0 left-0 right-0 bg-red-500/90 text-white text-center py-2 text-sm font-medium z-50">
           🔒 App bloqueado - Conte uma história para desbloquear
         </div>
       )}
       
-      {shouldApplyLock && (
-        <PasswordDialog
-          isOpen={showPasswordDialog}
-          onClose={() => setShowPasswordDialog(false)}
-          onSuccess={handlePasswordSuccess}
-          mode="verify"
-          title="Senha para Sair"
-        />
-      )}
+      <PasswordDialog
+        isOpen={showPasswordDialog}
+        onClose={() => setShowPasswordDialog(false)}
+        onSuccess={handlePasswordSuccess}
+        mode="verify"
+        title="Senha para Sair"
+      />
     </>
   );
 };

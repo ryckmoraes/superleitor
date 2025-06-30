@@ -17,6 +17,7 @@ interface OnboardingContextProps {
   resetOnboarding: () => void;
   isFirstTimeUser: boolean;
   handleAppExit: () => void;
+  isLoaded: boolean;
 }
 
 const defaultOnboardingData: OnboardingData = {
@@ -45,8 +46,8 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Load data from localStorage on mount
   useEffect(() => {
-    const loadData = async () => {
-      logger.onboarding("Iniciando carregamento de dados");
+    const loadData = () => {
+      logger.onboarding("Carregando dados do onboarding");
       
       try {
         const stored = localStorage.getItem("onboardingData");
@@ -64,37 +65,34 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           setOnboardingData(parsedData);
           setIsFirstTimeUser(!parsedData.setupCompleted);
           
-          logger.onboarding("Dados carregados com sucesso", {
-            setupCompleted: parsedData.setupCompleted,
-            isFirstTimeUser: !parsedData.setupCompleted
+          logger.onboarding("Dados carregados", {
+            setupCompleted: parsedData.setupCompleted
           });
         } else {
-          logger.onboarding("Nenhum dado encontrado - usuário novo");
+          logger.onboarding("Primeiro uso - dados padrão");
           setIsFirstTimeUser(true);
         }
       } catch (error) {
-        logger.error("Erro ao carregar dados do onboarding:", error);
-        // Em caso de erro, manter dados padrão
+        logger.error("Erro ao carregar dados:", error);
         setOnboardingData(defaultOnboardingData);
         setIsFirstTimeUser(true);
-      } finally {
-        setIsLoaded(true);
-        logger.onboarding("Carregamento de dados finalizado");
       }
+      
+      setIsLoaded(true);
     };
 
+    // Carregamento imediato
     loadData();
   }, []);
 
-  // Save data to localStorage when it changes (só se já foi carregado)
+  // Save data to localStorage when it changes
   useEffect(() => {
     if (isLoaded) {
-      logger.onboarding("Salvando dados", {
-        setupCompleted: onboardingData.setupCompleted
-      });
-      
       try {
         localStorage.setItem("onboardingData", JSON.stringify(onboardingData));
+        logger.onboarding("Dados salvos", {
+          setupCompleted: onboardingData.setupCompleted
+        });
       } catch (error) {
         logger.error("Erro ao salvar dados:", error);
       }
@@ -128,13 +126,13 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   };
 
-  // Só renderizar filhos quando dados estiverem carregados
+  // Renderizar loading simples enquanto carrega
   if (!isLoaded) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-          <p className="text-sm text-gray-600">Carregando dados...</p>
+          <p className="text-sm text-gray-600">Carregando configurações...</p>
         </div>
       </div>
     );
@@ -146,7 +144,8 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       updateOnboardingData, 
       resetOnboarding,
       isFirstTimeUser,
-      handleAppExit
+      handleAppExit,
+      isLoaded
     }}>
       {children}
     </OnboardingContext.Provider>
