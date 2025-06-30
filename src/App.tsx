@@ -38,19 +38,32 @@ const queryClient = new QueryClient({
 
 const App = () => {
   useEffect(() => {
-    // Configuração mobile básica
-    document.addEventListener('touchstart', (e) => {
+    console.log("App: Iniciando aplicação");
+    
+    // Configuração mobile simplificada
+    const handleTouch = (e: TouchEvent) => {
       if (e.touches.length > 1) {
         e.preventDefault();
       }
-    }, { passive: false });
-
+    };
+    
+    document.addEventListener('touchstart', handleTouch, { passive: false });
+    
     // Remover splash screen do Capacitor
     const capacitorWindow = window as CapacitorWindow;
     if (capacitorWindow.Capacitor?.Plugins?.SplashScreen) {
-      capacitorWindow.Capacitor.Plugins.SplashScreen.hide();
+      console.log("App: Ocultando splash screen do Capacitor");
+      capacitorWindow.Capacitor.Plugins.SplashScreen.hide().catch(console.log);
     }
+    
+    console.log("App: Configuração concluída");
+    
+    return () => {
+      document.removeEventListener('touchstart', handleTouch);
+    };
   }, []);
+
+  console.log("App: Renderizando componente principal");
 
   return (
     <QueryClientProvider client={queryClient}>

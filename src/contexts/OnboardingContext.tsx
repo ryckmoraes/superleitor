@@ -43,45 +43,57 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [isFirstTimeUser, setIsFirstTimeUser] = useState<boolean>(true);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Inicialização simplificada
+  // Inicialização ultra-simplificada para Android
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("onboardingData");
-      if (stored) {
-        const parsedData = JSON.parse(stored);
-        
-        // Converter datas
-        if (parsedData.adminBirthdate) {
-          parsedData.adminBirthdate = new Date(parsedData.adminBirthdate);
-        }
-        if (parsedData.superReaderBirthdate) {
-          parsedData.superReaderBirthdate = new Date(parsedData.superReaderBirthdate);
-        }
-        
-        setOnboardingData(parsedData);
-        setIsFirstTimeUser(!parsedData.setupCompleted);
-      }
-    } catch (error) {
-      // Falha silenciosa, usar dados padrão
-    }
+    let mounted = true;
     
-    // Marcar como carregado após 100ms para evitar travamentos
-    setTimeout(() => setIsLoaded(true), 100);
+    const loadData = () => {
+      try {
+        const stored = localStorage.getItem("onboardingData");
+        if (stored && mounted) {
+          const parsedData = JSON.parse(stored);
+          
+          // Converter datas apenas se existirem
+          if (parsedData.adminBirthdate) {
+            parsedData.adminBirthdate = new Date(parsedData.adminBirthdate);
+          }
+          if (parsedData.superReaderBirthdate) {
+            parsedData.superReaderBirthdate = new Date(parsedData.superReaderBirthdate);
+          }
+          
+          setOnboardingData(parsedData);
+          setIsFirstTimeUser(!parsedData.setupCompleted);
+        }
+      } catch (error) {
+        console.log("Erro ao carregar dados - usando padrão");
+      }
+      
+      if (mounted) {
+        setIsLoaded(true);
+      }
+    };
+
+    // Carregar imediatamente sem timeout
+    loadData();
+    
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // Salvar dados quando mudarem
-  useEffect(() => {
-    if (isLoaded) {
-      try {
-        localStorage.setItem("onboardingData", JSON.stringify(onboardingData));
-      } catch (error) {
-        // Falha silenciosa
-      }
-    }
-  }, [onboardingData, isLoaded]);
-
   const updateOnboardingData = (data: Partial<OnboardingData>) => {
-    setOnboardingData(prev => ({ ...prev, ...data }));
+    setOnboardingData(prev => {
+      const newData = { ...prev, ...data };
+      
+      // Salvar imediatamente
+      try {
+        localStorage.setItem("onboardingData", JSON.stringify(newData));
+      } catch (error) {
+        console.log("Erro ao salvar dados");
+      }
+      
+      return newData;
+    });
   };
 
   const resetOnboarding = () => {
@@ -92,7 +104,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       localStorage.removeItem("onboardingData");
       localStorage.removeItem("app_password");
     } catch (error) {
-      // Falha silenciosa
+      console.log("Erro ao limpar dados");
     }
   };
   
@@ -100,22 +112,11 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     try {
       localStorage.setItem("app_exited", "true");
     } catch (error) {
-      // Falha silenciosa
+      console.log("Erro ao marcar saída");
     }
   };
 
-  // Renderizar loading simples
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-          <p className="text-sm text-gray-600">Carregando...</p>
-        </div>
-      </div>
-    );
-  }
-
+  // Não mostrar loading - renderizar imediatamente
   return (
     <OnboardingContext.Provider value={{ 
       onboardingData, 
@@ -123,7 +124,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       resetOnboarding,
       isFirstTimeUser,
       handleAppExit,
-      isLoaded
+      isLoaded: true // Sempre true para evitar travamento
     }}>
       {children}
     </OnboardingContext.Provider>

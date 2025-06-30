@@ -8,21 +8,29 @@ const Index = () => {
   const { onboardingData } = useOnboarding();
 
   useEffect(() => {
-    // Navegação direta e imediata
-    if (onboardingData.setupCompleted) {
-      navigate("/welcome", { replace: true });
-    } else {
-      navigate("/setup", { replace: true });
-    }
+    // Navegação imediata sem verificações complexas
+    console.log("Index: Setup completed?", onboardingData.setupCompleted);
+    
+    const timer = setTimeout(() => {
+      if (onboardingData.setupCompleted) {
+        console.log("Index: Navegando para welcome");
+        navigate("/welcome", { replace: true });
+      } else {
+        console.log("Index: Navegando para setup");
+        navigate("/setup", { replace: true });
+      }
+    }, 100); // Timeout mínimo para garantir renderização
+
+    return () => clearTimeout(timer);
   }, [navigate, onboardingData.setupCompleted]);
 
-  // Tela de carregamento mínima
+  // Tela de loading ultra-simples
   return (
     <div className="min-h-screen bg-white flex items-center justify-center">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <h1 className="text-2xl font-bold text-blue-600">Superleitor</h1>
-        <p className="text-gray-600 mt-2">Inicializando...</p>
+        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <h1 className="text-2xl font-bold text-blue-600 mb-2">Superleitor</h1>
+        <p className="text-gray-600">Carregando...</p>
       </div>
     </div>
   );
