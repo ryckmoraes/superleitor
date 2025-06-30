@@ -16,6 +16,17 @@ import { OnboardingProvider } from "./contexts/OnboardingContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import AppLockProvider from "./components/AppLockProvider";
 
+// Type definition for Capacitor on window
+interface CapacitorWindow extends Window {
+  Capacitor?: {
+    Plugins?: {
+      SplashScreen?: {
+        hide: () => Promise<void>;
+      };
+    };
+  };
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -35,8 +46,9 @@ const App = () => {
     }, { passive: false });
 
     // Remover splash screen do Capacitor
-    if (window.Capacitor?.Plugins?.SplashScreen) {
-      window.Capacitor.Plugins.SplashScreen.hide();
+    const capacitorWindow = window as CapacitorWindow;
+    if (capacitorWindow.Capacitor?.Plugins?.SplashScreen) {
+      capacitorWindow.Capacitor.Plugins.SplashScreen.hide();
     }
   }, []);
 
