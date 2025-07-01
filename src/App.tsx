@@ -10,6 +10,17 @@ import RecordingScreen from "./pages/RecordingScreen";
 import WelcomeSplashScreen from "./pages/WelcomeSplashScreen";
 import NotFound from "./pages/NotFound";
 
+// Type declaration for Capacitor
+interface CapacitorWindow extends Window {
+  Capacitor?: {
+    Plugins?: {
+      SplashScreen?: {
+        hide: () => Promise<void>;
+      };
+    };
+  };
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -21,16 +32,17 @@ const queryClient = new QueryClient({
 
 const App = () => {
   useEffect(() => {
-    console.log("App: Starting simplified version");
+    console.log("App: Ultra-simplified version starting");
     
     // Hide Capacitor splash screen if available
-    if (window.Capacitor?.Plugins?.SplashScreen) {
+    const capacitorWindow = window as CapacitorWindow;
+    if (capacitorWindow.Capacitor?.Plugins?.SplashScreen) {
       console.log("App: Hiding Capacitor splash screen");
-      window.Capacitor.Plugins.SplashScreen.hide().catch(console.log);
+      capacitorWindow.Capacitor.Plugins.SplashScreen.hide().catch(console.log);
     }
   }, []);
 
-  console.log("App: Rendering");
+  console.log("App: Rendering ultra-simplified version");
 
   return (
     <QueryClientProvider client={queryClient}>
