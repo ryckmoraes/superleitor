@@ -4,26 +4,23 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 
-console.log("Main: Iniciando aplicação");
+console.log("Main: Starting app initialization");
 
-// Inicialização ultra-robusta para Android
 const initApp = () => {
-  console.log("Main: Função initApp chamada");
+  console.log("Main: initApp called");
   
-  let rootElement = document.getElementById("root");
+  const rootElement = document.getElementById("root");
   
   if (!rootElement) {
-    console.log("Main: Elemento root não encontrado, criando...");
-    rootElement = document.createElement("div");
-    rootElement.id = "root";
-    document.body.appendChild(rootElement);
+    console.error("Main: Root element not found");
+    return;
   }
   
-  console.log("Main: Elemento root encontrado/criado");
+  console.log("Main: Root element found");
   
   try {
     const root = createRoot(rootElement);
-    console.log("Main: Root React criado");
+    console.log("Main: React root created");
     
     root.render(
       <StrictMode>
@@ -31,17 +28,26 @@ const initApp = () => {
       </StrictMode>
     );
     
-    console.log("Main: App renderizado com sucesso");
+    console.log("Main: App rendered successfully");
   } catch (error) {
-    console.error("Main: Erro ao renderizar app:", error);
+    console.error("Main: Error rendering app:", error);
+    
+    // Fallback: show error message
+    rootElement.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column;">
+        <h1>Erro ao carregar o aplicativo</h1>
+        <p>Tente recarregar a página</p>
+        <button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px;">Recarregar</button>
+      </div>
+    `;
   }
 };
 
-// Aguardar carregamento completo do DOM
+// Wait for DOM to be ready
 if (document.readyState === 'loading') {
-  console.log("Main: DOM ainda carregando, aguardando...");
+  console.log("Main: DOM loading, waiting...");
   document.addEventListener('DOMContentLoaded', initApp);
 } else {
-  console.log("Main: DOM já carregado, iniciando app");
+  console.log("Main: DOM ready, starting app");
   initApp();
 }

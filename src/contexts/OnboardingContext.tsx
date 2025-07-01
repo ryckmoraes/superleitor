@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState } from "react";
 
 interface OnboardingData {
   adminName: string;
@@ -40,71 +40,25 @@ export const useOnboarding = () => {
 
 export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [onboardingData, setOnboardingData] = useState<OnboardingData>(defaultOnboardingData);
-  const [isFirstTimeUser, setIsFirstTimeUser] = useState<boolean>(true);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  // Inicialização ultra-simplificada para Android
-  useEffect(() => {
-    let mounted = true;
-    
-    const loadData = () => {
-      try {
-        const stored = localStorage.getItem("onboardingData");
-        if (stored && mounted) {
-          const parsedData = JSON.parse(stored);
-          
-          // Converter datas apenas se existirem
-          if (parsedData.adminBirthdate) {
-            parsedData.adminBirthdate = new Date(parsedData.adminBirthdate);
-          }
-          if (parsedData.superReaderBirthdate) {
-            parsedData.superReaderBirthdate = new Date(parsedData.superReaderBirthdate);
-          }
-          
-          setOnboardingData(parsedData);
-          setIsFirstTimeUser(!parsedData.setupCompleted);
-        }
-      } catch (error) {
-        console.log("Erro ao carregar dados - usando padrão");
-      }
-      
-      if (mounted) {
-        setIsLoaded(true);
-      }
-    };
-
-    // Carregar imediatamente sem timeout
-    loadData();
-    
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
   const updateOnboardingData = (data: Partial<OnboardingData>) => {
-    setOnboardingData(prev => {
-      const newData = { ...prev, ...data };
-      
-      // Salvar imediatamente
-      try {
-        localStorage.setItem("onboardingData", JSON.stringify(newData));
-      } catch (error) {
-        console.log("Erro ao salvar dados");
-      }
-      
-      return newData;
-    });
+    const newData = { ...onboardingData, ...data };
+    setOnboardingData(newData);
+    
+    try {
+      localStorage.setItem("onboardingData", JSON.stringify(newData));
+    } catch (error) {
+      console.log("Error saving onboarding data");
+    }
   };
 
   const resetOnboarding = () => {
     setOnboardingData(defaultOnboardingData);
-    setIsFirstTimeUser(true);
-    
     try {
       localStorage.removeItem("onboardingData");
       localStorage.removeItem("app_password");
     } catch (error) {
-      console.log("Erro ao limpar dados");
+      console.log("Error clearing onboarding data");
     }
   };
   
@@ -112,19 +66,18 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     try {
       localStorage.setItem("app_exited", "true");
     } catch (error) {
-      console.log("Erro ao marcar saída");
+      console.log("Error marking app exit");
     }
   };
 
-  // Não mostrar loading - renderizar imediatamente
   return (
     <OnboardingContext.Provider value={{ 
       onboardingData, 
       updateOnboardingData, 
       resetOnboarding,
-      isFirstTimeUser,
+      isFirstTimeUser: !onboardingData.setupCompleted,
       handleAppExit,
-      isLoaded: true // Sempre true para evitar travamento
+      isLoaded: true
     }}>
       {children}
     </OnboardingContext.Provider>
